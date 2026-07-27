@@ -85,3 +85,15 @@ function kcpLoadTiroirs() {
   }
   return _kcpFetchTiroirs();
 }
+
+// ── Cache de l'historique du chat (même logique stale-while-revalidate) ──
+// L'historique change à chaque message : on affiche le cache tout de suite
+// puis on revalide en réseau (l'appel se fait en parallèle du reste).
+function _kcpHistKey() { return 'kcp_history_' + (KCP_CONFIG.client_id || 'anon'); }
+function kcpReadHistoryCache() {
+  try { const c = JSON.parse(localStorage.getItem(_kcpHistKey()) || 'null'); return c && c.data ? c.data : null; }
+  catch (e) { return null; }
+}
+function kcpCacheHistory(data) {
+  try { localStorage.setItem(_kcpHistKey(), JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {}
+}

@@ -109,11 +109,10 @@
     <div class="field">
       <label class="label" for="nom">
         <span id="nom-label">Nom du tiroir</span>
-        <span class="hint" id="nom-hint">minuscules, chiffres, tirets</span>
       </label>
       <div class="pfx">
         <span class="pfx-sym" id="pfx-sym">#</span>
-        <input type="text" id="nom" placeholder="nom-du-tiroir" autocomplete="off" spellcheck="false" maxlength="60" oninput="onNom()">
+        <input type="text" id="nom" placeholder="" autocomplete="off" spellcheck="false" maxlength="60" oninput="onNom()">
       </div>
     </div>
 
@@ -168,7 +167,6 @@
   const nomEl = document.getElementById('nom');
   const perimEl = document.getElementById('perim');
   const submitEl = document.getElementById('submit');
-  const nomHint = document.getElementById('nom-hint');
 
   // Slug live : minuscules, accents retires, espaces/caracteres speciaux -> tiret.
   // On garde un tiret final pendant la frappe (trim complet a la soumission).
@@ -197,7 +195,6 @@
     nomEl.style.paddingLeft = anx ? '3.4rem' : '1.65rem';
     document.getElementById('page-title').textContent = anx ? 'Nouvelle annexe' : 'Nouveau tiroir';
     document.getElementById('nom-label').textContent = anx ? "Nom de l'annexe" : 'Nom du tiroir';
-    nomEl.placeholder = anx ? "nom-de-l-annexe" : 'nom-du-tiroir';
     submitEl.textContent = anx ? "Créer l'annexe →" : 'Créer le tiroir →';
   }
 
