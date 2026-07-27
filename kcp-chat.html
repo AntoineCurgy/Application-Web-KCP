@@ -147,7 +147,8 @@
   .slash-btn.m-dem { background:var(--dark); border-color:var(--dark-border); color:var(--dark-text); }
 
   .inp-wrap {
-    flex:1; background:var(--surface2); border:1.5px solid var(--border);
+    flex:1; min-width:0;   /* autorise le rétrécissement : sinon le champ pousse le bouton envoyer hors écran */
+    background:var(--surface2); border:1.5px solid var(--border);
     border-radius:12px; display:flex; align-items:flex-end;
     padding:0 0.85rem; transition:border-color 0.15s; gap:0.5rem;
   }
@@ -168,7 +169,7 @@
   .tag-x:hover { opacity:1; }
 
   textarea {
-    flex:1; background:transparent; border:none; outline:none;
+    flex:1; min-width:0; background:transparent; border:none; outline:none;
     color:var(--ink); font-family:var(--font); font-size:14px;
     resize:none; padding:0.7rem 0; line-height:1.45; max-height:90px;
   }
@@ -186,13 +187,14 @@
   .send svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
 
   /* iOS : >=16px sur les champs pour éviter le zoom automatique au focus */
-  @media(max-width:680px){ html{padding:0} textarea, .sel-wrap select{ font-size:16px; } }
+  /* html clair sur mobile : tout gap laissé par la barre Safari (100dvh) reste invisible au lieu d'apparaître en noir */
+  @media(max-width:680px){ html{padding:0; background:var(--bg);} textarea, .sel-wrap select{ font-size:16px; } }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <a href="./index.html" class="back">← Accueil</a>
+  <a href="./index.html" class="back">← Retour</a>
   <div class="hdr-row">
     <span class="hdr-title">Chat mémoire</span>
     <div class="sel-wrap">
@@ -284,7 +286,26 @@
     try { const d=new Date(ts); return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); } catch{ return ''; }
   }
 
+  // Rendu de l'historique (utilisé pour le cache ET la réponse réseau).
+  function renderHistory(data) {
+    document.getElementById('hist-load')?.remove();
+    msgs.innerHTML = '';   // sûr : au chargement il n'y a pas encore de message live
+    if (!data || !data.h || data.h.length === 0) { sysMsg('Aucun historique. Utilise <strong>/</strong> pour commencer.'); return; }
+    [...data.h].reverse().forEach(row => {
+      const m = row.m||'demande', q = decodeURIComponent(row.q||''), rep = decodeURIComponent(row.r||''), ts = fmtTime(row.ts);
+      addMsgT('user', q.replace(/\n/g,'<br>'), null, null, ts);
+      let txt = rep;
+      try { const s=rep.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/i,'').trim(); txt=JSON.parse(s).text||rep; } catch{}
+      addMsgT('ai', txt, (row.t ? m+' · #'+row.t : m), m, ts);
+    });
+    scrollDown();
+  }
+
   async function loadHistory() {
+    // 1) Cache d'abord : affichage instantané si dispo.
+    const cached = (typeof kcpReadHistoryCache === 'function') ? kcpReadHistoryCache() : null;
+    if (cached) renderHistory(cached);
+    // 2) Revalidation réseau en parallèle, puis mise à jour + cache.
     try {
       const r = await fetch(C.webhooks.history, {
         method:'POST', headers:{'Content-Type':'application/json'},
@@ -293,19 +314,13 @@
       const raw = await r.text();
       const cleaned = raw.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/i,'').trim();
       const data = JSON.parse(cleaned);
-      document.getElementById('hist-load')?.remove();
-      if (!data.h || data.h.length === 0) { sysMsg('Aucun historique. Utilise <strong>/</strong> pour commencer.'); return; }
-      [...data.h].reverse().forEach(row => {
-        const m = row.m||'demande', q = decodeURIComponent(row.q||''), rep = decodeURIComponent(row.r||''), ts = fmtTime(row.ts);
-        addMsgT('user', q.replace(/\n/g,'<br>'), null, null, ts);
-        let txt = rep;
-        try { const s=rep.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/i,'').trim(); txt=JSON.parse(s).text||rep; } catch{}
-        addMsgT('ai', txt, (row.t ? m+' · #'+row.t : m), m, ts);
-      });
-      scrollDown();
+      if (typeof kcpCacheHistory === 'function') kcpCacheHistory(data);
+      renderHistory(data);
     } catch(e) {
-      document.getElementById('hist-load')?.remove();
-      sysMsg('Historique indisponible. Utilise <strong>/</strong> pour commencer.');
+      if (!cached) {
+        document.getElementById('hist-load')?.remove();
+        sysMsg('Historique indisponible. Utilise <strong>/</strong> pour commencer.');
+      }
     }
   }
 
@@ -378,7 +393,10 @@
 
   // Mode /demande pré-sélectionné par défaut (sans forcer le focus/clavier au chargement).
   setMode('demande', false);
-  loadTiroirs().then(() => loadHistory());
+  // Les deux appels sont indépendants → on les lance EN PARALLÈLE (pas de chaînage).
+  // L'historique s'affiche depuis le cache immédiatement, le réseau revalide en fond.
+  loadTiroirs();
+  loadHistory();
 </script>
 </body>
 </html>
