@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#f6f4ee">
 <title>KCP — Enregistrer une réunion</title>
 <link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
 <link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
@@ -97,9 +99,9 @@
     <div class="field">
       <label class="label" for="titre">
         Titre de la réunion
-        <span class="hint">facultatif</span>
+        <span class="hint" id="titre-hint">requis</span>
       </label>
-      <input type="text" id="titre" placeholder="" autocomplete="off" spellcheck="false" maxlength="120">
+      <input type="text" id="titre" placeholder="" autocomplete="off" spellcheck="false" maxlength="120" oninput="check()">
     </div>
 
     <div class="note">
@@ -142,15 +144,17 @@
 
   function check() {
     const raw = urlEl.value.trim();
-    const ok = isValidUrl(raw);
-    if (raw.length > 0 && !ok) {
+    const urlOk = isValidUrl(raw);
+    if (raw.length > 0 && !urlOk) {
       urlHint.textContent = 'lien https valide requis';
       urlHint.classList.add('err');
     } else {
       urlHint.textContent = 'Google Meet ou Microsoft Teams';
       urlHint.classList.remove('err');
     }
-    submitEl.disabled = !ok;
+    // Titre désormais obligatoire : bouton actif seulement si URL valide ET titre non vide.
+    const titreOk = titreEl.value.trim().length > 0;
+    submitEl.disabled = !(urlOk && titreOk);
   }
 
   function show(id) { document.getElementById(id).classList.add('on'); }
@@ -163,6 +167,7 @@
     // Nettoie le titre des caracteres qui casseraient le JSON cote automatisation.
     const titre_reunion = titreEl.value.trim().replace(/["\\\r\n]/g, ' ').replace(/\s+/g, ' ').trim();
     if (!isValidUrl(meeting_url)) return;
+    if (!titre_reunion) { showErr('Le titre de la réunion est requis.'); return; }
 
     clearErr();
     submitEl.style.display = 'none';
