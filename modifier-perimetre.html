@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>KCP — Modifier un périmètre</title>
 <link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
 <link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
@@ -46,6 +46,9 @@
   select:focus { border-color:var(--ink); background:var(--surface); }
   .arr { position:absolute; right:1rem; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--ink-soft); font-size:12px; }
 
+  .note { display:flex; align-items:flex-start; gap:0.6rem; padding:0.85rem 1rem; background:rgba(77,107,20,0.07); border:1px solid rgba(77,107,20,0.18); border-left:3px solid var(--accent-deep); border-radius:8px; font-size:12px; font-family:var(--mono); color:var(--ink-soft); line-height:1.5; }
+  .note .ico { flex-shrink:0; color:var(--accent-deep); font-weight:700; }
+
   .btn-dark { width:100%; padding:1rem; background:var(--dark); color:var(--dark-text); border:none; border-radius:10px; font-family:var(--font); font-size:15px; font-weight:700; cursor:pointer; transition:background 0.15s, transform 0.1s; }
   .btn-dark:hover { background:var(--dark-soft); }
   .btn-dark:active { transform:scale(0.99); }
@@ -74,7 +77,8 @@
   .wrap > :nth-child(1){animation-delay:.04s} .wrap > :nth-child(2){animation-delay:.09s}
   .wrap > :nth-child(3){animation-delay:.13s}
   @keyframes up{to{opacity:1;transform:translateY(0)}}
-  @media(max-width:600px){ html{padding:0} body{border-radius:0; min-height:100vh} }
+  /* iOS : >=16px sur les champs pour éviter le zoom automatique au focus */
+  @media(max-width:600px){ html{padding:0} body{border-radius:0; min-height:100vh} textarea, select{ font-size:16px; } }
 </style>
 </head>
 <body>
@@ -100,9 +104,13 @@
     <div class="field">
       <label class="label" for="perim">
         Périmètre déclaré
-        <span class="hint" id="perim-hint">min. 10 caractères</span>
+        <span class="hint" id="perim-hint">min. 40 caractères</span>
       </label>
-      <textarea id="perim" placeholder="Sélectionne d'abord un tiroir…" maxlength="400" oninput="check()" disabled></textarea>
+      <textarea id="perim" placeholder="Sélectionne d'abord un tiroir…" maxlength="2000" oninput="check()" disabled></textarea>
+      <div class="note">
+        <span class="ico">›</span>
+        <span>Décris précisément le sujet couvert. C'est ce texte qui guide le tri de tes infos : un bon périmètre = une mémoire fiable, sans hors-sujet.</span>
+      </div>
     </div>
 
     <button class="btn-dark" id="submit" onclick="submit()" disabled>Mettre à jour →</button>
@@ -137,17 +145,20 @@
   const items = {};        // doc_int_id -> item {nom_tiroir, type, perimetre_declare, ...}
   let original = '';       // périmètre actuel du tiroir sélectionné
 
+  // Annexe : label complet prefixe anx_. Tolere "anx_x" (corrige) ou "nx_x" (1er char retire).
+  function anxLabel(nom){ nom = nom || ''; if (nom.indexOf('anx_') === 0) return nom; if (nom.indexOf('nx_') === 0) return 'a' + nom; return 'anx_' + nom; }
+  function dispLabel(t){ return String(t.type).toUpperCase() === 'ANX' ? anxLabel(t.nom_tiroir) : ('#' + t.nom_tiroir); }
+
   async function loadTiroirs() {
     try {
-      const r = await fetch(C.webhooks.tiroirs, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({client_id:id_client}) });
-      const data = await r.json();
+      const data = await kcpLoadTiroirs();
       const list = Array.isArray(data) ? data : (data.pcp_anx || data.tous || data.pcp || []);
       list.forEach(t => {
         if (!t.doc_int_id) return;
         items[t.doc_int_id] = t;
         const o = document.createElement('option');
         o.value = t.doc_int_id;
-        o.textContent = (String(t.type).toUpperCase() === 'ANX' ? '@' : '#') + t.nom_tiroir;
+        o.textContent = dispLabel(t);
         sel.appendChild(o);
       });
     } catch(e) { console.warn('Tiroirs unavailable'); }
@@ -170,16 +181,16 @@
   function check() {
     const val = perimEl.value.trim();
     const len = val.length;
-    if (len > 0 && len < 10) {
-      const reste = 10 - len;
+    if (len > 0 && len < 40) {
+      const reste = 40 - len;
       perimHint.textContent = 'encore ' + reste + ' caractère' + (reste > 1 ? 's' : '');
       perimHint.classList.add('err');
     } else {
-      perimHint.textContent = 'min. 10 caractères';
+      perimHint.textContent = 'min. 40 caractères';
       perimHint.classList.remove('err');
     }
-    // actif si un tiroir choisi, périmètre >= 10, ET modifié
-    submitEl.disabled = !(sel.value && len >= 10 && val !== original.trim());
+    // actif si un tiroir choisi, périmètre >= 40, ET modifié
+    submitEl.disabled = !(sel.value && len >= 40 && val !== original.trim());
   }
 
   function show(id) { document.getElementById(id).classList.add('on'); }
@@ -190,7 +201,7 @@
   async function submit() {
     const doc_int_id = sel.value;
     const perimetre_declare = perimEl.value.trim();
-    if (!doc_int_id || perimetre_declare.length < 10) return;
+    if (!doc_int_id || perimetre_declare.length < 40) return;
 
     hideAll();
     submitEl.style.display = 'none';
@@ -215,6 +226,7 @@
     if (res.ok && data.success) {
       // refléter la nouvelle valeur en mémoire pour une éventuelle nouvelle édition
       if (items[doc_int_id]) items[doc_int_id].perimetre_declare = perimetre_declare;
+      if (typeof kcpInvalidateTiroirs === 'function') kcpInvalidateTiroirs();
       original = perimetre_declare;
       submitEl.style.display = '';
       submitEl.disabled = true;

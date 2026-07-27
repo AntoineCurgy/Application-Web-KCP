@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>KCP — Initialiser une IA</title>
 <link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
 <link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
@@ -28,7 +28,7 @@
   .kcp-tag { font-size:11px; font-family:var(--mono); color:var(--accent-deep); letter-spacing:0.15em; text-transform:uppercase; display:block; margin-bottom:0.7rem; }
   .page-title { font-size:28px; font-weight:700; letter-spacing:-0.02em; }
 
-  .card { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r); padding:1.5rem; box-shadow:0 1px 6px rgba(22,21,15,0.06); display:flex; flex-direction:column; gap:1.35rem; }
+  .card { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r); padding:1.5rem; box-shadow:0 1px 6px rgba(22,21,15,0.06); display:flex; flex-direction:column; gap:1.35rem; position:relative; z-index:5; }
   .label { font-size:12px; font-family:var(--mono); color:var(--ink); letter-spacing:0.08em; text-transform:uppercase; font-weight:500; display:block; margin-bottom:0.5rem; }
   .label .opt { color:var(--muted); text-transform:none; letter-spacing:0; font-weight:500; }
   .sel-wrap { position:relative; }
@@ -109,7 +109,7 @@
   .error-state { display:none; padding:0.9rem 1rem; border:1.5px solid var(--border-strong); border-radius:10px; font-size:13px; font-family:var(--mono); color:var(--ink-soft); }
   .error-state.on { display:block; }
 
-  .footer { display:flex; align-items:center; justify-content:center; gap:0.5rem; }
+  .footer { display:flex; align-items:center; justify-content:center; gap:0.5rem; position:relative; z-index:0; }
   .footer-text { font-size:11px; font-family:var(--mono); color:var(--muted); }
   .dot { width:5px; height:5px; border-radius:50%; background:var(--accent-deep); animation:pulse 2.4s ease-in-out infinite; }
   @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.2;transform:scale(.6)}}
@@ -119,7 +119,8 @@
   .wrap > :nth-child(3){animation-delay:.14s} .wrap > :nth-child(4){animation-delay:.18s}
   @keyframes up{to{opacity:1;transform:translateY(0)}}
   @media(max-width:360px){.llm-grid{grid-template-columns:1fr}}
-  @media(max-width:600px){ html{padding:0} body{border-radius:0; min-height:100vh} }
+  /* iOS : >=16px sur les champs pour éviter le zoom automatique au focus */
+  @media(max-width:600px){ html{padding:0} body{border-radius:0; min-height:100vh} select, .ms-trigger{ font-size:16px; } }
 </style>
 </head>
 <body>
@@ -143,7 +144,7 @@
     </div>
 
     <div>
-      <span class="label">Ajouter au contexte <span class="opt">— tiroirs / annexes · optionnel · max 3</span></span>
+      <span class="label">Ajouter au contexte <span class="opt">— tiroirs / annexes · optionnel · max 5</span></span>
       <div class="ms" id="ms">
         <div class="ms-head">
           <button type="button" class="ms-trigger empty" id="ms-trigger" onclick="toggleMs()" disabled>
@@ -193,18 +194,20 @@
   let prompt = '';
   const sel = document.getElementById('sel');
 
-  const MAX_ADD = 3;
+  const MAX_ADD = 5;
   let secondItems = [];            // liste PCP + ANX (2e menu)
   const selected = new Map();      // key -> item sélectionné
 
   function keyOf(it){ return it.id || it.nom_tiroir; }
   function isAnx(it){ return (it.type && String(it.type).toUpperCase() === 'ANX') || /^ANX/i.test(it.id || ''); }
-  function labelOf(it){ return (isAnx(it) ? '@' : '#') + it.nom_tiroir; }
+  // Annexe : label complet prefixe anx_. Tolere les deux backends (label brut
+  // "anx_x" une fois corrige, ou "nx_x" si le 1er caractere a ete retire).
+  function anxLabel(nom){ nom = nom || ''; if (nom.indexOf('anx_') === 0) return nom; if (nom.indexOf('nx_') === 0) return 'a' + nom; return 'anx_' + nom; }
+  function labelOf(it){ return isAnx(it) ? anxLabel(it.nom_tiroir) : ('#' + it.nom_tiroir); }
 
   async function loadTiroirs() {
     try {
-      const r = await fetch(C.webhooks.tiroirs, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({client_id:C.client_id}) });
-      const data = await r.json();
+      const data = await kcpLoadTiroirs();
       // Deux listes : pcp (menu principal) et pcp_anx (multi-select). Tolérant à l'ancien format tableau.
       let pcp, all;
       if (Array.isArray(data)) { pcp = data; all = data; }
