@@ -109,6 +109,7 @@
     <div class="field">
       <label class="label" for="nom">
         <span id="nom-label">Nom du tiroir</span>
+        <span class="hint err" id="nom-hint" style="display:none">ce nom existe déjà</span>
       </label>
       <div class="pfx">
         <span class="pfx-sym" id="pfx-sym">#</span>
@@ -167,6 +168,26 @@
   const nomEl = document.getElementById('nom');
   const perimEl = document.getElementById('perim');
   const submitEl = document.getElementById('submit');
+  const nomHint = document.getElementById('nom-hint');
+
+  // Labels déjà pris (pour interdire un doublon dès la saisie ; le 409 backend reste le garde ultime).
+  let existingLabels = new Set();
+  function anxLabel(nom){ nom = nom || ''; if (nom.indexOf('anx_') === 0) return nom; if (nom.indexOf('nx_') === 0) return 'a' + nom; return 'anx_' + nom; }
+  async function loadExisting() {
+    try {
+      const data = await kcpLoadTiroirs();
+      const list = Array.isArray(data) ? data : (data.pcp_anx || data.tous || data.pcp || []);
+      existingLabels = new Set(list.map(function(t){
+        return (String(t.type).toUpperCase() === 'ANX' ? anxLabel(t.nom_tiroir) : '#' + t.nom_tiroir).toLowerCase();
+      }));
+      check();
+    } catch (e) { /* liste indispo : on laisse le backend gérer le 409 */ }
+  }
+  // Label qui serait créé avec la saisie courante.
+  function currentLabel() { return (nature === 'ANX' ? 'anx_' : '#') + nomEl.value.replace(/^-+|-+$/g, ''); }
+
+  // Nettoie un texte libre des caractères qui casseraient le JSON de l'automatisation (flux création = jsonString).
+  function sanitize(s) { return (s || '').replace(/[\\"]/g, "'").replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim(); }
 
   // Slug live : minuscules, accents retires, espaces/caracteres speciaux -> tiret.
   // On garde un tiret final pendant la frappe (trim complet a la soumission).
@@ -196,6 +217,7 @@
     document.getElementById('page-title').textContent = anx ? 'Nouvelle annexe' : 'Nouveau tiroir';
     document.getElementById('nom-label').textContent = anx ? "Nom de l'annexe" : 'Nom du tiroir';
     submitEl.textContent = anx ? "Créer l'annexe →" : 'Créer le tiroir →';
+    check();   // le préfixe du label change -> re-teste le doublon
   }
 
   function setSphere(v) {
@@ -205,7 +227,8 @@
   }
 
   function check() {
-    const nomOk = nomEl.value.replace(/^-+|-+$/g, '').length >= 2;
+    const cleanNom = nomEl.value.replace(/^-+|-+$/g, '');
+    const nomOk = cleanNom.length >= 2;
     const perimLen = perimEl.value.trim().length;
     const perimOk = perimLen >= 40;
     const ph = document.getElementById('perim-hint');
@@ -217,7 +240,10 @@
       ph.textContent = 'min. 40 caractères';
       ph.classList.remove('err');
     }
-    submitEl.disabled = !(nomOk && perimOk);
+    // Doublon : le label complet existe déjà (# pour tiroir, anx_ pour annexe).
+    const dup = nomOk && existingLabels.has(currentLabel().toLowerCase());
+    nomHint.style.display = dup ? 'inline' : 'none';
+    submitEl.disabled = !(nomOk && perimOk && !dup);
   }
 
   function show(id) { document.getElementById(id).classList.add('on'); }
@@ -228,8 +254,11 @@
   async function submit() {
     // Trim complet des tirets de bordure au moment de l'envoi.
     const nom_tiroir = nomEl.value.replace(/^-+|-+$/g, '');
-    const perimetre_declare = perimEl.value.trim();
+    // Nettoyage des caractères qui casseraient le JSON de l'automatisation.
+    const perimetre_declare = sanitize(perimEl.value);
     if (nom_tiroir.length < 2 || perimetre_declare.length < 40) return;
+    // Garde-fou doublon côté client (le backend renvoie aussi une 409).
+    if (existingLabels.has(currentLabel().toLowerCase())) { nomHint.style.display = 'inline'; return; }
 
     clearErr();
     submitEl.style.display = 'none';
@@ -257,11 +286,13 @@
 
     if (res.ok && data.success) {
       if (typeof kcpInvalidateTiroirs === 'function') kcpInvalidateTiroirs();
+      existingLabels.add(currentLabel().toLowerCase());   // évite un doublon immédiat sans recharger
       document.getElementById('s-msg').textContent = (nature === 'ANX')
         ? 'Annexe créée, prête à être chargée en contexte.'
         : 'Tiroir créé, prêt à recevoir vos réunions et vos conversations IA.';
       show('s-success');
     } else if (res.status === 409 || data.error === 'label_exists') {
+      existingLabels.add(currentLabel().toLowerCase());   // le backend confirme le doublon
       submitEl.style.display = '';
       showErr('Ce nom existe déjà, choisis-en un autre.');
     } else {
@@ -269,6 +300,8 @@
       showErr('Création impossible. Réessaie.');
     }
   }
+
+  loadExisting();
 </script>
 </body>
 </html>
