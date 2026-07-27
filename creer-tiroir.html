@@ -2,8 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KCP — Nouveau tiroir</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>KCP — Nouveau document</title>
 <link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
 <link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
 <script src="./config.js"></script>
@@ -45,6 +45,9 @@
 
   textarea { resize:none; min-height:80px; line-height:1.5; font-weight:500; font-size:14px; }
 
+  .note { display:flex; align-items:flex-start; gap:0.6rem; padding:0.85rem 1rem; background:rgba(77,107,20,0.07); border:1px solid rgba(77,107,20,0.18); border-left:3px solid var(--accent-deep); border-radius:8px; font-size:12px; font-family:var(--mono); color:var(--ink-soft); line-height:1.5; }
+  .note .ico { flex-shrink:0; color:var(--accent-deep); font-weight:700; }
+
   .toggle { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; }
   .tog-btn { padding:0.8rem; border-radius:10px; border:1.5px solid var(--border); background:var(--surface2); color:var(--muted); font-family:var(--font); font-size:15px; font-weight:700; cursor:pointer; transition:all 0.15s; }
   .tog-btn:hover { color:var(--ink-soft); border-color:var(--border-strong); }
@@ -81,7 +84,8 @@
   .wrap > :nth-child(1){animation-delay:.04s} .wrap > :nth-child(2){animation-delay:.09s}
   .wrap > :nth-child(3){animation-delay:.13s} .wrap > :nth-child(4){animation-delay:.17s}
   @keyframes up{to{opacity:1;transform:translateY(0)}}
-  @media(max-width:600px){ html{padding:0} body{border-radius:0; min-height:100vh} }
+  /* iOS : >=16px sur les champs pour éviter le zoom automatique au focus */
+  @media(max-width:600px){ html{padding:0} body{border-radius:0; min-height:100vh} input[type=text], textarea, select{ font-size:16px; } }
 </style>
 </head>
 <body>
@@ -90,17 +94,25 @@
   <div>
     <a href="./index.html" class="back">← Retour</a>
     <span class="kcp-tag">KCP — Knowledge Context Protocol</span>
-    <h1 class="page-title">Nouveau tiroir</h1>
+    <h1 class="page-title" id="page-title">Nouveau tiroir</h1>
   </div>
 
   <div class="card">
     <div class="field">
+      <span class="label">Type</span>
+      <div class="toggle">
+        <button class="tog-btn on" id="btn-tiroir" onclick="setNature('PCP')">Tiroir</button>
+        <button class="tog-btn" id="btn-annexe" onclick="setNature('ANX')">Annexe</button>
+      </div>
+    </div>
+
+    <div class="field">
       <label class="label" for="nom">
-        Nom du tiroir
+        <span id="nom-label">Nom du tiroir</span>
         <span class="hint" id="nom-hint">minuscules, chiffres, tirets</span>
       </label>
       <div class="pfx">
-        <span class="pfx-sym">#</span>
+        <span class="pfx-sym" id="pfx-sym">#</span>
         <input type="text" id="nom" placeholder="nom-du-tiroir" autocomplete="off" spellcheck="false" maxlength="60" oninput="onNom()">
       </div>
     </div>
@@ -116,9 +128,13 @@
     <div class="field">
       <label class="label" for="perim">
         Périmètre déclaré
-        <span class="hint" id="perim-hint">min. 10 caractères</span>
+        <span class="hint" id="perim-hint">min. 40 caractères</span>
       </label>
-      <textarea id="perim" placeholder="Ce tiroir sert à…" maxlength="400" oninput="check()"></textarea>
+      <textarea id="perim" placeholder="Ce document sert à…" maxlength="2000" oninput="check()"></textarea>
+      <div class="note">
+        <span class="ico">›</span>
+        <span>Décris précisément le sujet couvert. C'est ce texte qui guide le tri de tes infos : un bon périmètre = une mémoire fiable, sans hors-sujet.</span>
+      </div>
     </div>
 
     <button class="btn-dark" id="submit" onclick="submit()" disabled>Créer le tiroir →</button>
@@ -132,7 +148,7 @@
   </div>
 
   <div class="state success" id="s-success">
-    <span class="s-msg">Tiroir créé, prêt à recevoir vos réunions et vos conversations IA.</span>
+    <span class="s-msg" id="s-msg">Tiroir créé, prêt à recevoir vos réunions et vos conversations IA.</span>
   </div>
 
   <div class="footer"><div class="dot"></div><span class="footer-text">système actif · KCP V2</span></div>
@@ -147,19 +163,42 @@
   const id_client = _session ? _session.client_id : null;
 
   let sphere = 'pro';
+  let nature = 'PCP';   // PCP = tiroir, ANX = annexe
 
   const nomEl = document.getElementById('nom');
   const perimEl = document.getElementById('perim');
   const submitEl = document.getElementById('submit');
   const nomHint = document.getElementById('nom-hint');
 
-  // Normalise en direct : minuscules, chiffres, tirets uniquement.
+  // Slug live : minuscules, accents retires, espaces/caracteres speciaux -> tiret.
+  // On garde un tiret final pendant la frappe (trim complet a la soumission).
+  function slugifyLive(s) {
+    return (s || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')  // accents
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, '-')                        // espaces + speciaux -> tiret
+      .replace(/-{2,}/g, '-')                              // pas de doubles tirets
+      .replace(/^-+/, '');                                 // pas de tiret initial
+  }
+
   function onNom() {
     const raw = nomEl.value;
-    const clean = raw.toLowerCase().replace(/[^a-z0-9-]/g, '');
-    if (clean !== raw) { nomEl.value = clean; nomHint.textContent = 'seuls a-z, 0-9 et - sont autorisés'; nomHint.classList.add('err'); }
-    else { nomHint.textContent = 'minuscules, chiffres, tirets'; nomHint.classList.remove('err'); }
+    const clean = slugifyLive(raw);
+    if (clean !== raw) nomEl.value = clean;
     check();
+  }
+
+  function setNature(v) {
+    nature = v;
+    document.getElementById('btn-tiroir').classList.toggle('on', v === 'PCP');
+    document.getElementById('btn-annexe').classList.toggle('on', v === 'ANX');
+    const anx = v === 'ANX';
+    document.getElementById('pfx-sym').textContent = anx ? 'anx_' : '#';
+    nomEl.style.paddingLeft = anx ? '3.4rem' : '1.65rem';
+    document.getElementById('page-title').textContent = anx ? 'Nouvelle annexe' : 'Nouveau tiroir';
+    document.getElementById('nom-label').textContent = anx ? "Nom de l'annexe" : 'Nom du tiroir';
+    nomEl.placeholder = anx ? "nom-de-l-annexe" : 'nom-du-tiroir';
+    submitEl.textContent = anx ? "Créer l'annexe →" : 'Créer le tiroir →';
   }
 
   function setSphere(v) {
@@ -169,16 +208,16 @@
   }
 
   function check() {
-    const nomOk = nomEl.value.trim().length >= 2;
+    const nomOk = nomEl.value.replace(/^-+|-+$/g, '').length >= 2;
     const perimLen = perimEl.value.trim().length;
-    const perimOk = perimLen >= 10;
+    const perimOk = perimLen >= 40;
     const ph = document.getElementById('perim-hint');
     if (perimLen > 0 && !perimOk) {
-      const reste = 10 - perimLen;
+      const reste = 40 - perimLen;
       ph.textContent = 'encore ' + reste + ' caractère' + (reste > 1 ? 's' : '');
       ph.classList.add('err');
     } else {
-      ph.textContent = 'min. 10 caractères';
+      ph.textContent = 'min. 40 caractères';
       ph.classList.remove('err');
     }
     submitEl.disabled = !(nomOk && perimOk);
@@ -190,9 +229,10 @@
   function clearErr() { document.getElementById('s-error').classList.remove('on'); }
 
   async function submit() {
-    const nom_tiroir = nomEl.value.trim();
+    // Trim complet des tirets de bordure au moment de l'envoi.
+    const nom_tiroir = nomEl.value.replace(/^-+|-+$/g, '');
     const perimetre_declare = perimEl.value.trim();
-    if (nom_tiroir.length < 2 || perimetre_declare.length < 10) return;
+    if (nom_tiroir.length < 2 || perimetre_declare.length < 40) return;
 
     clearErr();
     submitEl.style.display = 'none';
@@ -203,7 +243,7 @@
     try {
       res = await fetch(C.webhooks.creer_tiroir, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_client, nom_tiroir, sphere, perimetre_declare })
+        body: JSON.stringify({ id_client, nom_tiroir, sphere, perimetre_declare, nature })
       });
       // Lire le corps AVANT tout test de statut (la 409 porte error:label_exists).
       const raw = await res.text();
@@ -219,6 +259,10 @@
     hide('s-loading');
 
     if (res.ok && data.success) {
+      if (typeof kcpInvalidateTiroirs === 'function') kcpInvalidateTiroirs();
+      document.getElementById('s-msg').textContent = (nature === 'ANX')
+        ? 'Annexe créée, prête à être chargée en contexte.'
+        : 'Tiroir créé, prêt à recevoir vos réunions et vos conversations IA.';
       show('s-success');
     } else if (res.status === 409 || data.error === 'label_exists') {
       submitEl.style.display = '';

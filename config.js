@@ -45,3 +45,43 @@ const KCP_CONFIG = {
     location.replace('./login.html');
   }
 })();
+
+// ─────────────────────────────────────────────────────────────
+// Cache local de la liste des tiroirs (stale-while-revalidate).
+// La liste change rarement (création / modif de périmètre) : on la
+// sert instantanément depuis localStorage et on rafraîchit en fond.
+// Invalidation explicite après création ou modification.
+// ─────────────────────────────────────────────────────────────
+const KCP_TIROIRS_TTL = 10 * 60 * 1000; // 10 min
+
+function _kcpTiroirsKey() { return 'kcp_tiroirs_' + (KCP_CONFIG.client_id || 'anon'); }
+
+function _kcpReadTiroirsCache() {
+  try { return JSON.parse(localStorage.getItem(_kcpTiroirsKey()) || 'null'); }
+  catch (e) { return null; }
+}
+
+function kcpInvalidateTiroirs() {
+  try { localStorage.removeItem(_kcpTiroirsKey()); } catch (e) {}
+}
+
+async function _kcpFetchTiroirs() {
+  const r = await fetch(KCP_WEBHOOKS.tiroirs, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ client_id: KCP_CONFIG.client_id })
+  });
+  const data = await r.json();
+  try { localStorage.setItem(_kcpTiroirsKey(), JSON.stringify({ ts: Date.now(), data })); } catch (e) {}
+  return data;
+}
+
+// Renvoie une Promise résolue avec la liste. Cache présent → résolution
+// immédiate + rafraîchissement en fond si périmé. Sinon appel réseau.
+function kcpLoadTiroirs() {
+  const cached = _kcpReadTiroirsCache();
+  if (cached && cached.data) {
+    if (Date.now() - (cached.ts || 0) >= KCP_TIROIRS_TTL) { _kcpFetchTiroirs().catch(function(){}); }
+    return Promise.resolve(cached.data);
+  }
+  return _kcpFetchTiroirs();
+}

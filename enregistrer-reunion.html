@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>KCP — Enregistrer une réunion</title>
 <link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
 <link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
@@ -72,7 +72,8 @@
   .wrap > :nth-child(1){animation-delay:.04s} .wrap > :nth-child(2){animation-delay:.09s}
   .wrap > :nth-child(3){animation-delay:.13s} .wrap > :nth-child(4){animation-delay:.17s}
   @keyframes up{to{opacity:1;transform:translateY(0)}}
-  @media(max-width:600px){ html{padding:0} body{border-radius:0; min-height:100vh} }
+  /* iOS : >=16px sur les champs pour éviter le zoom automatique au focus */
+  @media(max-width:600px){ html{padding:0} body{border-radius:0; min-height:100vh} input[type=text]{ font-size:16px; } }
 </style>
 </head>
 <body>
@@ -103,7 +104,7 @@
 
     <div class="note">
       <span class="ico">●</span>
-      <span>Le robot rejoint la réunion et l'enregistre. Si personne n'est présent au bout de 10 minutes, il repart automatiquement.</span>
+      <span>Le robot rejoint la réunion et l'enregistre. Envoie-le au moment où tu rejoins la réunion (ou juste avant) : il n'est pas programmable à l'avance. Si personne n'est présent au bout de 10 minutes, il repart automatiquement.</span>
     </div>
 
     <button class="btn-dark" id="submit" onclick="submit()" disabled>Envoyer le robot →</button>
