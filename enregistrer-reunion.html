@@ -191,7 +191,13 @@
     hide('s-loading');
 
     if (res.ok && data.success) {
-      show('s-success');
+      // Enchaînement : on vide les champs et on réarme le formulaire pour un nouvel envoi.
+      urlEl.value = '';
+      titreEl.value = '';
+      check();                        // ré-évalue (bouton désactivé tant que rien n'est saisi)
+      submitEl.style.display = '';    // ré-affiche le bouton
+      show('s-success');              // confirmation du dernier envoi
+      urlEl.focus();                  // prêt à coller le lien suivant
     } else {
       submitEl.style.display = '';
       showErr('Envoi impossible. Vérifie le lien et réessaie.');
