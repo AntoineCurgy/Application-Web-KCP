@@ -110,7 +110,7 @@
   function notionUrl(uuid) {
     if (!uuid) return '';
     const clean = String(uuid).replace(/-/g, '').trim();
-    return clean ? 'https://www.notion.so/' + clean : '';
+    return clean ? 'https://app.notion.com/p/' + clean : '';
   }
 
   async function doLogin() {
