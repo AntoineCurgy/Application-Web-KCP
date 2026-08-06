@@ -15,6 +15,7 @@ const KCP_WEBHOOKS = {
   creer_tiroir: 'https://hook.eu2.make.com/eb7lvgopight6cd56vw2hyclimy8mu7x', // Make: KCP - Nouveau Tiroir
   update_perimetre: 'https://hook.eu2.make.com/mrtjwmxnmnhy9vus3vlmn6ps99oowa15', // Make: KCP - Update Perimetre
   creer_bot: 'https://hook.eu2.make.com/v3wdi25sob508x5gzvr11o0wwfg363vy', // Make: KCP - Meeting BaaS - Creer Bot
+  reset_password: 'https://hook.eu2.make.com/baacr4sl603f8jif2htezl4tbttp857p', // Make: KCP - Reset Password
 };
 
 const KCP_SESSION_KEY = 'kcp_session';
@@ -38,10 +39,13 @@ const KCP_CONFIG = {
 };
 
 // ── Garde d'accès : pas de session → redirection vers le login ──
-// (la page login.html est la seule exemptée)
+// Pages publiques : la connexion, et la définition de mot de passe
+// (atteinte par un lien reçu par email, donc forcément déconnecté).
+const KCP_PUBLIC_PAGES = ['login.html', 'reset-password.html'];
+
 (function kcpGuard() {
   var page = location.pathname.split('/').pop();
-  if (!_kcpSession && page !== 'login.html') {
+  if (!_kcpSession && KCP_PUBLIC_PAGES.indexOf(page) === -1) {
     location.replace('./login.html');
   }
 })();
