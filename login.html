@@ -30,11 +30,17 @@
   .page-sub { font-size:13px; font-family:var(--mono); color:var(--muted); margin-top:0.35rem; }
 
   .card { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r); padding:1.5rem; box-shadow:0 1px 6px rgba(22,21,15,0.06); display:flex; flex-direction:column; gap:1.25rem; }
+  .view { display:flex; flex-direction:column; gap:1.25rem; }
+  .view.off { display:none; }
   .field { display:flex; flex-direction:column; gap:0.5rem; }
   .label { font-size:12px; font-family:var(--mono); color:var(--ink); letter-spacing:0.08em; text-transform:uppercase; font-weight:500; }
   input { width:100%; background:var(--surface2); color:var(--ink); border:1.5px solid var(--border); border-radius:10px; padding:0.85rem 1rem; font-family:var(--font); font-size:15px; font-weight:600; outline:none; transition:border-color 0.15s; }
   input::placeholder { color:var(--muted); font-weight:400; }
   input:focus { border-color:var(--ink); background:var(--surface); }
+
+  .mini-link { align-self:flex-end; background:none; border:none; padding:0; font-size:12px; font-family:var(--mono); font-weight:500; color:var(--muted); cursor:pointer; text-decoration:none; transition:color 0.15s; }
+  .mini-link:hover { color:var(--ink); }
+  .mini-link.left { align-self:flex-start; }
 
   .btn-dark { width:100%; padding:1rem; background:var(--dark); color:var(--dark-text); border:none; border-radius:10px; font-family:var(--font); font-size:15px; font-weight:700; cursor:pointer; transition:background 0.15s, transform 0.1s; display:flex; align-items:center; justify-content:center; gap:0.6rem; }
   .btn-dark:hover { background:var(--dark-soft); }
@@ -49,6 +55,12 @@
   .error { display:none; padding:0.8rem 1rem; border:1.5px solid rgba(150,40,40,0.35); background:rgba(150,40,40,0.06); border-radius:10px; font-size:13px; font-family:var(--mono); color:#8a2f2f; }
   .error.on { display:block; }
 
+  .state { display:none; }
+  .state.on { display:flex; }
+  .success { flex-direction:column; gap:0.6rem; padding:1.25rem; background:var(--dark); border:1.5px solid var(--dark-border); border-radius:10px; position:relative; overflow:hidden; }
+  .success::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--accent); }
+  .s-msg { font-size:14px; font-family:var(--mono); color:var(--dark-text); line-height:1.5; }
+
   .footer { display:flex; align-items:center; justify-content:center; gap:0.5rem; }
   .footer-text { font-size:11px; font-family:var(--mono); color:var(--muted); }
   .dot { width:5px; height:5px; border-radius:50%; background:var(--accent-deep); animation:pulse 2.4s ease-in-out infinite; }
@@ -56,7 +68,7 @@
 
   .wrap > * { opacity:0; transform:translateY(8px); animation:up 0.3s ease forwards; }
   .wrap > :nth-child(1){animation-delay:.04s} .wrap > :nth-child(2){animation-delay:.09s}
-  .wrap > :nth-child(3){animation-delay:.14s}
+  .wrap > :nth-child(3){animation-delay:.14s} .wrap > :nth-child(4){animation-delay:.18s}
   @keyframes up{to{opacity:1;transform:translateY(0)}}
   /* iOS : >=16px sur les champs pour éviter le zoom automatique au focus */
   @media(max-width:600px){ html{padding:0} body{border-radius:0; min-height:100vh} input{ font-size:16px; } }
@@ -68,26 +80,52 @@
   <div>
     <div class="brand"><div class="brand-mark">K</div></div>
     <span class="kcp-tag">KCP — Knowledge Context Protocol</span>
-    <h1 class="page-title">Connexion</h1>
-    <p class="page-sub">Accède à ta mémoire de projets.</p>
+    <h1 class="page-title" id="page-title">Connexion</h1>
+    <p class="page-sub" id="page-sub">Accède à ta mémoire de projets.</p>
   </div>
 
   <div class="card">
-    <div class="field">
-      <label class="label" for="user">Identifiant</label>
-      <input type="text" id="user" placeholder="identifiant" autocomplete="username" autocapitalize="none" spellcheck="false" onkeydown="handleKey(event)">
-    </div>
-    <div class="field">
-      <label class="label" for="pass">Mot de passe</label>
-      <input type="password" id="pass" placeholder="••••••••" autocomplete="current-password" onkeydown="handleKey(event)">
+
+    <!-- Vue connexion -->
+    <div class="view" id="view-login">
+      <div class="field">
+        <label class="label" for="email">Email</label>
+        <input type="email" id="email" placeholder="prenom@domaine.com" autocomplete="username" autocapitalize="none" spellcheck="false" onkeydown="handleKey(event)">
+      </div>
+      <div class="field">
+        <label class="label" for="pass">Mot de passe</label>
+        <input type="password" id="pass" placeholder="••••••••" autocomplete="current-password" onkeydown="handleKey(event)">
+        <button type="button" class="mini-link" onclick="showForgot()">Mot de passe oublié ?</button>
+      </div>
+
+      <div class="error" id="err"></div>
+
+      <button class="btn-dark" id="submit" onclick="doLogin()">
+        <span class="spinner"></span>
+        <span class="btn-lbl">Se connecter →</span>
+      </button>
     </div>
 
-    <div class="error" id="err"></div>
+    <!-- Vue demande de réinitialisation -->
+    <div class="view off" id="view-forgot">
+      <div class="field">
+        <label class="label" for="femail">Email</label>
+        <input type="email" id="femail" placeholder="prenom@domaine.com" autocomplete="username" autocapitalize="none" spellcheck="false" onkeydown="handleKeyForgot(event)">
+        <button type="button" class="mini-link left" onclick="showLogin()">← Revenir à la connexion</button>
+      </div>
 
-    <button class="btn-dark" id="submit" onclick="doLogin()">
-      <span class="spinner"></span>
-      <span class="btn-lbl">Se connecter →</span>
-    </button>
+      <div class="error" id="ferr"></div>
+
+      <button class="btn-dark" id="fsubmit" onclick="doForgot()">
+        <span class="spinner"></span>
+        <span class="btn-lbl">Envoyer le lien →</span>
+      </button>
+    </div>
+
+  </div>
+
+  <div class="state success" id="s-success">
+    <span class="s-msg" id="s-msg"></span>
   </div>
 
   <div class="footer"><div class="dot"></div><span class="footer-text">système actif · KCP V2</span></div>
@@ -101,10 +139,38 @@
 
   const btn = document.getElementById('submit');
   const err = document.getElementById('err');
+  const fbtn = document.getElementById('fsubmit');
+  const ferr = document.getElementById('ferr');
 
   function handleKey(e) { if (e.key === 'Enter') { e.preventDefault(); doLogin(); } }
+  function handleKeyForgot(e) { if (e.key === 'Enter') { e.preventDefault(); doForgot(); } }
   function showErr(m) { err.textContent = m; err.classList.add('on'); }
   function clearErr() { err.classList.remove('on'); }
+  function showFerr(m) { ferr.textContent = m; ferr.classList.add('on'); }
+  function clearFerr() { ferr.classList.remove('on'); }
+  function hideSuccess() { document.getElementById('s-success').classList.remove('on'); }
+
+  // ── Bascule connexion / mot de passe oublié (même carte, même états) ──
+  function showForgot() {
+    clearErr(); clearFerr(); hideSuccess();
+    document.getElementById('view-login').classList.add('off');
+    document.getElementById('view-forgot').classList.remove('off');
+    document.getElementById('page-title').textContent = 'Mot de passe oublié';
+    document.getElementById('page-sub').textContent = 'Reçois un lien pour en définir un nouveau.';
+    // On reprend l'email déjà saisi côté connexion, pour ne pas le retaper.
+    const f = document.getElementById('femail');
+    if (!f.value) f.value = document.getElementById('email').value.trim();
+    f.focus();
+  }
+
+  function showLogin() {
+    clearErr(); clearFerr(); hideSuccess();
+    document.getElementById('view-forgot').classList.add('off');
+    document.getElementById('view-login').classList.remove('off');
+    document.getElementById('page-title').textContent = 'Connexion';
+    document.getElementById('page-sub').textContent = 'Accède à ta mémoire de projets.';
+    document.getElementById('email').focus();
+  }
 
   // Reconstruit une URL Notion a partir d'un UUID (best practice : seul l'UUID transite).
   function notionUrl(uuid) {
@@ -114,10 +180,10 @@
   }
 
   async function doLogin() {
-    const username = document.getElementById('user').value.trim();
+    const username = document.getElementById('email').value.trim();
     const password = document.getElementById('pass').value;
     clearErr();
-    if (!username || !password) { showErr('Identifiant et mot de passe requis.'); return; }
+    if (!username || !password) { showErr('Email et mot de passe requis.'); return; }
 
     btn.classList.add('loading'); btn.disabled = true;
     try {
@@ -144,14 +210,47 @@
         location.replace('./index.html');
         return;
       }
-      showErr(d.message || d.error || 'Identifiant ou mot de passe incorrect.');
+      showErr(d.message || d.error || 'Email ou mot de passe incorrect.');
     } catch (e) {
       showErr('Connexion impossible. Réessaie.');
     }
     btn.classList.remove('loading'); btn.disabled = false;
   }
 
-  document.getElementById('user').focus();
+  // Demande de lien. La réponse du backend est volontairement identique
+  // que l'email existe ou non : on ne révèle jamais quels comptes existent.
+  async function doForgot() {
+    const email = document.getElementById('femail').value.trim();
+    clearFerr(); hideSuccess();
+    if (!email) { showFerr('Email requis.'); return; }
+
+    fbtn.classList.add('loading'); fbtn.disabled = true;
+    let res, data = {};
+    try {
+      res = await fetch(C.webhooks.reset_password, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ mode:'demande', email })
+      });
+      const raw = await res.text();
+      const cleaned = raw.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/i,'').trim();
+      try { data = JSON.parse(cleaned); } catch (e) { data = {}; }
+    } catch (e) {
+      fbtn.classList.remove('loading'); fbtn.disabled = false;
+      showFerr('Envoi impossible. Réessaie.');
+      return;
+    }
+
+    fbtn.classList.remove('loading'); fbtn.disabled = false;
+
+    if (res.ok && data.success) {
+      document.getElementById('s-msg').textContent = data.message || "Si un compte existe pour cette adresse, un lien vient d'être envoyé.";
+      document.getElementById('s-success').classList.add('on');
+    } else {
+      showFerr('Envoi impossible. Réessaie.');
+    }
+  }
+
+  document.getElementById('email').focus();
 </script>
 </body>
 </html>
