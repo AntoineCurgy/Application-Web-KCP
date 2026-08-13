@@ -71,22 +71,26 @@
   .ms-chip .x:hover { opacity:1; background:var(--dark-border); }
 
   /* LLM BUTTONS */
-  .llm-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.15rem; }
-  .llm-btn { display:flex; align-items:center; justify-content:center; padding:1.35rem 1rem; border-radius:10px; cursor:pointer; font-family:var(--mono); font-size:18px; font-weight:500; transition:all 0.15s; border:1.5px solid; position:relative; overflow:hidden; }
-  .llm-btn:not([disabled]):hover { transform:translateY(-2px); }
+  .llm-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; }
+  .llm-col { display:flex; flex-direction:column; gap:0.55rem; }
+  .llm-btn { display:flex; align-items:center; justify-content:center; padding:1.2rem 0.4rem; border-radius:10px; cursor:pointer; font-family:var(--mono); font-size:15px; font-weight:500; transition:all 0.15s; border:1.5px solid; }
+  .llm-btn:not([disabled]):hover { transform:translateY(-2px); box-shadow:0 6px 14px rgba(22,21,15,0.14); }
   .llm-btn:not([disabled]):active { transform:scale(0.98); }
 
-  .llm-btn.claude { background:var(--dark); border-color:var(--dark-border); color:var(--dark-text); }
-  .llm-btn.claude::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--accent); }
-  .llm-btn.claude:not([disabled]):hover { background:var(--dark-soft); box-shadow:0 6px 18px rgba(22,21,15,0.22); }
+  /* Couleurs de marque : Claude terracotta, ChatGPT vert. MCP = variante Claude contourée. */
+  .llm-btn.claude { background:#CC785C; border-color:#CC785C; color:#fff; }
+  .llm-btn.claude-mcp { background:var(--surface); border-color:#CC785C; color:#CC785C; }
+  .llm-btn.chatgpt { background:#10A37F; border-color:#10A37F; color:#fff; }
+  .llm-btn[disabled] { opacity:0.4; cursor:not-allowed; }
 
-  .llm-btn.chatgpt { background:var(--surface2); border-color:var(--border-strong); color:var(--ink); }
-  .llm-btn.chatgpt:not([disabled]):hover { background:var(--surface); border-color:var(--ink); box-shadow:0 6px 12px rgba(22,21,15,0.09); }
+  /* Copie du prompt sans ouvrir l'assistant : style standard des boutons d'action. */
+  .copy-mini { background:var(--accent); color:var(--dark); border:none; border-radius:8px; padding:0.5rem 0.4rem; font-family:var(--mono); font-size:12px; font-weight:600; cursor:pointer; transition:opacity 0.15s; }
+  .copy-mini:not([disabled]):hover { opacity:0.85; }
+  .copy-mini[disabled] { opacity:0.4; cursor:not-allowed; }
 
-  /* disabled lisible */
-  .llm-btn[disabled].claude { background:#1e201a; border-color:#1e201a; color:#4a4d44; }
-  .llm-btn[disabled].claude::before { opacity:0.15; }
-  .llm-btn[disabled].chatgpt { color:var(--muted); border-color:var(--border); cursor:not-allowed; }
+  /* Reinitialisation de la page, sans texte. */
+  .reset-btn { width:36px; height:36px; border-radius:50%; border:1.5px solid var(--border-strong); background:var(--surface); color:var(--ink-soft); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; padding:0; }
+  .reset-btn:hover { color:var(--ink); border-color:var(--ink); transform:rotate(180deg); }
 
   /* STATES */
   .state { display:none; }
@@ -118,7 +122,7 @@
   .wrap > :nth-child(1){animation-delay:.04s} .wrap > :nth-child(2){animation-delay:.09s}
   .wrap > :nth-child(3){animation-delay:.14s} .wrap > :nth-child(4){animation-delay:.18s}
   @keyframes up{to{opacity:1;transform:translateY(0)}}
-  @media(max-width:360px){.llm-grid{grid-template-columns:1fr}}
+  @media(max-width:520px){.llm-grid{grid-template-columns:1fr}}
   /* iOS : >=16px sur les champs pour éviter le zoom automatique au focus */
   @media(max-width:600px){ html{padding:0} body{border-radius:0; min-height:100vh} select, .ms-trigger{ font-size:16px; } }
 </style>
@@ -127,7 +131,10 @@
 <div class="wrap">
 
   <div>
-    <a href="./index.html" class="back">← Retour</a>
+    <div style="display:flex; align-items:flex-start; justify-content:space-between;">
+      <a href="./index.html" class="back">← Retour</a>
+      <button type="button" class="reset-btn" title="Réinitialiser" aria-label="Réinitialiser" onclick="resetPage()">↻</button>
+    </div>
     <span class="kcp-tag">KCP — Knowledge Context Protocol</span>
     <h1 class="page-title">Initialiser une IA</h1>
   </div>
@@ -162,8 +169,18 @@
     <div>
       <span class="label">Ouvrir dans</span>
       <div class="llm-grid">
-        <button class="llm-btn claude" id="btn-claude" onclick="launch('claude')" disabled>Claude</button>
-        <button class="llm-btn chatgpt" id="btn-chatgpt" onclick="launch('chatgpt')" disabled>ChatGPT</button>
+        <div class="llm-col">
+          <button class="llm-btn claude" id="btn-claude" onclick="launch('claude')" disabled>Claude</button>
+          <button class="copy-mini" id="cp-claude" onclick="copyOnly('claude')" disabled>Copier le prompt</button>
+        </div>
+        <div class="llm-col">
+          <button class="llm-btn claude-mcp" id="btn-claude-mcp" onclick="launch('claude-mcp')" disabled>Claude (MCP)</button>
+          <button class="copy-mini" id="cp-claude-mcp" onclick="copyOnly('claude-mcp')" disabled>Copier le prompt</button>
+        </div>
+        <div class="llm-col">
+          <button class="llm-btn chatgpt" id="btn-chatgpt" onclick="launch('chatgpt')" disabled>ChatGPT</button>
+          <button class="copy-mini" id="cp-chatgpt" onclick="copyOnly('chatgpt')" disabled>Copier le prompt</button>
+        </div>
       </div>
     </div>
 
@@ -217,11 +234,12 @@
     } catch(e) { console.warn('Tiroirs unavailable'); }
   }
 
+  const LLM_BUTTONS = ['btn-claude','btn-claude-mcp','btn-chatgpt','cp-claude','cp-claude-mcp','cp-chatgpt'];
+
   function onChange() {
     const has = !!sel.value;
     sel.classList.toggle('empty', !has);
-    document.getElementById('btn-claude').disabled = !has;
-    document.getElementById('btn-chatgpt').disabled = !has;
+    LLM_BUTTONS.forEach(id => { document.getElementById(id).disabled = !has; });
     // Le multi-select suit le tiroir principal.
     document.getElementById('ms-trigger').disabled = !has;
     // Le tiroir principal ne peut pas être aussi un ajout.
@@ -299,9 +317,9 @@
     if (ms && !ms.contains(e.target)) closeMs();
   });
 
-  async function launch(llm) {
-    if (!sel.value) return;
-    closeMs(); hideAll(); show('s-loading');
+  // Recupere le prompt pour l'assistant choisi ('claude' | 'claude-mcp' | 'chatgpt').
+  // Le backend lit la page de prompt correspondante ; sans llm, il sert la version MCP.
+  async function fetchPrompt(llm) {
     const ajouts = [...selected.values()].map(it => ({
       nom_tiroir: it.nom_tiroir,
       type: isAnx(it) ? 'ANX' : 'PCP',
@@ -310,20 +328,48 @@
     }));
     // Liens Notion prets a inserer (vrais sauts de ligne cote JS ; Make ne fait qu'un replace direct).
     const liens_additionnels = ajouts.map(a => a.url).filter(Boolean).join('\n');
+    const r = await fetch(C.webhooks.prompt, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ client_id:C.client_id, nom_tiroir:sel.value, ajouts, liens_additionnels, llm })
+    });
+    const d = await r.json();
+    const raw = d.prompt || d.content || d.text || '';
+    prompt = raw ? decodeURIComponent(escape(atob(raw))) : '';
+    return ajouts.length;
+  }
+
+  async function launch(llm) {
+    if (!sel.value) return;
+    closeMs(); hideAll(); show('s-loading');
     try {
-      const r = await fetch(C.webhooks.prompt, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ client_id:C.client_id, nom_tiroir:sel.value, ajouts, liens_additionnels })
-      });
-      const d = await r.json();
-      const raw = d.prompt || d.content || d.text || '';
-      prompt = raw ? decodeURIComponent(escape(atob(raw))) : '';
+      const n = await fetchPrompt(llm);
       await copy(prompt);
       hide('s-loading');
-      document.getElementById('s-tiroir').textContent = '#' + sel.value + (ajouts.length ? '  +' + ajouts.length : '');
+      document.getElementById('s-tiroir').textContent = '#' + sel.value + (n ? '  +' + n : '');
       show('s-success');
-      window.open(llm==='claude'?'https://claude.ai/new':'https://chatgpt.com/', '_blank');
+      window.open(llm === 'chatgpt' ? 'https://chatgpt.com/' : 'https://claude.ai/new', '_blank');
     } catch(e) { hide('s-loading'); showErr('Erreur lors du chargement. Réessaie.'); }
+  }
+
+  // Copie le prompt sans ouvrir l'assistant.
+  async function copyOnly(llm) {
+    if (!sel.value) return;
+    closeMs(); hideAll(); show('s-loading');
+    try {
+      const n = await fetchPrompt(llm);
+      await copy(prompt);
+      hide('s-loading');
+      document.getElementById('s-tiroir').textContent = '#' + sel.value + (n ? '  +' + n : '');
+      show('s-success');
+    } catch(e) { hide('s-loading'); showErr('Erreur lors du chargement. Réessaie.'); }
+  }
+
+  // Reinitialise la page : tiroir principal, ajouts et etats.
+  function resetPage() {
+    sel.value = '';
+    selected.clear();
+    prompt = '';
+    onChange();
   }
 
   async function copy(t) { try { await navigator.clipboard.writeText(t); } catch { const a=document.createElement('textarea'); a.value=t; document.body.appendChild(a); a.select(); document.execCommand('copy'); document.body.removeChild(a); } }
