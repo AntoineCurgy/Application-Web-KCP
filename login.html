@@ -119,9 +119,11 @@
   }
 
   // Reconstruit une URL Notion a partir d'un UUID (best practice : seul l'UUID transite).
+  // L'UUID est conserve tel quel, avec ses tirets : c'est le format canonique de l'API
+  // Notion et celui du referentiel. Un seul standard partout, aucune transformation.
   function notionUrl(uuid) {
     if (!uuid) return '';
-    const clean = String(uuid).replace(/-/g, '').trim();
+    const clean = String(uuid).trim();
     return clean ? 'https://app.notion.com/p/' + clean : '';
   }
 
