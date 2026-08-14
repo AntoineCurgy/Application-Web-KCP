@@ -135,6 +135,14 @@
     </a>
   </div>
 
+  <div class="notion-group">
+    <div class="notion-hdr">Aide</div>
+    <a id="n-guide" href="#" class="notion-row" target="_blank" rel="noopener">
+      <div class="notion-left"><span>📖</span><span class="notion-label">Instructions</span></div>
+      <span class="notion-arr">→</span>
+    </a>
+  </div>
+
   <div class="footer">
     <div class="dot"></div>
     <span class="footer-text">système actif · KCP V2</span>
@@ -145,6 +153,7 @@
   document.getElementById('c-name').textContent = KCP_CONFIG.client_name;
   if (KCP_CONFIG.notion.tiroirs)  document.getElementById('n-tiroirs').href = KCP_CONFIG.notion.tiroirs;
   if (KCP_CONFIG.notion.reunions) document.getElementById('n-reunions').href = KCP_CONFIG.notion.reunions;
+  if (KCP_CONFIG.guide)           document.getElementById('n-guide').href    = KCP_CONFIG.guide;
   document.title = 'KCP — ' + KCP_CONFIG.client_name;
 </script>
 </body>

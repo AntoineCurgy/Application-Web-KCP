@@ -18,6 +18,11 @@ const KCP_WEBHOOKS = {
   reset_password: 'https://hook.eu2.make.com/baacr4sl603f8jif2htezl4tbttp857p', // Make: KCP - Reset Password
 };
 
+// Guide d'utilisation, Google Doc partage en lecture. L'identifiant d'un
+// document Drive ne change pas quand on le modifie : le lien est donc stable,
+// il suffit d'editer le document pour que tout le monde voie la mise a jour.
+const KCP_GUIDE_URL = 'https://docs.google.com/document/d/191TJ4O0OQIqXZyyErrrS67GgajxZTJOs3euLILiWLAg/view';
+
 const KCP_SESSION_KEY = 'kcp_session';
 
 function kcpGetSession() {
@@ -36,6 +41,7 @@ const KCP_CONFIG = {
   client_name: _kcpSession ? _kcpSession.client_name : null,
   notion:      (_kcpSession && _kcpSession.notion) ? _kcpSession.notion : {},
   webhooks:    KCP_WEBHOOKS,
+  guide:       KCP_GUIDE_URL,
 };
 
 // ── Garde d'accès : pas de session → redirection vers le login ──
