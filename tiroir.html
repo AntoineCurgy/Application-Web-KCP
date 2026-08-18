@@ -60,9 +60,6 @@
   .ms-check { width:18px; height:18px; border-radius:5px; border:1.5px solid var(--border-strong); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--dark); background:var(--surface); }
   .ms-opt.on .ms-check { background:var(--accent); border-color:var(--accent-deep); }
   .ms-opt-lbl { font-size:14px; font-family:var(--mono); font-weight:500; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .ms-badge { margin-left:auto; font-size:10px; font-family:var(--mono); letter-spacing:0.06em; padding:2px 6px; border-radius:4px; text-transform:uppercase; flex-shrink:0; }
-  .ms-badge.pcp { color:var(--accent-deep); background:rgba(77,107,20,0.10); }
-  .ms-badge.anx { color:var(--ink-soft); background:rgba(22,21,15,0.07); }
   .ms-note { font-size:12px; font-family:var(--mono); color:var(--muted); padding:0.75rem 0.9rem; }
 
   .ms-chips { display:none; flex-wrap:wrap; gap:0.4rem; }
@@ -141,10 +138,10 @@
 
   <div class="card">
     <div>
-      <span class="label">Tiroir principal</span>
+      <span class="label">Sujet principal</span>
       <div class="sel-wrap">
         <select id="sel" class="empty" onchange="onChange()">
-          <option value="">— choisir un tiroir —</option>
+          <option value="">— choisir un sujet —</option>
         </select>
         <span class="arr">▾</span>
       </div>
@@ -155,7 +152,7 @@
       <div class="ms" id="ms">
         <div class="ms-head">
           <button type="button" class="ms-trigger empty" id="ms-trigger" onclick="toggleMs()" disabled>
-            <span class="ms-trigger-lbl" id="ms-lbl">— sélectionne d'abord un tiroir principal —</span>
+            <span class="ms-trigger-lbl" id="ms-lbl">— sélectionne d'abord un sujet principal —</span>
             <span class="arr">▾</span>
           </button>
           <div class="ms-panel" id="ms-panel"></div>
@@ -268,11 +265,9 @@
       const full = (selected.size >= MAX_ADD) && !on;
       const row = document.createElement('div');
       row.className = 'ms-opt' + (on ? ' on' : '') + (full ? ' disabled' : '');
-      const anx = isAnx(it);
       row.innerHTML =
         '<span class="ms-check">' + (on ? '✓' : '') + '</span>' +
-        '<span class="ms-opt-lbl">' + labelOf(it) + '</span>' +
-        '<span class="ms-badge ' + (anx ? 'anx' : 'pcp') + '">' + (anx ? 'ANX' : 'PCP') + '</span>';
+        '<span class="ms-opt-lbl">' + labelOf(it) + '</span>';
       row.onclick = (e) => { e.stopPropagation(); if (full) return; toggleItem(it); };
       panel.appendChild(row);
     });
@@ -289,9 +284,9 @@
     chipsWrap.style.display = selected.size ? 'flex' : 'none';
 
     // Libellé du déclencheur
-    if (!mainNom) { trigLbl.textContent = "— sélectionne d'abord un tiroir principal —"; trig.classList.add('empty'); }
+    if (!mainNom) { trigLbl.textContent = "— sélectionne d'abord un sujet principal —"; trig.classList.add('empty'); }
     else if (selected.size) { trigLbl.textContent = selected.size + ' ajout' + (selected.size > 1 ? 's' : '') + ' · max ' + MAX_ADD; trig.classList.remove('empty'); }
-    else { trigLbl.textContent = '— tiroirs / annexes —'; trig.classList.add('empty'); }
+    else { trigLbl.textContent = '— autres sujets —'; trig.classList.add('empty'); }
   }
 
   function toggleItem(it) {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KCP — Nouveau document</title>
+<title>KCP — Nouveau sujet</title>
 <link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
 <link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
 <script src="./config.js"></script>
@@ -48,11 +48,6 @@
   .note { display:flex; align-items:flex-start; gap:0.6rem; padding:0.85rem 1rem; background:rgba(77,107,20,0.07); border:1px solid rgba(77,107,20,0.18); border-left:3px solid var(--accent-deep); border-radius:8px; font-size:12px; font-family:var(--mono); color:var(--ink-soft); line-height:1.5; }
   .note .ico { flex-shrink:0; color:var(--accent-deep); font-weight:700; }
 
-  .toggle { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; }
-  .tog-btn { padding:0.8rem; border-radius:10px; border:1.5px solid var(--border); background:var(--surface2); color:var(--muted); font-family:var(--font); font-size:15px; font-weight:700; cursor:pointer; transition:all 0.15s; }
-  .tog-btn:hover { color:var(--ink-soft); border-color:var(--border-strong); }
-  .tog-btn.on { background:var(--dark); border-color:var(--dark); color:var(--dark-text); }
-
   .btn-dark { width:100%; padding:1rem; background:var(--dark); color:var(--dark-text); border:none; border-radius:10px; font-family:var(--font); font-size:15px; font-weight:700; cursor:pointer; transition:background 0.15s, transform 0.1s; }
   .btn-dark:hover { background:var(--dark-soft); }
   .btn-dark:active { transform:scale(0.99); }
@@ -94,21 +89,13 @@
   <div>
     <a href="./index.html" class="back">← Retour</a>
     <span class="kcp-tag">KCP — Knowledge Context Protocol</span>
-    <h1 class="page-title" id="page-title">Nouveau tiroir</h1>
+    <h1 class="page-title" id="page-title">Nouveau sujet</h1>
   </div>
 
   <div class="card">
     <div class="field">
-      <span class="label">Type</span>
-      <div class="toggle">
-        <button class="tog-btn on" id="btn-tiroir" onclick="setNature('PCP')">Tiroir</button>
-        <button class="tog-btn" id="btn-annexe" onclick="setNature('ANX')">Annexe</button>
-      </div>
-    </div>
-
-    <div class="field">
       <label class="label" for="nom">
-        <span id="nom-label">Nom du tiroir</span>
+        <span id="nom-label">Nom du sujet</span>
         <span class="hint err" id="nom-hint" style="display:none">ce nom existe déjà</span>
       </label>
       <div class="pfx">
@@ -118,26 +105,18 @@
     </div>
 
     <div class="field">
-      <span class="label">Sphère</span>
-      <div class="toggle">
-        <button class="tog-btn on" id="btn-pro" onclick="setSphere('pro')">Professionnel</button>
-        <button class="tog-btn" id="btn-perso" onclick="setSphere('perso')">Personnel</button>
-      </div>
-    </div>
-
-    <div class="field">
       <label class="label" for="perim">
         Périmètre déclaré
         <span class="hint" id="perim-hint">min. 40 caractères</span>
       </label>
-      <textarea id="perim" placeholder="Ce document sert à…" maxlength="2000" oninput="check()"></textarea>
+      <textarea id="perim" placeholder="Ce sujet sert à…" maxlength="2000" oninput="check()"></textarea>
       <div class="note">
         <span class="ico">›</span>
         <span>Décris précisément le sujet couvert. C'est ce texte qui guide le tri de tes infos : un bon périmètre = une mémoire fiable, sans hors-sujet.</span>
       </div>
     </div>
 
-    <button class="btn-dark" id="submit" onclick="submit()" disabled>Créer le tiroir →</button>
+    <button class="btn-dark" id="submit" onclick="submit()" disabled>Créer le sujet →</button>
 
     <div class="state loading" id="s-loading">
       <div class="spinner"></div>
@@ -148,7 +127,7 @@
   </div>
 
   <div class="state success" id="s-success">
-    <span class="s-msg" id="s-msg">Tiroir créé, prêt à recevoir vos réunions et vos conversations IA.</span>
+    <span class="s-msg" id="s-msg">Sujet créé, prêt à recevoir vos réunions et vos conversations IA.</span>
   </div>
 
   <div class="footer"><div class="dot"></div><span class="footer-text">système actif · KCP V2</span></div>
@@ -161,9 +140,6 @@
   const _session = (typeof kcpGetSession === 'function') ? kcpGetSession() : JSON.parse(localStorage.getItem('kcp_session') || 'null');
   if (!_session || !_session.client_id) { location.replace('./login.html'); }
   const id_client = _session ? _session.client_id : null;
-
-  let sphere = 'pro';
-  let nature = 'PCP';   // PCP = tiroir, ANX = annexe
 
   const nomEl = document.getElementById('nom');
   const perimEl = document.getElementById('perim');
@@ -183,8 +159,8 @@
       check();
     } catch (e) { /* liste indispo : on laisse le backend gérer le 409 */ }
   }
-  // Label qui serait créé avec la saisie courante.
-  function currentLabel() { return (nature === 'ANX' ? 'anx_' : '#') + nomEl.value.replace(/^-+|-+$/g, ''); }
+  // Label qui serait créé avec la saisie courante. La page ne crée que des sujets.
+  function currentLabel() { return '#' + nomEl.value.replace(/^-+|-+$/g, ''); }
 
   // Nettoie un texte libre des caractères qui casseraient le JSON de l'automatisation (flux création = jsonString).
   function sanitize(s) { return (s || '').replace(/[\\"]/g, "'").replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim(); }
@@ -207,25 +183,6 @@
     check();
   }
 
-  function setNature(v) {
-    nature = v;
-    document.getElementById('btn-tiroir').classList.toggle('on', v === 'PCP');
-    document.getElementById('btn-annexe').classList.toggle('on', v === 'ANX');
-    const anx = v === 'ANX';
-    document.getElementById('pfx-sym').textContent = anx ? 'anx_' : '#';
-    nomEl.style.paddingLeft = anx ? '3.4rem' : '1.65rem';
-    document.getElementById('page-title').textContent = anx ? 'Nouvelle annexe' : 'Nouveau tiroir';
-    document.getElementById('nom-label').textContent = anx ? "Nom de l'annexe" : 'Nom du tiroir';
-    submitEl.textContent = anx ? "Créer l'annexe →" : 'Créer le tiroir →';
-    check();   // le préfixe du label change -> re-teste le doublon
-  }
-
-  function setSphere(v) {
-    sphere = v;
-    document.getElementById('btn-pro').classList.toggle('on', v === 'pro');
-    document.getElementById('btn-perso').classList.toggle('on', v === 'perso');
-  }
-
   function check() {
     const cleanNom = nomEl.value.replace(/^-+|-+$/g, '');
     const nomOk = cleanNom.length >= 2;
@@ -240,7 +197,7 @@
       ph.textContent = 'min. 40 caractères';
       ph.classList.remove('err');
     }
-    // Doublon : le label complet existe déjà (# pour tiroir, anx_ pour annexe).
+    // Doublon : le label complet existe déjà.
     const dup = nomOk && existingLabels.has(currentLabel().toLowerCase());
     nomHint.style.display = dup ? 'inline' : 'none';
     submitEl.disabled = !(nomOk && perimOk && !dup);
@@ -269,7 +226,7 @@
     try {
       res = await fetch(C.webhooks.creer_tiroir, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_client, nom_tiroir, sphere, perimetre_declare, nature })
+        body: JSON.stringify({ id_client, nom_tiroir, perimetre_declare })
       });
       // Lire le corps AVANT tout test de statut (la 409 porte error:label_exists).
       const raw = await res.text();
@@ -287,9 +244,7 @@
     if (res.ok && data.success) {
       if (typeof kcpInvalidateTiroirs === 'function') kcpInvalidateTiroirs();
       existingLabels.add(currentLabel().toLowerCase());   // évite un doublon immédiat sans recharger
-      document.getElementById('s-msg').textContent = (nature === 'ANX')
-        ? 'Annexe créée, prête à être chargée en contexte.'
-        : 'Tiroir créé, prêt à recevoir vos réunions et vos conversations IA.';
+      document.getElementById('s-msg').textContent = 'Sujet créé, prêt à recevoir vos réunions et vos conversations IA.';
       show('s-success');
     } else if (res.status === 409 || data.error === 'label_exists') {
       existingLabels.add(currentLabel().toLowerCase());   // le backend confirme le doublon

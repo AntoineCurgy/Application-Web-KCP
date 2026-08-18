@@ -200,7 +200,7 @@
     <span class="hdr-title">Chat mémoire</span>
     <div class="sel-wrap">
       <select id="tiroir-sel" class="empty" onchange="onTiroirChange(this.value)">
-        <option value="">— tiroir —</option>
+        <option value="">— sujet —</option>
       </select>
       <span class="sel-arr">▾</span>
     </div>
@@ -247,15 +247,13 @@
   const modeTagLbl = document.getElementById('mode-tag-lbl');
   const inpWrap = document.getElementById('inp-wrap');
 
-  // Affichage : GCP sans prefixe, tiroir avec croisillon.
-  function chatLabel(val){ return /^gcp_/i.test(val) ? val : ('#' + val); }
+  // Affichage : un noeud structurant sans croisillon, un sujet avec.
+  function chatLabel(val){ return /^#/.test(val) ? val : (/^Head$/i.test(val) ? val : '#' + val); }
 
   async function loadTiroirs() {
     const sel = document.getElementById('tiroir-sel');
-    // Les deux cerveaux de sphere, interrogeables comme des tiroirs.
-    [['gcp_pro','gcp_pro'], ['gcp_perso','gcp_perso']].forEach(function(g){
-      const o = document.createElement('option'); o.value = g[0]; o.textContent = g[1]; sel.appendChild(o);
-    });
+    // La racine, interrogeable comme un sujet.
+    const oHead = document.createElement('option'); oHead.value = 'Head'; oHead.textContent = 'Head'; sel.appendChild(oHead);
     try {
       const data = await kcpLoadTiroirs();
       const list = Array.isArray(data) ? data : (data.pcp || data.principaux || []);

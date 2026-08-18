@@ -16,6 +16,7 @@ const KCP_WEBHOOKS = {
   update_perimetre: 'https://hook.eu2.make.com/mrtjwmxnmnhy9vus3vlmn6ps99oowa15', // Make: KCP - Update Perimetre
   creer_bot: 'https://hook.eu2.make.com/v3wdi25sob508x5gzvr11o0wwfg363vy', // Make: KCP - Meeting BaaS - Creer Bot
   reset_password: 'https://hook.eu2.make.com/baacr4sl603f8jif2htezl4tbttp857p', // Make: KCP - Reset Password
+  captures: 'https://hook.eu2.make.com/r50v5k4dwhgb1i51pj1rfwvsz231t9e8', // Make: KCP - WebApp - Informations Capturées
 };
 
 // Guide d'utilisation, Google Doc partage en lecture. L'identifiant d'un
@@ -106,4 +107,16 @@ function kcpReadHistoryCache() {
 }
 function kcpCacheHistory(data) {
   try { localStorage.setItem(_kcpHistKey(), JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {}
+}
+
+// ── Cache des informations capturées (même logique que l'historique) ──
+// La liste s'allonge à chaque capture : on affiche le cache tout de suite
+// puis on revalide en réseau.
+function _kcpCapturesKey() { return 'kcp_captures_' + (KCP_CONFIG.client_id || 'anon'); }
+function kcpReadCapturesCache() {
+  try { const c = JSON.parse(localStorage.getItem(_kcpCapturesKey()) || 'null'); return c && c.data ? c.data : null; }
+  catch (e) { return null; }
+}
+function kcpCacheCaptures(data) {
+  try { localStorage.setItem(_kcpCapturesKey(), JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {}
 }
