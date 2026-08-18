@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KCP — Informations capturées</title>
+<link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
+<link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
+<script src="./config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#f6f4ee; --surface:#ffffff; --surface2:#efece2;
+    --border:#d3cebd; --border-strong:#b8b2a0;
+    --ink:#16150f; --ink-soft:#3d3b30; --muted:#524e3e;
+    --accent:#c8f55a; --accent-deep:#4d6b14;
+    --dark:#14160f; --dark-soft:#1d2016; --dark-border:#2c2f22;
+    --dark-text:#eef0e5; --dark-muted:#9aa088;
+    --r:14px; --font:'Syne',sans-serif; --mono:'DM Mono',monospace;
+  }
+  html { background:#14160f; min-height:100vh; padding:0 1.5rem; }
+  body { background:var(--bg); color:var(--ink); font-family:var(--font); max-width:600px; margin:0 auto;  min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:2.5rem 2rem 3rem; }
+  .wrap { width:100%; max-width:100%; display:flex; flex-direction:column; gap:1.15rem; }
+
+  .back { display:inline-flex; align-items:center; gap:0.4rem; font-size:13px; font-family:var(--mono); font-weight:500; color:var(--ink-soft); text-decoration:none; padding:0.45rem 0.9rem; border:1.5px solid var(--border-strong); border-radius:100px; background:var(--surface); transition:all 0.15s; align-self:flex-start; margin-bottom:1.4rem; }
+  .back:hover { color:var(--ink); border-color:var(--ink); }
+  .kcp-tag { font-size:11px; font-family:var(--mono); color:var(--accent-deep); letter-spacing:0.15em; text-transform:uppercase; display:block; margin-bottom:0.7rem; }
+  .page-title { font-size:28px; font-weight:700; letter-spacing:-0.02em; }
+
+  .card { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r); padding:1.5rem; box-shadow:0 1px 6px rgba(22,21,15,0.06); display:flex; flex-direction:column; gap:1.25rem; }
+
+  .label { font-size:12px; font-family:var(--mono); color:var(--ink); letter-spacing:0.08em; text-transform:uppercase; font-weight:500; display:flex; align-items:center; justify-content:space-between; }
+  .hint { font-size:12px; color:var(--muted); text-transform:none; letter-spacing:0; font-weight:500; font-family:var(--mono); }
+
+  .note { display:flex; align-items:flex-start; gap:0.6rem; padding:0.85rem 1rem; background:rgba(77,107,20,0.07); border:1px solid rgba(77,107,20,0.18); border-left:3px solid var(--accent-deep); border-radius:8px; font-size:12px; font-family:var(--mono); color:var(--ink-soft); line-height:1.5; }
+  .note .ico { flex-shrink:0; color:var(--accent-deep); font-weight:700; }
+
+  /* ── LISTE DES CAPTURES ── */
+  .caps { display:flex; flex-direction:column; }
+  .cap { border-top:1px solid var(--border); }
+  .cap:first-child { border-top:none; }
+  .cap-head { display:flex; align-items:center; gap:0.7rem; padding:0.85rem 0; cursor:pointer; transition:opacity 0.12s; }
+  .cap-head:hover { opacity:0.7; }
+  .cap-doc { font-size:14px; font-family:var(--mono); font-weight:500; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cap-date { margin-left:auto; font-size:12px; font-family:var(--mono); color:var(--muted); flex-shrink:0; }
+  .cap-arr { font-size:11px; color:var(--muted); flex-shrink:0; transition:transform 0.15s; }
+  .cap.on .cap-arr { transform:rotate(90deg); }
+  .cap-body { display:none; padding:0 0 1rem; }
+  .cap.on .cap-body { display:block; }
+  .cap-line { font-size:13px; font-family:var(--mono); color:var(--ink-soft); line-height:1.55; padding:0.35rem 0 0.35rem 0.9rem; border-left:2px solid var(--border); }
+
+  .state { display:none; }
+  .state.on { display:flex; }
+  .loading { align-items:center; gap:0.75rem; padding:1rem; background:var(--surface2); border:1.5px solid var(--border); border-radius:10px; }
+  .spinner { width:16px; height:16px; border:2px solid var(--border-strong); border-top-color:var(--ink); border-radius:50%; animation:spin 0.7s linear infinite; flex-shrink:0; }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-txt { font-size:14px; font-family:var(--mono); color:var(--ink-soft); }
+
+  .empty-state { display:none; font-size:13px; font-family:var(--mono); color:var(--muted); line-height:1.5; }
+  .empty-state.on { display:block; }
+
+  .error-state { display:none; padding:0.9rem 1rem; border:1.5px solid var(--border-strong); border-radius:10px; font-size:13px; font-family:var(--mono); color:var(--ink-soft); }
+  .error-state.on { display:block; }
+
+  .footer { display:flex; align-items:center; justify-content:center; gap:0.5rem; }
+  .footer-text { font-size:11px; font-family:var(--mono); color:var(--muted); }
+  .dot { width:5px; height:5px; border-radius:50%; background:var(--accent-deep); animation:pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.2;transform:scale(.6)}}
+
+  .wrap > * { opacity:0; transform:translateY(8px); animation:up 0.3s ease forwards; }
+  .wrap > :nth-child(1){animation-delay:.04s} .wrap > :nth-child(2){animation-delay:.09s}
+  .wrap > :nth-child(3){animation-delay:.13s}
+  @keyframes up{to{opacity:1;transform:translateY(0)}}
+  @media(max-width:600px){ html{padding:0} body{border-radius:0; min-height:100vh} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div>
+    <a href="./index.html" class="back">← Retour</a>
+    <span class="kcp-tag">KCP — Knowledge Context Protocol</span>
+    <h1 class="page-title">Informations capturées</h1>
+  </div>
+
+  <div class="card">
+    <span class="label">
+      Derniers enregistrements
+      <span class="hint" id="count"></span>
+    </span>
+
+    <div class="note">
+      <span class="ico">›</span>
+      <span>Tout ce qui a été enregistré dans ta mémoire, tous sujets confondus. Chaque ligne indique le sujet visé ; clique pour voir le détail.</span>
+    </div>
+
+    <div class="state loading on" id="s-loading">
+      <div class="spinner"></div>
+      <span class="loading-txt">Chargement…</span>
+    </div>
+
+    <div class="caps" id="caps"></div>
+
+    <div class="empty-state" id="s-empty">Aucune information capturée pour l'instant. Enregistre une information depuis une conversation IA ou une réunion, elle apparaîtra ici.</div>
+
+    <div class="error-state" id="s-error"></div>
+  </div>
+
+  <div class="footer"><div class="dot"></div><span class="footer-text">système actif · KCP V2</span></div>
+
+</div>
+<script>
+  const C = KCP_CONFIG;
+
+  // Garde de session (config.js redirige déjà, double sécurité + id_client).
+  const _session = (typeof kcpGetSession === 'function') ? kcpGetSession() : JSON.parse(localStorage.getItem('kcp_session') || 'null');
+  if (!_session || !_session.client_id) { location.replace('./login.html'); }
+  const id_client = _session ? _session.client_id : null;
+
+  const capsEl = document.getElementById('caps');
+  const countEl = document.getElementById('count');
+
+  // Libellés des documents, résolus depuis la liste déjà en cache :
+  // le journal des dépôts ne porte que l'identifiant, pas le libellé.
+  const labels = {};
+  function anxLabel(nom){ nom = nom || ''; if (nom.indexOf('anx_') === 0) return nom; if (nom.indexOf('nx_') === 0) return 'a' + nom; return 'anx_' + nom; }
+  function dispLabel(t){ return String(t.type).toUpperCase() === 'ANX' ? anxLabel(t.nom_tiroir) : ('#' + t.nom_tiroir); }
+
+  async function loadLabels() {
+    try {
+      const data = await kcpLoadTiroirs();
+      const list = Array.isArray(data) ? data : (data.pcp_anx || data.tous || data.pcp || []);
+      list.forEach(function(t){ if (t.doc_int_id) labels[t.doc_int_id] = dispLabel(t); });
+    } catch (e) { /* sans libellé, on affiche l'identifiant */ }
+  }
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  function fmtDate(ts) {
+    if (!ts) return '';
+    try {
+      const d = new Date(ts);
+      if (isNaN(d)) return String(ts);
+      return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) + ' ' + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    } catch (e) { return String(ts); }
+  }
+
+  // Une capture est une suite d'entrées séparées par trois barres verticales.
+  function lines(contenu) {
+    return String(contenu || '').split('|||').map(function(s){ return s.trim(); }).filter(Boolean);
+  }
+
+  function render(data) {
+    const list = Array.isArray(data) ? data : ((data && data.captures) || []);
+    hide('s-loading');
+    capsEl.innerHTML = '';
+
+    if (!list.length) { show('s-empty'); countEl.textContent = ''; return; }
+    hide('s-empty');
+    countEl.textContent = list.length + (list.length > 1 ? ' entrées' : ' entrée');
+
+    list.forEach(function(c, i) {
+      const item = document.createElement('div');
+      item.className = 'cap';
+
+      const head = document.createElement('div');
+      head.className = 'cap-head';
+      head.innerHTML =
+        '<span class="cap-arr">▸</span>' +
+        '<span class="cap-doc">' + esc(labels[c.id_doc] || c.id_doc || '—') + '</span>' +
+        '<span class="cap-date">' + esc(fmtDate(c.date)) + '</span>';
+      head.onclick = function(){ item.classList.toggle('on'); };
+
+      const body = document.createElement('div');
+      body.className = 'cap-body';
+      body.innerHTML = lines(c.contenu).map(function(l){
+        return '<div class="cap-line">' + esc(l) + '</div>';
+      }).join('');
+
+      item.appendChild(head);
+      item.appendChild(body);
+      capsEl.appendChild(item);
+    });
+  }
+
+  function show(id) { document.getElementById(id).classList.add('on'); }
+  function hide(id) { document.getElementById(id).classList.remove('on'); }
+  function showErr(m) { const e = document.getElementById('s-error'); e.textContent = m; e.classList.add('on'); }
+
+  async function fetchCaptures() {
+    const r = await fetch(C.webhooks.captures, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: id_client })
+    });
+    const raw = await r.text();
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+    return JSON.parse(cleaned);
+  }
+
+  // Cache d'abord (affichage immédiat), puis revalidation réseau.
+  async function load() {
+    await loadLabels();
+
+    const cached = (typeof kcpReadCapturesCache === 'function') ? kcpReadCapturesCache() : null;
+    if (cached) render(cached);
+
+    try {
+      const data = await fetchCaptures();
+      if (typeof kcpCacheCaptures === 'function') kcpCacheCaptures(data);
+      render(data);
+    } catch (e) {
+      hide('s-loading');
+      // Le cache déjà affiché reste valable : on n'alerte que s'il n'y a rien à montrer.
+      if (!cached) { show('s-empty'); }
+    }
+  }
+
+  load();
+</script>
+</body>
+</html>

@@ -92,10 +92,10 @@
 
   <div class="card">
     <div class="field">
-      <label class="label" for="sel">Tiroir</label>
+      <label class="label" for="sel">Sujet</label>
       <div class="sel-wrap">
         <select id="sel" class="empty" onchange="onSelect()">
-          <option value="">— choisir un tiroir —</option>
+          <option value="">— choisir un sujet —</option>
         </select>
         <span class="arr">▾</span>
       </div>
@@ -106,7 +106,7 @@
         Périmètre déclaré
         <span class="hint" id="perim-hint">min. 40 caractères</span>
       </label>
-      <textarea id="perim" placeholder="Sélectionne d'abord un tiroir…" maxlength="2000" oninput="check()" disabled></textarea>
+      <textarea id="perim" placeholder="Sélectionne d'abord un sujet…" maxlength="2000" oninput="check()" disabled></textarea>
       <div class="note">
         <span class="ico">›</span>
         <span>Décris précisément le sujet couvert. C'est ce texte qui guide le tri de tes infos : un bon périmètre = une mémoire fiable, sans hors-sujet.</span>
@@ -143,7 +143,7 @@
   const perimHint = document.getElementById('perim-hint');
 
   const items = {};        // doc_int_id -> item {nom_tiroir, type, perimetre_declare, ...}
-  let original = '';       // périmètre actuel du tiroir sélectionné
+  let original = '';       // périmètre actuel du sujet sélectionné
 
   // Annexe : label complet prefixe anx_. Tolere "anx_x" (corrige) ou "nx_x" (1er char retire).
   function anxLabel(nom){ nom = nom || ''; if (nom.indexOf('anx_') === 0) return nom; if (nom.indexOf('nx_') === 0) return 'a' + nom; return 'anx_' + nom; }
@@ -189,7 +189,7 @@
       perimHint.textContent = 'min. 40 caractères';
       perimHint.classList.remove('err');
     }
-    // actif si un tiroir choisi, périmètre >= 40, ET modifié
+    // actif si un sujet choisi, périmètre >= 40, ET modifié
     submitEl.disabled = !(sel.value && len >= 40 && val !== original.trim());
   }
 
