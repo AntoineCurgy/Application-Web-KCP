@@ -21,7 +21,7 @@ const KCP_WEBHOOKS = {
 // Guide d'utilisation, Google Doc partage en lecture. L'identifiant d'un
 // document Drive ne change pas quand on le modifie : le lien est donc stable,
 // il suffit d'editer le document pour que tout le monde voie la mise a jour.
-const KCP_GUIDE_URL = 'https://docs.google.com/document/d/191TJ4O0OQIqXZyyErrrS67GgajxZTJOs3euLILiWLAg/view';
+const KCP_GUIDE_URL = 'https://docs.google.com/document/d/1iDpCeGGRI2g-ekKcszG5GeayUDRstWP1FPtsU9ziqnA/view';
 
 const KCP_SESSION_KEY = 'kcp_session';
 
