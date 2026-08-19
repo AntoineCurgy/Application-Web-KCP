@@ -9,20 +9,8 @@
 <link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
 <script src="./config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./kcp.css">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg:#f6f4ee; --surface:#ffffff; --surface2:#efece2;
-    --border:#d3cebd; --border-strong:#b8b2a0;
-    --ink:#16150f; --ink-soft:#3d3b30; --muted:#524e3e;
-    --accent:#c8f55a; --accent-deep:#4d6b14;
-    --dark:#14160f; --dark-soft:#1d2016; --dark-border:#2c2f22;
-    --dark-text:#eef0e5; --dark-muted:#9aa088;
-    --font:'Syne',sans-serif; --mono:'DM Mono',monospace;
-  }
-
-  html { background:var(--bg); min-height:100vh; }
-
   /* Layout aligné sur les autres pages : page qui défile normalement,
      header et zone de saisie épinglés en sticky. Pas de hauteur fixe ni
      d'overflow:hidden (ce qui provoquait la zone sombre résiduelle sur iOS). */
@@ -33,6 +21,7 @@
     display:flex; flex-direction:column;
     border-left:1.5px solid var(--border); border-right:1.5px solid var(--border);
   }
+
   @media(max-width:640px){ body { border-left:none; border-right:none; } }
 
   /* ── HEADER ── */
@@ -51,7 +40,6 @@
     border:1.5px solid var(--border-strong); border-radius:100px; background:var(--surface);
     transition:all 0.15s; margin-bottom:0.6rem;
   }
-  .back:hover { color:var(--ink); border-color:var(--ink); }
 
   .hdr-row {
     display:flex; align-items:center; justify-content:space-between;
@@ -65,6 +53,7 @@
 
   /* SELECT TIROIR */
   .sel-wrap { position:relative; flex:1; max-width:260px; }
+
   .sel-wrap select {
     width:100%; background:var(--surface2); color:var(--ink);
     border:1.5px solid var(--border); border-radius:8px;
@@ -73,8 +62,11 @@
     appearance:none; cursor:pointer; outline:none;
     transition:border-color 0.15s;
   }
+
   .sel-wrap select:focus { border-color:var(--ink); background:var(--surface); }
+
   .sel-wrap select.empty { color:var(--muted); }
+
   .sel-arr {
     position:absolute; right:0.65rem; top:50%; transform:translateY(-50%);
     pointer-events:none; color:var(--ink-soft); font-size:11px;
@@ -85,13 +77,17 @@
     flex:1; padding:1rem 1.25rem 0.5rem;
     display:flex; flex-direction:column; gap:0.7rem;
   }
+
   .msgs::-webkit-scrollbar { width:3px; }
+
   .msgs::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
 
   .hist-loading { text-align:center; font-size:11px; font-family:var(--mono); color:var(--muted); padding:0.75rem 0; }
 
   .msg { display:flex; flex-direction:column; max-width:85%; }
+
   .msg.user { align-self:flex-end; align-items:flex-end; }
+
   .msg.ai   { align-self:flex-start; align-items:flex-start; }
 
   .msg-tag {
@@ -99,18 +95,29 @@
     text-transform:uppercase; padding:2px 7px; border-radius:4px;
     margin-bottom:4px; border:1px solid;
   }
+
   .msg-tag.capture { color:var(--accent-deep); background:rgba(77,107,20,0.10); border-color:rgba(77,107,20,0.25); }
+
   .msg-tag.demande { color:var(--ink-soft); background:rgba(22,21,15,0.07); border-color:rgba(22,21,15,0.18); }
+
   .msg-tag.systeme { color:var(--muted); background:transparent; border-color:var(--border); }
 
   .bubble { padding:0.65rem 0.9rem; border-radius:12px; font-size:14px; line-height:1.55; }
+
   .msg.user .bubble { background:var(--dark); color:var(--dark-text); border-bottom-right-radius:3px; }
+
   .msg.ai   .bubble { background:var(--surface); border:1.5px solid var(--border); color:var(--ink); border-bottom-left-radius:3px; }
+
   .msg-time { font-size:10px; font-family:var(--mono); color:var(--muted); margin-top:3px; padding:0 3px; }
 
   .typing { display:flex; align-items:center; gap:4px; padding:0.65rem 0.9rem; background:var(--surface); border:1.5px solid var(--border); border-radius:12px; border-bottom-left-radius:3px; align-self:flex-start; }
+
   .td { width:5px; height:5px; border-radius:50%; background:var(--muted); animation:blink 1.2s ease-in-out infinite; }
-  .td:nth-child(2){animation-delay:.2s} .td:nth-child(3){animation-delay:.4s}
+
+  .td:nth-child(2){animation-delay:.2s}
+
+  .td:nth-child(3){animation-delay:.4s}
+
   @keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
 
   /* ── COMMAND MENU ── */
@@ -119,15 +126,25 @@
     margin:0 1.25rem; background:var(--surface);
     border:1.5px solid var(--border); border-radius:12px; overflow:hidden;
   }
+
   .cmd.open { display:flex; }
+
   .cmd-hdr { padding:0.4rem 0.9rem; font-size:10px; font-family:var(--mono); color:var(--muted); letter-spacing:0.12em; text-transform:uppercase; border-bottom:1px solid var(--border); }
+
   .cmd-opt { display:flex; align-items:center; gap:0.85rem; padding:0.75rem 0.9rem; background:transparent; border:none; cursor:pointer; text-align:left; transition:background 0.1s; width:100%; border-top:1px solid var(--border); }
+
   .cmd-opt:first-of-type { border-top:none; }
+
   .cmd-opt:hover { background:var(--surface2); }
+
   .cmd-ico { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:11px; font-weight:500; flex-shrink:0; }
+
   .cmd-ico.capture { background:rgba(77,107,20,0.10); color:var(--accent-deep); border:1.5px solid rgba(77,107,20,0.25); }
+
   .cmd-ico.demande  { background:rgba(22,21,15,0.07); color:var(--ink-soft); border:1.5px solid rgba(22,21,15,0.18); }
+
   .cmd-name { font-size:14px; font-family:var(--mono); font-weight:500; color:var(--ink); }
+
   .cmd-desc { font-size:12px; font-family:var(--mono); color:var(--muted); margin-top:1px; }
 
   /* ── INPUT AREA ── */
@@ -146,9 +163,13 @@
     justify-content:center; font-family:var(--mono); font-size:15px;
     font-weight:500; color:var(--ink-soft); transition:all 0.12s;
   }
+
   .slash-btn:hover { border-color:var(--border-strong); color:var(--ink); }
+
   .slash-btn.active { border-color:var(--ink); background:var(--surface2); }
+
   .slash-btn.m-cap { border-color:rgba(77,107,20,0.5); background:rgba(77,107,20,0.10); color:var(--accent-deep); }
+
   .slash-btn.m-dem { background:var(--dark); border-color:var(--dark-border); color:var(--dark-text); }
 
   .inp-wrap {
@@ -157,7 +178,9 @@
     border-radius:12px; display:flex; align-items:flex-end;
     padding:0 0.85rem; transition:border-color 0.15s; gap:0.5rem;
   }
+
   .inp-wrap:focus-within { border-color:var(--ink); background:var(--surface); }
+
   .inp-wrap.m-cap:focus-within { border-color:rgba(77,107,20,0.5); }
 
   .mode-tag {
@@ -167,10 +190,15 @@
     font-size:10px; font-family:var(--mono);
     letter-spacing:0.08em; text-transform:uppercase; flex-shrink:0;
   }
+
   .mode-tag.capture { color:var(--accent-deep); background:rgba(77,107,20,0.10); border:1px solid rgba(77,107,20,0.25); }
+
   .mode-tag.demande { color:var(--dark-text); background:var(--dark); border:1px solid var(--dark-border); }
+
   .mode-tag.vis { display:flex; }
+
   .tag-x { background:none; border:none; cursor:pointer; color:inherit; opacity:0.55; font-size:13px; line-height:1; padding:0; }
+
   .tag-x:hover { opacity:1; }
 
   textarea {
@@ -178,6 +206,7 @@
     color:var(--ink); font-family:var(--font); font-size:14px;
     resize:none; padding:0.7rem 0; line-height:1.45; max-height:90px;
   }
+
   textarea::placeholder { color:var(--muted); }
 
   .send {
@@ -186,9 +215,13 @@
     justify-content:center; flex-shrink:0; color:var(--accent);
     transition:opacity 0.15s, transform 0.1s;
   }
+
   .send:hover { opacity:0.85; }
+
   .send:active { transform:scale(0.94); }
+
   .send:disabled { opacity:0.3; cursor:default; transform:none; }
+
   .send svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
 
   /* iOS : >=16px sur les champs pour éviter le zoom automatique au focus */
