@@ -193,8 +193,8 @@
 
 <script>
   document.getElementById('c-name').textContent = KCP_CONFIG.client_name;
-  if (KCP_CONFIG.notion.tiroirs)  document.getElementById('n-tiroirs').href = KCP_CONFIG.notion.tiroirs;
-  if (KCP_CONFIG.notion.reunions) document.getElementById('n-reunions').href = KCP_CONFIG.notion.reunions;
+  if (KCP_CONFIG.notion.tiroirs)  document.getElementById('n-tiroirs').href = kcpNotionHref(KCP_CONFIG.notion.tiroirs);
+  if (KCP_CONFIG.notion.reunions) document.getElementById('n-reunions').href = kcpNotionHref(KCP_CONFIG.notion.reunions);
   if (KCP_CONFIG.guide)           document.getElementById('n-guide').href    = KCP_CONFIG.guide;
   document.title = 'KCP — ' + KCP_CONFIG.client_name;
 

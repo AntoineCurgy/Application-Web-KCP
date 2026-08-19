@@ -119,12 +119,12 @@
     location.href = './reset-password.html' + (v ? '?email=' + encodeURIComponent(v) : '');
   }
 
-  // Reconstruit une URL Notion a partir d'un UUID (best practice : seul l'UUID transite).
-  // L'UUID est conserve tel quel, avec ses tirets : c'est le format canonique de l'API
-  // Notion et celui du referentiel. Un seul standard partout, aucune transformation.
+  // Reconstruit une URL Notion a partir d'un UUID (seul l'UUID transite).
+  // Le referentiel garde l'UUID avec tirets (format canonique de l'API),
+  // mais app.notion.com exige desormais l'identifiant SANS tirets dans l'URL.
   function notionUrl(uuid) {
     if (!uuid) return '';
-    const clean = String(uuid).trim();
+    const clean = String(uuid).trim().replace(/-/g, '');
     return clean ? 'https://app.notion.com/p/' + clean : '';
   }
 
