@@ -17,6 +17,8 @@ const KCP_WEBHOOKS = {
   creer_bot: 'https://hook.eu2.make.com/v3wdi25sob508x5gzvr11o0wwfg363vy', // Make: KCP - Meeting BaaS - Creer Bot
   reset_password: 'https://hook.eu2.make.com/baacr4sl603f8jif2htezl4tbttp857p', // Make: KCP - Reset Password
   captures: 'https://hook.eu2.make.com/r50v5k4dwhgb1i51pj1rfwvsz231t9e8', // Make: KCP - WebApp - Informations Capturées
+  points_a_clarifier: 'https://hook.eu2.make.com/qkvmr8udjdy5kr6ptm620b3wb2cl47xh', // Make: KCP - WebApp - Points a clarifier
+  reponse_clarification: 'https://hook.eu2.make.com/c29ze7t8b9ql9qf3mjcud8e4f8vc6tpr', // Make: KCP - WebApp - Reponse Clarification
 };
 
 // Guide d'utilisation, Google Doc partage en lecture. L'identifiant d'un
@@ -119,4 +121,17 @@ function kcpReadCapturesCache() {
 }
 function kcpCacheCaptures(data) {
   try { localStorage.setItem(_kcpCapturesKey(), JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {}
+}
+
+// ── Cache des points à clarifier (même logique que les captures) ──
+// La liste est renouvelée chaque nuit par le système : on affiche le
+// cache tout de suite, et on revalide TOUJOURS en réseau. Répondre à
+// un point le retire localement (la pastille de l'accueil suit).
+function _kcpPointsKey() { return 'kcp_points_' + (KCP_CONFIG.client_id || 'anon'); }
+function kcpReadPointsCache() {
+  try { const c = JSON.parse(localStorage.getItem(_kcpPointsKey()) || 'null'); return c && c.data ? c.data : null; }
+  catch (e) { return null; }
+}
+function kcpCachePoints(data) {
+  try { localStorage.setItem(_kcpPointsKey(), JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {}
 }
