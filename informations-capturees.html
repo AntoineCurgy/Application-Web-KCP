@@ -32,10 +32,9 @@
 
   .label { font-size:12px; font-family:var(--mono); color:var(--ink); letter-spacing:0.08em; text-transform:uppercase; font-weight:500; display:flex; align-items:center; justify-content:space-between; }
   .hint { font-size:12px; color:var(--muted); text-transform:none; letter-spacing:0; font-weight:500; font-family:var(--mono); }
-  .label-right { display:flex; align-items:center; gap:0.6rem; }
-  .refresh { width:28px; height:28px; font-size:15px; font-family:var(--mono); color:var(--muted); background:var(--surface); border:1.5px solid var(--border); border-radius:100px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
-  .refresh:hover { color:var(--ink); border-color:var(--border-strong); }
-  .refresh.spin { animation:spin 0.7s linear infinite; }
+  .reset-btn { width:36px; height:36px; border-radius:50%; border:1.5px solid var(--border-strong); background:var(--surface); color:var(--ink-soft); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; padding:0; }
+  .reset-btn:hover { color:var(--ink); border-color:var(--ink); transform:rotate(180deg); }
+  .reset-btn.spin { animation:spin 0.7s linear infinite; }
 
   .note { display:flex; align-items:flex-start; gap:0.6rem; padding:0.85rem 1rem; background:rgba(77,107,20,0.07); border:1px solid rgba(77,107,20,0.18); border-left:3px solid var(--accent-deep); border-radius:8px; font-size:12px; font-family:var(--mono); color:var(--ink-soft); line-height:1.5; }
   .note .ico { flex-shrink:0; color:var(--accent-deep); font-weight:700; }
@@ -83,7 +82,10 @@
 <div class="wrap">
 
   <div>
-    <a href="./index.html" class="back">← Retour</a>
+    <div style="display:flex; align-items:flex-start; justify-content:space-between;">
+      <a href="./index.html" class="back">← Retour</a>
+      <button type="button" class="reset-btn" id="btn-refresh" title="Rafraîchir" aria-label="Rafraîchir">↻</button>
+    </div>
     <span class="kcp-tag">KCP — Knowledge Context Protocol</span>
     <h1 class="page-title">Informations capturées</h1>
   </div>
@@ -91,10 +93,7 @@
   <div class="card">
     <span class="label">
       Derniers enregistrements
-      <span class="label-right">
-        <span class="hint" id="count"></span>
-        <button class="refresh" id="btn-refresh" title="Rafraîchir" aria-label="Rafraîchir">⟳</button>
-      </span>
+      <span class="hint" id="count"></span>
     </span>
 
     <div class="note">
