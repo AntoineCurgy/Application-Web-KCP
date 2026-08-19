@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f6f4ee">
 <title>KCP — Initialiser une IA</title>
 <link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
 <link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
@@ -19,7 +20,7 @@
     --dark-text:#eef0e5; --dark-muted:#9aa088;
     --r:14px; --font:'Syne',sans-serif; --mono:'DM Mono',monospace;
   }
-  html { background:#14160f; min-height:100vh; padding:0 1.5rem; }
+  html { background:var(--bg); min-height:100vh; }
   body { background:var(--bg); color:var(--ink); font-family:var(--font); max-width:600px; margin:0 auto;  min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:2.5rem 2rem 3rem; }
   .wrap { width:100%; max-width:100%; display:flex; flex-direction:column; gap:1.15rem; }
 
@@ -121,7 +122,7 @@
   @keyframes up{to{opacity:1;transform:translateY(0)}}
   @media(max-width:520px){.llm-grid{grid-template-columns:1fr}}
   /* iOS : >=16px sur les champs pour éviter le zoom automatique au focus */
-  @media(max-width:600px){ html{padding:0} body{border-radius:0; min-height:100vh} select, .ms-trigger{ font-size:16px; } }
+  @media(max-width:600px){ body{border-radius:0; min-height:100vh} select, .ms-trigger{ font-size:16px; } }
 </style>
 </head>
 <body>

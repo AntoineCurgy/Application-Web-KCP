@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f6f4ee">
 <title>KCP</title>
 <link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
 <link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
@@ -20,13 +21,13 @@
     --r:14px; --font:'Syne',sans-serif; --mono:'DM Mono',monospace;
   }
 
-  html { background:#14160f; min-height:100vh; padding:0 1.5rem; }
+  html { background:var(--bg); min-height:100vh; }
 
   body {
     background:var(--bg); color:var(--ink); font-family:var(--font);
-    max-width:1060px; margin:0 auto; min-height:100vh;
-    padding:2.5rem 3rem 3rem;
-    display:flex; flex-direction:column; gap:1.15rem;
+    max-width:1120px; margin:0 auto; min-height:100vh;
+    padding:3rem 3rem 3.5rem;
+    display:flex; flex-direction:column; gap:1.5rem;
   }
 
   /* HEADER */
@@ -52,14 +53,14 @@
 
 
   /* GROUPES */
-  .groups-3, .groups-2 { display:grid; grid-template-columns:1fr; gap:1.15rem; align-items:start; }
-  .group { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r); overflow:hidden; }
-  .group-hdr { font-size:11px; font-family:var(--mono); color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; padding:0.65rem 1.1rem 0.4rem; }
-  .group-row { display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.9rem 1.1rem; text-decoration:none; color:var(--ink); border-top:1px solid var(--border); transition:background 0.12s; }
+  .groups-3, .groups-2 { display:grid; grid-template-columns:1fr; gap:1.5rem; }
+  .group { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r); overflow:hidden; display:flex; flex-direction:column; }
+  .group-hdr { font-size:12px; font-family:var(--mono); color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; padding:0.85rem 1.3rem 0.55rem; }
+  .group-row { flex:1; display:flex; align-items:center; justify-content:space-between; gap:0.85rem; padding:1.15rem 1.3rem; text-decoration:none; color:var(--ink); border-top:1px solid var(--border); transition:background 0.12s; }
   .group-row:hover { background:var(--surface2); }
-  .row-main { display:flex; flex-direction:column; gap:0.25rem; min-width:0; }
-  .row-title { font-size:14px; font-weight:700; letter-spacing:-0.01em; }
-  .row-sub { font-size:11px; font-family:var(--mono); color:var(--muted); line-height:1.4; }
+  .row-main { display:flex; flex-direction:column; gap:0.3rem; min-width:0; }
+  .row-title { font-size:16px; font-weight:700; letter-spacing:-0.01em; }
+  .row-sub { font-size:12px; font-family:var(--mono); color:var(--muted); line-height:1.45; }
   .row-arr { font-size:12px; color:var(--muted); flex-shrink:0; }
   .pastille { flex-shrink:0; min-width:22px; height:20px; padding:0 7px; background:var(--accent-deep); color:#ffffff; border-radius:100px; font-size:11px; font-family:var(--mono); font-weight:500; display:flex; align-items:center; justify-content:center; }
   .pastille[hidden] { display:none; }
@@ -69,10 +70,10 @@
   }
 
   /* LIGNES NOTION / AIDE */
-  .notion-row { display:flex; align-items:center; justify-content:space-between; padding:0.85rem 1.1rem; text-decoration:none; color:var(--ink-soft); border-top:1px solid var(--border); transition:background 0.12s; }
+  .notion-row { flex:1; display:flex; align-items:center; justify-content:space-between; padding:1.05rem 1.3rem; text-decoration:none; color:var(--ink-soft); border-top:1px solid var(--border); transition:background 0.12s; }
   .notion-row:hover { background:var(--surface2); color:var(--ink); }
   .notion-left { display:flex; align-items:center; gap:0.65rem; }
-  .notion-label { font-size:14px; font-weight:600; }
+  .notion-label { font-size:15px; font-weight:600; }
   .notion-arr { font-size:12px; color:var(--muted); }
 
   /* FOOTER */
@@ -88,7 +89,7 @@
   body > :nth-child(5){animation-delay:.23s}
   @keyframes up{to{opacity:1;transform:translateY(0)}}
 
-  @media(max-width:680px){ html{padding:0} body{padding:2rem 1.25rem} }
+  @media(max-width:680px){ body{padding:2rem 1.25rem} }
   @media(max-width:899px){ body{max-width:600px} }
 </style>
 </head>
@@ -165,11 +166,11 @@
   <div class="groups-2">
   <div class="group">
     <div class="group-hdr">Notion</div>
-    <a id="n-tiroirs" href="#" class="notion-row" target="_blank">
+    <a id="n-tiroirs" href="#" class="notion-row" target="_blank" rel="noopener">
       <div class="notion-left"><span>🗂</span><span class="notion-label">Mes sujets</span></div>
       <span class="notion-arr">→</span>
     </a>
-    <a id="n-reunions" href="#" class="notion-row" target="_blank">
+    <a id="n-reunions" href="#" class="notion-row" target="_blank" rel="noopener">
       <div class="notion-left"><span>📋</span><span class="notion-label">Réunions</span></div>
       <span class="notion-arr">→</span>
     </a>

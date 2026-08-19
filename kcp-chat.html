@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f6f4ee">
 <title>KCP — Chat</title>
 <link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
 <link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
@@ -20,7 +21,7 @@
     --font:'Syne',sans-serif; --mono:'DM Mono',monospace;
   }
 
-  html { background:#14160f; min-height:100vh; padding:0 1.5rem; }
+  html { background:var(--bg); min-height:100vh; }
 
   /* Layout aligné sur les autres pages : page qui défile normalement,
      header et zone de saisie épinglés en sticky. Pas de hauteur fixe ni
@@ -189,7 +190,7 @@
   .send svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
 
   /* iOS : >=16px sur les champs pour éviter le zoom automatique au focus */
-  @media(max-width:680px){ html{padding:0} textarea, .sel-wrap select{ font-size:16px; } }
+  @media(max-width:680px){ textarea, .sel-wrap select{ font-size:16px; } }
 </style>
 </head>
 <body>
