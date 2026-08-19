@@ -44,7 +44,7 @@
   .pfx-sym { position:absolute; left:1rem; top:50%; transform:translateY(-50%); font-size:15px; font-weight:600; color:var(--ink-soft); pointer-events:none; font-family:var(--mono); }
   .pfx input { padding-left:1.65rem; font-family:var(--mono); }
 
-  textarea { resize:none; min-height:80px; line-height:1.5; font-weight:500; font-size:14px; }
+  textarea { resize:none; min-height:150px; line-height:1.5; font-weight:500; font-size:14px; }
 
   .note { display:flex; align-items:flex-start; gap:0.6rem; padding:0.85rem 1rem; background:rgba(77,107,20,0.07); border:1px solid rgba(77,107,20,0.18); border-left:3px solid var(--accent-deep); border-radius:8px; font-size:12px; font-family:var(--mono); color:var(--ink-soft); line-height:1.5; }
   .note .ico { flex-shrink:0; color:var(--accent-deep); font-weight:700; }
@@ -64,8 +64,6 @@
 
   .success { flex-direction:column; gap:0.75rem; padding:1.25rem; background:var(--dark); border:1.5px solid var(--dark-border); border-radius:10px; position:relative; overflow:hidden; }
   .success::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--accent); }
-  .s-label { font-size:11px; font-family:var(--mono); color:var(--accent); letter-spacing:0.15em; text-transform:uppercase; }
-  .s-name { font-size:18px; font-weight:700; color:var(--dark-text); font-family:var(--mono); }
   .s-msg { font-size:13px; font-family:var(--mono); color:var(--dark-muted); line-height:1.5; }
 
   .error-state { display:none; padding:0.9rem 1rem; border:1.5px solid var(--border-strong); border-radius:10px; font-size:13px; font-family:var(--mono); color:var(--ink-soft); }
