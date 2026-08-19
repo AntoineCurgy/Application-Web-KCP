@@ -26,6 +26,14 @@ const KCP_WEBHOOKS = {
 // il suffit d'editer le document pour que tout le monde voie la mise a jour.
 const KCP_GUIDE_URL = 'https://docs.google.com/document/d/1iDpCeGGRI2g-ekKcszG5GeayUDRstWP1FPtsU9ziqnA/view';
 
+// ── URL Notion : app.notion.com exige désormais l'identifiant SANS tirets ──
+// L'UUID du référentiel garde ses tirets (format canonique de l'API) ;
+// seule l'URL de consultation est normalisée, au moment de l'affichage.
+// Couvre aussi les sessions déjà stockées avec l'ancien format.
+function kcpNotionHref(u) {
+  return String(u || '').replace(/(app\.notion\.com\/p\/)([0-9a-fA-F-]+)/, function(_, p, id) { return p + id.replace(/-/g, ''); });
+}
+
 const KCP_SESSION_KEY = 'kcp_session';
 
 function kcpGetSession() {
