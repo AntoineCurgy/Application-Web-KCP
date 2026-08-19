@@ -34,6 +34,19 @@ function kcpNotionHref(u) {
   return String(u || '').replace(/(app\.notion\.com\/p\/)([0-9a-fA-F-]+)/, function(_, p, id) { return p + id.replace(/-/g, ''); });
 }
 
+// ── Œil « maintenir pour afficher » des champs mot de passe ──
+// Presser affiche, relâcher (ou glisser hors du bouton) masque :
+// impossible de laisser un mot de passe affiché par oubli.
+function kcpEye(btnId, inputId) {
+  const b = document.getElementById(btnId), i = document.getElementById(inputId);
+  if (!b || !i) return;
+  b.addEventListener('pointerdown', function (e) { e.preventDefault(); i.type = 'text'; });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) {
+    b.addEventListener(ev, function () { i.type = 'password'; });
+  });
+  b.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+}
+
 const KCP_SESSION_KEY = 'kcp_session';
 
 function kcpGetSession() {

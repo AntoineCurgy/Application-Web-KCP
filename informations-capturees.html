@@ -64,8 +64,6 @@
   .empty-state { display:none; font-size:13px; font-family:var(--mono); color:var(--muted); line-height:1.5; }
   .empty-state.on { display:block; }
 
-  .error-state { display:none; padding:0.9rem 1rem; border:1.5px solid var(--border-strong); border-radius:10px; font-size:13px; font-family:var(--mono); color:var(--ink-soft); }
-  .error-state.on { display:block; }
 
   .footer { display:flex; align-items:center; justify-content:center; gap:0.5rem; }
   .footer-text { font-size:11px; font-family:var(--mono); color:var(--muted); }
@@ -111,7 +109,6 @@
 
     <div class="empty-state" id="s-empty">Aucune information capturée pour l'instant. Enregistre une information depuis une conversation IA ou une réunion, elle apparaîtra ici.</div>
 
-    <div class="error-state" id="s-error"></div>
   </div>
 
   <div class="footer"><div class="dot"></div><span class="footer-text">système actif · KCP V2</span></div>
@@ -193,7 +190,6 @@
 
   function show(id) { document.getElementById(id).classList.add('on'); }
   function hide(id) { document.getElementById(id).classList.remove('on'); }
-  function showErr(m) { const e = document.getElementById('s-error'); e.textContent = m; e.classList.add('on'); }
 
   async function fetchCaptures() {
     const r = await fetch(C.webhooks.captures, {
