@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KCP — Informations capturées</title>
+<title>KCP — Points à clarifier</title>
 <link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
 <link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
 <script src="./config.js"></script>
@@ -32,27 +32,30 @@
 
   .label { font-size:12px; font-family:var(--mono); color:var(--ink); letter-spacing:0.08em; text-transform:uppercase; font-weight:500; display:flex; align-items:center; justify-content:space-between; }
   .hint { font-size:12px; color:var(--muted); text-transform:none; letter-spacing:0; font-weight:500; font-family:var(--mono); }
-  .label-right { display:flex; align-items:center; gap:0.6rem; }
-  .refresh { width:28px; height:28px; font-size:15px; font-family:var(--mono); color:var(--muted); background:var(--surface); border:1.5px solid var(--border); border-radius:100px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
-  .refresh:hover { color:var(--ink); border-color:var(--border-strong); }
-  .refresh.spin { animation:spin 0.7s linear infinite; }
 
   .note { display:flex; align-items:flex-start; gap:0.6rem; padding:0.85rem 1rem; background:rgba(77,107,20,0.07); border:1px solid rgba(77,107,20,0.18); border-left:3px solid var(--accent-deep); border-radius:8px; font-size:12px; font-family:var(--mono); color:var(--ink-soft); line-height:1.5; }
   .note .ico { flex-shrink:0; color:var(--accent-deep); font-weight:700; }
 
-  /* ── LISTE DES CAPTURES ── */
-  .caps { display:flex; flex-direction:column; }
-  .cap { border-top:1px solid var(--border); }
-  .cap:first-child { border-top:none; }
-  .cap-head { display:flex; align-items:center; gap:0.7rem; padding:0.85rem 0; cursor:pointer; transition:opacity 0.12s; }
-  .cap-head:hover { opacity:0.7; }
-  .cap-doc { font-size:14px; font-family:var(--mono); font-weight:500; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .cap-date { margin-left:auto; font-size:12px; font-family:var(--mono); color:var(--muted); flex-shrink:0; }
-  .cap-arr { font-size:11px; color:var(--muted); flex-shrink:0; transition:transform 0.15s; }
-  .cap.on .cap-arr { transform:rotate(90deg); }
-  .cap-body { display:none; padding:0 0 1rem; }
-  .cap.on .cap-body { display:block; }
-  .cap-line { font-size:13px; font-family:var(--mono); color:var(--ink-soft); line-height:1.55; padding:0.35rem 0 0.35rem 0.9rem; border-left:2px solid var(--border); }
+  /* ── LISTE DES POINTS ── */
+  .pts { display:flex; flex-direction:column; }
+  .pt { border-top:1px solid var(--border); padding:1.1rem 0; display:flex; flex-direction:column; gap:0.75rem; }
+  .pt:first-child { border-top:none; padding-top:0.2rem; }
+  .pt.busy { opacity:0.45; pointer-events:none; }
+  .pt-doc { font-size:11px; font-family:var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
+  .pt-question { font-size:15px; font-weight:600; line-height:1.45; letter-spacing:-0.01em; }
+  .pt-doute { font-size:12px; font-family:var(--mono); color:var(--muted); line-height:1.5; }
+
+  .pt-actions { display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center; }
+  .btn { font-size:13px; font-family:var(--mono); font-weight:500; padding:0.5rem 1.05rem; border-radius:100px; border:1.5px solid var(--border-strong); background:var(--surface); color:var(--ink); cursor:pointer; transition:all 0.15s; }
+  .btn:hover { border-color:var(--ink); }
+  .btn.primary { background:var(--dark); border-color:var(--dark); color:var(--accent); }
+  .btn.primary:hover { background:var(--dark-soft); }
+  .btn.ghost { border-color:transparent; background:none; color:var(--muted); padding:0.5rem 0.55rem; font-size:12px; }
+  .btn.ghost:hover { color:var(--ink); }
+
+  .pt-answer { display:flex; flex-direction:column; gap:0.5rem; }
+  textarea { width:100%; min-height:74px; padding:0.75rem 0.9rem; border:1.5px solid var(--border); border-radius:10px; background:var(--surface); font-family:var(--mono); font-size:13px; color:var(--ink); resize:vertical; line-height:1.5; }
+  textarea:focus { outline:none; border-color:var(--border-strong); }
 
   .state { display:none; }
   .state.on { display:flex; }
@@ -85,21 +88,18 @@
   <div>
     <a href="./index.html" class="back">← Retour</a>
     <span class="kcp-tag">KCP — Knowledge Context Protocol</span>
-    <h1 class="page-title">Informations capturées</h1>
+    <h1 class="page-title">Points à clarifier</h1>
   </div>
 
   <div class="card">
     <span class="label">
-      Derniers enregistrements
-      <span class="label-right">
-        <span class="hint" id="count"></span>
-        <button class="refresh" id="btn-refresh" title="Rafraîchir" aria-label="Rafraîchir">⟳</button>
-      </span>
+      Questions du système
+      <span class="hint" id="count"></span>
     </span>
 
     <div class="note">
       <span class="ico">›</span>
-      <span>Tout ce qui a été enregistré dans ta mémoire, tous sujets confondus. Chaque ligne indique le sujet visé ; clique pour voir le détail.</span>
+      <span>Ta mémoire se consolide en continu. Quand un point reste ambigu, la question t'est posée ici : chaque réponse — même un simple non — la rend plus fiable. Rien d'urgent, réponds quand tu veux.</span>
     </div>
 
     <div class="state loading on" id="s-loading">
@@ -107,9 +107,9 @@
       <span class="loading-txt">Chargement…</span>
     </div>
 
-    <div class="caps" id="caps"></div>
+    <div class="pts" id="pts"></div>
 
-    <div class="empty-state" id="s-empty">Aucune information capturée pour l'instant. Enregistre une information depuis une conversation IA ou une réunion, elle apparaîtra ici.</div>
+    <div class="empty-state" id="s-empty">Aucun point à clarifier : ta mémoire est au clair. Les nouvelles questions apparaîtront ici.</div>
 
     <div class="error-state" id="s-error"></div>
   </div>
@@ -125,11 +125,12 @@
   if (!_session || !_session.client_id) { location.replace('./login.html'); }
   const id_client = _session ? _session.client_id : null;
 
-  const capsEl = document.getElementById('caps');
+  const ptsEl = document.getElementById('pts');
   const countEl = document.getElementById('count');
+  let points = [];
 
-  // Libellés des documents, résolus depuis la liste déjà en cache :
-  // le journal des dépôts ne porte que l'identifiant, pas le libellé.
+  // Libellés des sujets, résolus depuis la liste déjà en cache :
+  // le journal ne porte que l'identifiant, pas le libellé.
   const labels = {};
   function anxLabel(nom){ nom = nom || ''; if (nom.indexOf('anx_') === 0) return nom; if (nom.indexOf('nx_') === 0) return 'a' + nom; return 'anx_' + nom; }
   function dispLabel(t){ return String(t.type).toUpperCase() === 'ANX' ? anxLabel(t.nom_tiroir) : ('#' + t.nom_tiroir); }
@@ -144,59 +145,88 @@
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
-  function fmtDate(ts) {
-    if (!ts) return '';
-    try {
-      const d = new Date(ts);
-      if (isNaN(d)) return String(ts);
-      return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) + ' ' + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    } catch (e) { return String(ts); }
-  }
-
-  // Une capture est une suite d'entrées séparées par trois barres verticales.
-  function lines(contenu) {
-    return String(contenu || '').split('|||').map(function(s){ return s.trim(); }).filter(Boolean);
-  }
-
   function render(data) {
-    const list = Array.isArray(data) ? data : ((data && data.captures) || []);
+    points = (data && data.points) ? data.points.slice() : (Array.isArray(data) ? data.slice() : []);
     hide('s-loading');
-    capsEl.innerHTML = '';
+    ptsEl.innerHTML = '';
 
-    if (!list.length) { show('s-empty'); countEl.textContent = ''; return; }
+    if (!points.length) { show('s-empty'); countEl.textContent = ''; return; }
     hide('s-empty');
-    countEl.textContent = list.length + (list.length > 1 ? ' entrées' : ' entrée');
+    countEl.textContent = points.length + (points.length > 1 ? ' points' : ' point');
 
-    list.forEach(function(c, i) {
+    points.forEach(function(p) {
       const item = document.createElement('div');
-      item.className = 'cap';
+      item.className = 'pt';
+      item.dataset.id = p.feedback_id;
 
-      const head = document.createElement('div');
-      head.className = 'cap-head';
-      head.innerHTML =
-        '<span class="cap-arr">▸</span>' +
-        '<span class="cap-doc">' + esc(labels[c.id_doc] || c.id_doc || '—') + '</span>' +
-        '<span class="cap-date">' + esc(fmtDate(c.date)) + '</span>';
-      head.onclick = function(){ item.classList.toggle('on'); };
+      // La question formulée par le système ; à défaut, le doute brut.
+      const question = (p.question || '').trim() || (p.doute || '').trim() || '—';
+      const showDoute = (p.question || '').trim() && (p.doute || '').trim() && p.question.trim() !== p.doute.trim();
 
-      const body = document.createElement('div');
-      body.className = 'cap-body';
-      body.innerHTML = lines(c.contenu).map(function(l){
-        return '<div class="cap-line">' + esc(l) + '</div>';
-      }).join('');
+      let html =
+        '<span class="pt-doc">' + esc(labels[p.doc_id] || p.doc_id || '') + '</span>' +
+        '<div class="pt-question">' + esc(question) + '</div>';
+      if (showDoute) html += '<div class="pt-doute">' + esc(p.doute) + '</div>';
 
-      item.appendChild(head);
-      item.appendChild(body);
-      capsEl.appendChild(item);
+      const closed = String(p.format || '').toLowerCase() === 'fermee';
+      if (closed) {
+        html += '<div class="pt-actions">' +
+          '<button class="btn primary" data-action="oui">Oui</button>' +
+          '<button class="btn" data-action="non">Non</button>' +
+          '<button class="btn ghost" data-action="obsolete">N\'a plus d\'importance</button>' +
+          '<button class="btn ghost" data-action="pas_maintenant">Pas maintenant</button>' +
+          '</div>';
+      } else {
+        html += '<div class="pt-answer">' +
+          '<textarea placeholder="Ta réponse…"></textarea>' +
+          '<div class="pt-actions">' +
+          '<button class="btn primary" data-action="repondu">Envoyer</button>' +
+          '<button class="btn ghost" data-action="obsolete">N\'a plus d\'importance</button>' +
+          '<button class="btn ghost" data-action="pas_maintenant">Pas maintenant</button>' +
+          '</div></div>';
+      }
+
+      item.innerHTML = html;
+      item.querySelectorAll('button[data-action]').forEach(function(b){
+        b.onclick = function(){ answer(item, p, b.dataset.action); };
+      });
+      ptsEl.appendChild(item);
     });
+  }
+
+  async function answer(item, p, action) {
+    let reponse = '';
+    if (action === 'repondu') {
+      const ta = item.querySelector('textarea');
+      reponse = (ta && ta.value || '').trim();
+      if (!reponse) { if (ta) ta.focus(); return; }
+    }
+    item.classList.add('busy');
+    try {
+      const r = await fetch(C.webhooks.reponse_clarification, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: id_client, feedback_id: p.feedback_id, action: action, reponse: reponse })
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      // Retrait local + mise à jour du cache : la pastille de l'accueil suit.
+      points = points.filter(function(x){ return x.feedback_id !== p.feedback_id; });
+      if (typeof kcpCachePoints === 'function') kcpCachePoints({ points: points });
+      item.remove();
+      countEl.textContent = points.length ? (points.length + (points.length > 1 ? ' points' : ' point')) : '';
+      if (!points.length) show('s-empty');
+    } catch (e) {
+      item.classList.remove('busy');
+      showErr("La réponse n'a pas pu être envoyée. Réessaie dans un instant.");
+      setTimeout(function(){ hide('s-error'); }, 4000);
+    }
   }
 
   function show(id) { document.getElementById(id).classList.add('on'); }
   function hide(id) { document.getElementById(id).classList.remove('on'); }
   function showErr(m) { const e = document.getElementById('s-error'); e.textContent = m; e.classList.add('on'); }
 
-  async function fetchCaptures() {
-    const r = await fetch(C.webhooks.captures, {
+  async function fetchPoints() {
+    const r = await fetch(C.webhooks.points_a_clarifier, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ client_id: id_client })
     });
@@ -205,16 +235,17 @@
     return JSON.parse(cleaned);
   }
 
-  // Cache d'abord (affichage immédiat), puis revalidation réseau.
+  // Cache d'abord (affichage immédiat), puis revalidation réseau SYSTÉMATIQUE :
+  // la liste est renouvelée chaque nuit, le cache ne fait pas foi.
   async function load() {
     await loadLabels();
 
-    const cached = (typeof kcpReadCapturesCache === 'function') ? kcpReadCapturesCache() : null;
+    const cached = (typeof kcpReadPointsCache === 'function') ? kcpReadPointsCache() : null;
     if (cached) render(cached);
 
     try {
-      const data = await fetchCaptures();
-      if (typeof kcpCacheCaptures === 'function') kcpCacheCaptures(data);
+      const data = await fetchPoints();
+      if (typeof kcpCachePoints === 'function') kcpCachePoints(data);
       render(data);
     } catch (e) {
       hide('s-loading');
@@ -222,19 +253,6 @@
       if (!cached) { show('s-empty'); }
     }
   }
-
-  // Rafraîchissement manuel : réseau direct, cache mis à jour.
-  document.getElementById('btn-refresh').onclick = async function(){
-    var b = this;
-    if (b.classList.contains('spin')) return;
-    b.classList.add('spin');
-    try {
-      const data = await fetchCaptures();
-      if (typeof kcpCacheCaptures === 'function') kcpCacheCaptures(data);
-      render(data);
-    } catch (e) { /* le contenu affiché reste valable */ }
-    finally { b.classList.remove('spin'); }
-  };
 
   load();
 </script>
