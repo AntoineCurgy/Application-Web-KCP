@@ -20,7 +20,7 @@
 
   /* ── CARTE ── */
   .map-box { width:100%; display:flex; justify-content:center; }
-  .map-box svg { display:block; width:100%; max-width:680px; height:auto; overflow:visible; }
+  .map-box svg { display:block; max-width:100%; height:auto; overflow:visible; }
   .lien-h { stroke:var(--border); stroke-width:1.2; fill:none; }
   .lien-forte { stroke:var(--ink-soft); stroke-width:2; fill:none; }
   .lien-faible { stroke:var(--border-strong); stroke-width:1; stroke-dasharray:3 4; fill:none; }
@@ -134,6 +134,9 @@
       else if (!root || /^N\/?A$/i.test(p) || p === '') { if (!root) root = n; else if (/GCP001/.test(n.id)) root = n; }
     });
     if (!root) root = Object.values(byId)[0];
+    // La racine porte le prénom de l'utilisateur : c'est sa mémoire.
+    const prenom = (C.client_name || '').trim();
+    if (prenom) root.label = prenom;
     (function sort(n){ n.children.sort(function(a, b){ return a.label.localeCompare(b.label, 'fr'); }); n.children.forEach(sort); })(root);
     return { root: root, byId: byId };
   }
@@ -144,7 +147,10 @@
     leaves(root);
     function depth(n) { return n.children.length ? 1 + Math.max.apply(null, n.children.map(depth)) : 0; }
     const D = Math.max(1, depth(root));
-    const R = 320, ring = R / D;
+    // Rayon proportionnel au nombre de feuilles : l'espacement sur l'anneau
+    // reste constant, la carte grandit avec le contenu au lieu de l'étirer.
+    const R = Math.max(90, Math.min(320, Math.round(7.4 * root._l)));
+    const ring = R / D;
     root._x = 0; root._y = 0; root._a = 0;
     (function place(n, a0, a1, d){
       let a = a0;
@@ -205,9 +211,41 @@
       n._y = Math.sin(n._a) * n._d * geo.ring;
     });
 
+    // ── Libellés tournés le long du rayon (technique canonique des arbres
+    // radiaux) : deux rayons voisins divergent, la collision est impossible.
+    // Côté gauche, le texte est retourné pour rester lisible. ──
+    nodes.forEach(function(n){
+      if (n === t.root) { n._anchor = 'middle'; n._tx = 0; n._ty = -16; n._rot = ''; return; }
+      const flip = Math.cos(n._a) < 0;
+      const deg = n._a * 180 / Math.PI + (flip ? 180 : 0);
+      n._anchor = flip ? 'end' : 'start';
+      n._tx = n._x + (flip ? -13 : 13) * 1;
+      n._ty = n._y + 4;
+      n._rot = ' transform="rotate(' + deg.toFixed(1) + ' ' + n._x.toFixed(1) + ' ' + n._y.toFixed(1) + ')"';
+    });
+
+    // ── Cadre ajusté au contenu réel (libellés compris), échelle constante :
+    // un nœud a la même taille visuelle à 2 sujets qu'à 40. ──
+    const CHAR = 7.1, PAD = 34, SCALE = 0.75;
+    let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+    nodes.forEach(function(n){
+      const w = String(n.label).length * CHAR;
+      minX = Math.min(minX, n._x - 10); maxX = Math.max(maxX, n._x + 10);
+      minY = Math.min(minY, n._y - 10); maxY = Math.max(maxY, n._y + 10);
+      if (n === t.root) {
+        minX = Math.min(minX, -w / 2); maxX = Math.max(maxX, w / 2);
+        minY = Math.min(minY, n._ty - 12);
+      } else {
+        // extrémité du libellé radial : nœud + (13 + largeur) le long de l'angle
+        const ex = n._x + Math.cos(n._a) * (13 + w), ey = n._y + Math.sin(n._a) * (13 + w);
+        minX = Math.min(minX, ex - 8); maxX = Math.max(maxX, ex + 8);
+        minY = Math.min(minY, ey - 8); maxY = Math.max(maxY, ey + 8);
+      }
+    });
+    const VX = minX - PAD, VY = minY - PAD, VW = (maxX - minX) + 2 * PAD, VH = (maxY - minY) + 2 * PAD;
+
     // ── SVG ──
-    const M = 90, W = (geo.R + M) * 2;
-    let svg = '<svg viewBox="' + (-geo.R - M) + ' ' + (-geo.R - M) + ' ' + W + ' ' + W + '" role="img" aria-label="Carte des sujets">';
+    let svg = '<svg viewBox="' + VX.toFixed(0) + ' ' + VY.toFixed(0) + ' ' + VW.toFixed(0) + ' ' + VH.toFixed(0) + '" style="width:min(' + Math.round(VW * SCALE) + 'px, 100%)" role="img" aria-label="Carte des sujets">';
     nodes.forEach(function(n){
       n.children.forEach(function(c){
         svg += '<line class="lien-h" data-n="' + esc(n.id) + ' ' + esc(c.id) + '" x1="' + n._x.toFixed(1) + '" y1="' + n._y.toFixed(1) + '" x2="' + c._x.toFixed(1) + '" y2="' + c._y.toFixed(1) + '"/>';
@@ -219,12 +257,9 @@
     });
     nodes.forEach(function(n){
       const comp = n.children.length > 0;
-      const anchor = n === t.root ? 'middle' : (Math.cos(n._a) >= 0 ? 'start' : 'end');
-      const tx = n === t.root ? 0 : n._x + Math.cos(n._a) * 13;
-      const ty = n === t.root ? -14 : n._y + Math.sin(n._a) * 13 + 4;
       svg += '<g class="noeud' + (comp ? ' composite' : '') + '" data-id="' + esc(n.id) + '" data-url="' + esc(n.url) + '">' +
         '<circle cx="' + n._x.toFixed(1) + '" cy="' + n._y.toFixed(1) + '" r="' + (n === t.root ? 9 : 7) + '"/>' +
-        '<text x="' + tx.toFixed(1) + '" y="' + ty.toFixed(1) + '" text-anchor="' + anchor + '">' + esc(n.label) + '</text></g>';
+        '<text x="' + n._tx.toFixed(1) + '" y="' + n._ty.toFixed(1) + '" text-anchor="' + n._anchor + '"' + n._rot + '>' + esc(n.label) + '</text></g>';
     });
     svg += '</svg>';
     document.getElementById('map').innerHTML = svg;
