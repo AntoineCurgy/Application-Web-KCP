@@ -9,7 +9,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-    --bg:#f6f4ee; --surface:#ffffff; --surface2:#efece2;
+    --bg:#f6f4ee; --surface:#ffffff; --surface2:#efece2; --surface3:#e7e3d3;
     --border:#d3cebd; --border-strong:#b8b2a0;
     --ink:#16150f; --ink-soft:#3d3b30; --muted:#524e3e;
     --accent:#c8f55a; --accent-deep:#4d6b14;
