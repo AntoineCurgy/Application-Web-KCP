@@ -350,12 +350,11 @@
       nom_tiroir: it.nom_tiroir,
       type: isAnx(it) ? 'ANX' : 'PCP',
       id: it.id || null,
-      // app.notion.com exige l'identifiant sans tirets : on normalise avant
-      // d'injecter le lien dans le prompt de l'assistant.
-      url: (typeof kcpNotionHref === 'function') ? (kcpNotionHref(it.url || '') || null) : (it.url || null),
+      url: it.url || null,
     }));
-    // Liens Notion prets a inserer (vrais sauts de ligne cote JS ; Make ne fait qu'un replace direct).
-    const liens_additionnels = ajouts.map(a => a.url).filter(Boolean).join('\n');
+    // UUID Notion (avec tirets, format canonique de l'API) prets a inserer :
+    // les prompts standards demandent desormais des UUID, pas des URLs.
+    const liens_additionnels = ajouts.map(a => a.id).filter(Boolean).join('\n');
     const r = await fetch(C.webhooks.prompt, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ client_id:C.client_id, nom_tiroir:sel.value, ajouts, liens_additionnels, llm })
