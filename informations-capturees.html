@@ -179,14 +179,12 @@
     });
   }
 
-  // Date et heure des données affichées (l'instant où le cache a été écrit).
-  function stampTs() {
-    const ts = (typeof kcpCapturesCacheTs === 'function') ? kcpCapturesCacheTs() : null;
-    const el = document.getElementById('refresh-ts');
-    if (!ts) { el.textContent = ''; return; }
-    const d = new Date(ts);
-    el.textContent = 'actualisé le ' + d.toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'}) +
-                     ' à ' + d.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+  // Horodatage : l'instant où les données ont réellement été cherchées.
+  function setTs(txt) { document.getElementById('refresh-ts').textContent = txt; }
+  function stampNow() {
+    const d = new Date();
+    setTs('actualisé le ' + d.toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'}) +
+          ' à ' + d.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'}));
   }
 
   function show(id) { document.getElementById(id).classList.add('on'); }
@@ -207,14 +205,15 @@
     await loadLabels();
 
     const cached = (typeof kcpReadCapturesCache === 'function') ? kcpReadCapturesCache() : null;
-    if (cached) { render(cached); stampTs(); }
+    if (cached) { render(cached); setTs('actualisation…'); }
 
     try {
       const data = await fetchCaptures();
       if (typeof kcpCacheCaptures === 'function') kcpCacheCaptures(data);
-      render(data); stampTs();
+      render(data); stampNow();
     } catch (e) {
       hide('s-loading');
+      setTs('actualisation impossible');
       // Le cache déjà affiché reste valable : on n'alerte que s'il n'y a rien à montrer.
       if (!cached) { show('s-empty'); }
     }
@@ -225,11 +224,12 @@
     var b = this;
     if (b.classList.contains('spin')) return;
     b.classList.add('spin');
+    setTs('actualisation…');
     try {
       const data = await fetchCaptures();
       if (typeof kcpCacheCaptures === 'function') kcpCacheCaptures(data);
-      render(data); stampTs();
-    } catch (e) { /* le contenu affiché reste valable */ }
+      render(data); stampNow();
+    } catch (e) { setTs('actualisation impossible'); /* le contenu affiché reste valable */ }
     finally { b.classList.remove('spin'); }
   };
 

@@ -144,10 +144,6 @@ function kcpReadCapturesCache() {
 function kcpCacheCaptures(data) {
   try { localStorage.setItem(_kcpCapturesKey(), JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {}
 }
-function kcpCapturesCacheTs() {
-  try { const c = JSON.parse(localStorage.getItem(_kcpCapturesKey()) || 'null'); return c && c.ts ? c.ts : null; }
-  catch (e) { return null; }
-}
 
 // ── Cache de la carte des sujets (même logique que les captures) ──
 function _kcpCarteKey() { return 'kcp_carte_' + (KCP_CONFIG.client_id || 'anon'); }
