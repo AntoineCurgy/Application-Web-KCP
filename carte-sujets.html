@@ -122,7 +122,10 @@
   // par libellé à chaque niveau : la carte est déterministe.
   function buildTree(sujets) {
     const byId = {};
-    sujets.forEach(function(s){ byId[s.doc_int_id] = { id: s.doc_int_id, label: s.doc_label || s.doc_int_id, url: s.url || '', children: [] }; });
+    // Les URLs Notion sont normalisées ici, à l'entrée : app.notion.com exige
+    // l'identifiant sans tirets. Point unique, le clic et la liste en héritent.
+    const href = function(u){ return (typeof kcpNotionHref === 'function') ? kcpNotionHref(u || '') : (u || ''); };
+    sujets.forEach(function(s){ byId[s.doc_int_id] = { id: s.doc_int_id, label: s.doc_label || s.doc_int_id, url: href(s.url), children: [] }; });
     let root = null;
     sujets.forEach(function(s){
       const n = byId[s.doc_int_id];

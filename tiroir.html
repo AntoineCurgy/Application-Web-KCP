@@ -350,7 +350,9 @@
       nom_tiroir: it.nom_tiroir,
       type: isAnx(it) ? 'ANX' : 'PCP',
       id: it.id || null,
-      url: it.url || null,
+      // app.notion.com exige l'identifiant sans tirets : on normalise avant
+      // d'injecter le lien dans le prompt de l'assistant.
+      url: (typeof kcpNotionHref === 'function') ? (kcpNotionHref(it.url || '') || null) : (it.url || null),
     }));
     // Liens Notion prets a inserer (vrais sauts de ligne cote JS ; Make ne fait qu'un replace direct).
     const liens_additionnels = ajouts.map(a => a.url).filter(Boolean).join('\n');
