@@ -19,7 +19,7 @@
 
   .reset-btn { width:36px; height:36px; border-radius:50%; border:1.5px solid var(--border-strong); background:var(--surface); color:var(--ink-soft); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; padding:0; }
 
-  .reset-btn:hover { color:var(--ink); border-color:var(--ink); transform:rotate(180deg); }
+  .reset-btn:hover { color:var(--ink); border-color:var(--ink); }
 
   .reset-btn.spin { animation:spin 0.7s linear infinite; }
 
@@ -80,7 +80,10 @@
   <div class="card">
     <span class="label">
       Derniers enregistrements
-      <span class="hint" id="count"></span>
+      <span style="display:flex; align-items:center; gap:0.75rem;">
+        <span class="hint" id="refresh-ts"></span>
+        <span class="hint" id="count"></span>
+      </span>
     </span>
 
     <div class="note">
@@ -176,6 +179,16 @@
     });
   }
 
+  // Date et heure des données affichées (l'instant où le cache a été écrit).
+  function stampTs() {
+    const ts = (typeof kcpCapturesCacheTs === 'function') ? kcpCapturesCacheTs() : null;
+    const el = document.getElementById('refresh-ts');
+    if (!ts) { el.textContent = ''; return; }
+    const d = new Date(ts);
+    el.textContent = 'actualisé le ' + d.toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'}) +
+                     ' à ' + d.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+  }
+
   function show(id) { document.getElementById(id).classList.add('on'); }
   function hide(id) { document.getElementById(id).classList.remove('on'); }
 
@@ -194,12 +207,12 @@
     await loadLabels();
 
     const cached = (typeof kcpReadCapturesCache === 'function') ? kcpReadCapturesCache() : null;
-    if (cached) render(cached);
+    if (cached) { render(cached); stampTs(); }
 
     try {
       const data = await fetchCaptures();
       if (typeof kcpCacheCaptures === 'function') kcpCacheCaptures(data);
-      render(data);
+      render(data); stampTs();
     } catch (e) {
       hide('s-loading');
       // Le cache déjà affiché reste valable : on n'alerte que s'il n'y a rien à montrer.
@@ -215,7 +228,7 @@
     try {
       const data = await fetchCaptures();
       if (typeof kcpCacheCaptures === 'function') kcpCacheCaptures(data);
-      render(data);
+      render(data); stampTs();
     } catch (e) { /* le contenu affiché reste valable */ }
     finally { b.classList.remove('spin'); }
   };

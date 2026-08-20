@@ -19,6 +19,7 @@ const KCP_WEBHOOKS = {
   captures: 'https://hook.eu2.make.com/r50v5k4dwhgb1i51pj1rfwvsz231t9e8', // Make: KCP - WebApp - Informations Capturées
   points_a_clarifier: 'https://hook.eu2.make.com/qkvmr8udjdy5kr6ptm620b3wb2cl47xh', // Make: KCP - WebApp - Points a clarifier
   reponse_clarification: 'https://hook.eu2.make.com/c29ze7t8b9ql9qf3mjcud8e4f8vc6tpr', // Make: KCP - WebApp - Reponse Clarification
+  carte: 'https://hook.eu2.make.com/5ewsvcp5me3femarcgozfpwvh02glfmy', // Make: KCP - WebApp - Carte
 };
 
 // Guide d'utilisation, Google Doc partage en lecture. L'identifiant d'un
@@ -142,6 +143,20 @@ function kcpReadCapturesCache() {
 }
 function kcpCacheCaptures(data) {
   try { localStorage.setItem(_kcpCapturesKey(), JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {}
+}
+function kcpCapturesCacheTs() {
+  try { const c = JSON.parse(localStorage.getItem(_kcpCapturesKey()) || 'null'); return c && c.ts ? c.ts : null; }
+  catch (e) { return null; }
+}
+
+// ── Cache de la carte des sujets (même logique que les captures) ──
+function _kcpCarteKey() { return 'kcp_carte_' + (KCP_CONFIG.client_id || 'anon'); }
+function kcpReadCarteCache() {
+  try { const c = JSON.parse(localStorage.getItem(_kcpCarteKey()) || 'null'); return c && c.data ? c.data : null; }
+  catch (e) { return null; }
+}
+function kcpCacheCarte(data) {
+  try { localStorage.setItem(_kcpCarteKey(), JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {}
 }
 
 // ── Cache des points à clarifier (même logique que les captures) ──

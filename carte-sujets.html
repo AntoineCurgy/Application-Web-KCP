@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f6f4ee">
+<title>KCP — Carte des sujets</title>
+<link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
+<link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
+<script src="./config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./kcp.css">
+<style>
+  body { background:var(--bg); color:var(--ink); font-family:var(--font); max-width:1120px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:2.5rem 3rem 3rem; }
+  .wrap { width:100%; display:flex; flex-direction:column; gap:1.15rem; }
+
+  .back { display:inline-flex; align-items:center; gap:0.4rem; font-size:13px; font-family:var(--mono); font-weight:500; color:var(--ink-soft); text-decoration:none; padding:0.45rem 0.9rem; border:1.5px solid var(--border-strong); border-radius:100px; background:var(--surface); transition:all 0.15s; align-self:flex-start; margin-bottom:1.4rem; }
+
+  .label { font-size:12px; font-family:var(--mono); color:var(--ink); letter-spacing:0.08em; text-transform:uppercase; font-weight:500; display:flex; align-items:center; justify-content:space-between; }
+
+  /* ── CARTE ── */
+  .map-box { width:100%; display:flex; justify-content:center; }
+  .map-box svg { display:block; width:100%; max-width:680px; height:auto; overflow:visible; }
+  .lien-h { stroke:var(--border); stroke-width:1.2; fill:none; }
+  .lien-forte { stroke:var(--ink-soft); stroke-width:2; fill:none; }
+  .lien-faible { stroke:var(--border-strong); stroke-width:1; stroke-dasharray:3 4; fill:none; }
+  .noeud circle { fill:var(--surface); stroke:var(--ink-soft); stroke-width:1.6; cursor:pointer; transition:fill 0.15s, stroke 0.15s; }
+  .noeud.composite circle { fill:var(--ink-soft); }
+  .noeud text { font-family:var(--mono); font-size:11.5px; fill:var(--ink-soft); cursor:pointer; }
+  .noeud:hover circle { stroke:var(--accent-deep); fill:var(--accent); }
+  .noeud:hover text { fill:var(--ink); font-weight:500; }
+  .estompe { opacity:0.18; transition:opacity 0.15s; }
+  .surligne.lien-forte { stroke:var(--accent-deep); stroke-width:2.5; }
+  .surligne.lien-faible { stroke:var(--accent-deep); }
+
+  .legende { display:flex; flex-wrap:wrap; gap:1.4rem; align-items:center; font-size:11px; font-family:var(--mono); color:var(--muted); }
+  .leg { display:inline-flex; align-items:center; gap:0.5rem; }
+  .leg svg { flex-shrink:0; }
+
+  /* ── LISTE (mobile) ── */
+  .liste { display:none; flex-direction:column; }
+  .li-row { display:flex; align-items:center; gap:0.6rem; padding:0.7rem 0; border-top:1px solid var(--border); text-decoration:none; color:var(--ink); }
+  .li-row:first-child { border-top:none; }
+  .li-nom { font-size:14px; font-family:var(--mono); font-weight:500; }
+  .li-row.composite .li-nom { font-weight:700; }
+  .li-branche { color:var(--border-strong); font-family:var(--mono); font-size:12px; white-space:pre; }
+  .li-liens { margin-left:auto; font-size:11px; font-family:var(--mono); color:var(--muted); flex-shrink:0; }
+
+  .state { display:none; }
+  .state.on { display:flex; }
+  .loading { align-items:center; gap:0.75rem; padding:1rem; background:var(--surface2); border:1.5px solid var(--border); border-radius:10px; }
+  .spinner { width:16px; height:16px; border:2px solid var(--border-strong); border-top-color:var(--ink); border-radius:50%; animation:spin 0.7s linear infinite; flex-shrink:0; }
+  .empty-state { display:none; font-size:13px; font-family:var(--mono); color:var(--muted); line-height:1.5; }
+  .empty-state.on { display:block; }
+
+  .footer { display:flex; align-items:center; justify-content:center; gap:0.5rem; }
+
+  @media(max-width:680px){
+    body { padding:2rem 1.25rem 3rem; }
+    .map-box, .legende { display:none; }
+    .liste { display:flex; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div>
+    <a href="./index.html" class="back">← Retour</a>
+    <span class="kcp-tag">KCP — Knowledge Context Protocol</span>
+    <h1 class="page-title">Carte des sujets</h1>
+  </div>
+
+  <div class="card">
+    <span class="label">
+      Ta mémoire, vue de haut
+      <span class="hint" id="count"></span>
+    </span>
+
+    <div class="note">
+      <span class="ico">›</span>
+      <span>La hiérarchie de tes sujets, et les liaisons que le système a établies entre eux. Ce qui n'est pas relié est une information aussi : tes sujets sont des mondes largement indépendants. Clique sur un sujet pour l'ouvrir dans Notion.</span>
+    </div>
+
+    <div class="state loading on" id="s-loading">
+      <div class="spinner"></div>
+      <span class="loading-txt">Chargement…</span>
+    </div>
+
+    <div class="map-box" id="map"></div>
+
+    <div class="legende" id="legende" style="display:none;">
+      <span class="leg"><svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="#d3cebd" stroke-width="1.2"/></svg>hiérarchie</span>
+      <span class="leg"><svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="#3d3b30" stroke-width="2"/></svg>liaison forte</span>
+      <span class="leg"><svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="#b8b2a0" stroke-width="1" stroke-dasharray="3 4"/></svg>liaison faible</span>
+      <span class="leg"><svg width="12" height="12"><circle cx="6" cy="6" r="4.5" fill="#3d3b30"/></svg>nœud</span>
+      <span class="leg"><svg width="12" height="12"><circle cx="6" cy="6" r="4.5" fill="#ffffff" stroke="#3d3b30" stroke-width="1.5"/></svg>sujet</span>
+    </div>
+
+    <div class="liste" id="liste"></div>
+
+    <div class="empty-state" id="s-empty">Aucun sujet à afficher pour l'instant.</div>
+  </div>
+
+  <div class="footer"><div class="dot"></div><span class="footer-text">système actif · KCP V2</span></div>
+
+</div>
+<script>
+  const C = KCP_CONFIG;
+
+  // Garde de session (config.js redirige déjà, double sécurité + id_client).
+  const _session = (typeof kcpGetSession === 'function') ? kcpGetSession() : JSON.parse(localStorage.getItem('kcp_session') || 'null');
+  if (!_session || !_session.client_id) { location.replace('./login.html'); }
+  const id_client = _session ? _session.client_id : null;
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function show(id) { document.getElementById(id).classList.add('on'); }
+  function hide(id) { document.getElementById(id).classList.remove('on'); }
+
+  // ── Construction de l'arbre depuis la colonne parent ──
+  // Racine = le nœud sans parent connu (le Head). Ordre alphabétique
+  // par libellé à chaque niveau : la carte est déterministe.
+  function buildTree(sujets) {
+    const byId = {};
+    sujets.forEach(function(s){ byId[s.doc_int_id] = { id: s.doc_int_id, label: s.doc_label || s.doc_int_id, url: s.url || '', children: [] }; });
+    let root = null;
+    sujets.forEach(function(s){
+      const n = byId[s.doc_int_id];
+      const p = (s.parent || '').trim();
+      if (p && byId[p]) { byId[p].children.push(n); }
+      else if (!root || /^N\/?A$/i.test(p) || p === '') { if (!root) root = n; else if (/GCP001/.test(n.id)) root = n; }
+    });
+    if (!root) root = Object.values(byId)[0];
+    (function sort(n){ n.children.sort(function(a, b){ return a.label.localeCompare(b.label, 'fr'); }); n.children.forEach(sort); })(root);
+    return { root: root, byId: byId };
+  }
+
+  // ── Placement radial : angle proportionnel au nombre de feuilles ──
+  function layout(root) {
+    function leaves(n) { n._l = n.children.length ? n.children.reduce(function(a, c){ return a + leaves(c); }, 0) : 1; return n._l; }
+    leaves(root);
+    function depth(n) { return n.children.length ? 1 + Math.max.apply(null, n.children.map(depth)) : 0; }
+    const D = Math.max(1, depth(root));
+    const R = 320, ring = R / D;
+    root._x = 0; root._y = 0; root._a = 0;
+    (function place(n, a0, a1, d){
+      let a = a0;
+      n.children.forEach(function(c){
+        const span = (a1 - a0) * (c._l / n._l);
+        c._a = a + span / 2;
+        c._d = d;
+        a += span;
+        place(c, c._a - span / 2, c._a + span / 2, d + 1);
+      });
+    })(root, -Math.PI, Math.PI, 1);
+
+    // Attraction angulaire légère entre sujets fortement liés, bornée
+    // pour ne jamais casser la lecture des branches.
+    return { R: R, ring: ring };
+  }
+
+  function relax(nodes, fortes, ring) {
+    for (let it = 0; it < 24; it++) {
+      fortes.forEach(function(l){
+        const a = l[0], b = l[1];
+        if (!a._d || !b._d) return;
+        let da = b._a - a._a;
+        while (da > Math.PI) da -= 2 * Math.PI;
+        while (da < -Math.PI) da += 2 * Math.PI;
+        const step = da * 0.02;
+        a._a += step; b._a -= step;
+      });
+    }
+  }
+
+  function render(data) {
+    hide('s-loading');
+    const sujets = (data && data.sujets) || [];
+    const liaisons = (data && data.liaisons) || [];
+    document.getElementById('count').textContent = sujets.length ? (sujets.length + ' sujets · ' + liaisons.length + ' liaison' + (liaisons.length > 1 ? 's' : '')) : '';
+    if (!sujets.length) { show('s-empty'); return; }
+    hide('s-empty');
+
+    const t = buildTree(sujets);
+    const geo = layout(t.root);
+    const nodes = Object.values(t.byId);
+
+    // Liaisons dédupliquées par paire, les deux extrémités visibles.
+    const seen = {}, edges = [];
+    liaisons.forEach(function(l){
+      const a = t.byId[l.source_id], b = t.byId[l.cible_id];
+      if (!a || !b || a === b) return;
+      const k = [l.source_id, l.cible_id].sort().join('|');
+      if (seen[k]) return;
+      seen[k] = true;
+      edges.push({ a: a, b: b, forte: String(l.intensite).toLowerCase() === 'forte', type: l.type || '', objet: l.objet || '' });
+    });
+    relax(nodes, edges.filter(function(e){ return e.forte; }).map(function(e){ return [e.a, e.b]; }), geo.ring);
+    nodes.forEach(function(n){
+      if (n === t.root) return;
+      n._x = Math.cos(n._a) * n._d * geo.ring;
+      n._y = Math.sin(n._a) * n._d * geo.ring;
+    });
+
+    // ── SVG ──
+    const M = 90, W = (geo.R + M) * 2;
+    let svg = '<svg viewBox="' + (-geo.R - M) + ' ' + (-geo.R - M) + ' ' + W + ' ' + W + '" role="img" aria-label="Carte des sujets">';
+    nodes.forEach(function(n){
+      n.children.forEach(function(c){
+        svg += '<line class="lien-h" data-n="' + esc(n.id) + ' ' + esc(c.id) + '" x1="' + n._x.toFixed(1) + '" y1="' + n._y.toFixed(1) + '" x2="' + c._x.toFixed(1) + '" y2="' + c._y.toFixed(1) + '"/>';
+      });
+    });
+    edges.forEach(function(e, i){
+      const mx = (e.a._x + e.b._x) / 2 * 0.78, my = (e.a._y + e.b._y) / 2 * 0.78;
+      svg += '<path class="' + (e.forte ? 'lien-forte' : 'lien-faible') + '" data-n="' + esc(e.a.id) + ' ' + esc(e.b.id) + '" d="M' + e.a._x.toFixed(1) + ' ' + e.a._y.toFixed(1) + ' Q' + mx.toFixed(1) + ' ' + my.toFixed(1) + ' ' + e.b._x.toFixed(1) + ' ' + e.b._y.toFixed(1) + '"><title>' + esc(e.type) + (e.objet ? ' — ' + esc(e.objet) : '') + '</title></path>';
+    });
+    nodes.forEach(function(n){
+      const comp = n.children.length > 0;
+      const anchor = n === t.root ? 'middle' : (Math.cos(n._a) >= 0 ? 'start' : 'end');
+      const tx = n === t.root ? 0 : n._x + Math.cos(n._a) * 13;
+      const ty = n === t.root ? -14 : n._y + Math.sin(n._a) * 13 + 4;
+      svg += '<g class="noeud' + (comp ? ' composite' : '') + '" data-id="' + esc(n.id) + '" data-url="' + esc(n.url) + '">' +
+        '<circle cx="' + n._x.toFixed(1) + '" cy="' + n._y.toFixed(1) + '" r="' + (n === t.root ? 9 : 7) + '"/>' +
+        '<text x="' + tx.toFixed(1) + '" y="' + ty.toFixed(1) + '" text-anchor="' + anchor + '">' + esc(n.label) + '</text></g>';
+    });
+    svg += '</svg>';
+    document.getElementById('map').innerHTML = svg;
+    document.getElementById('legende').style.display = '';
+
+    // Survol : la branche et les liaisons du nœud restent nettes, le reste s'estompe.
+    const allLines = document.querySelectorAll('#map line, #map path');
+    const allNodes = document.querySelectorAll('#map .noeud');
+    allNodes.forEach(function(g){
+      const id = g.dataset.id;
+      g.addEventListener('mouseenter', function(){
+        const keep = {};
+        keep[id] = true;
+        allLines.forEach(function(l){
+          const ids = l.dataset.n.split(' ');
+          if (ids.indexOf(id) === -1) { l.classList.add('estompe'); }
+          else { l.classList.add('surligne'); ids.forEach(function(x){ keep[x] = true; }); }
+        });
+        allNodes.forEach(function(o){ if (!keep[o.dataset.id]) o.classList.add('estompe'); });
+      });
+      g.addEventListener('mouseleave', function(){
+        allLines.forEach(function(l){ l.classList.remove('estompe'); l.classList.remove('surligne'); });
+        allNodes.forEach(function(o){ o.classList.remove('estompe'); });
+      });
+      g.addEventListener('click', function(){ if (g.dataset.url) window.open(g.dataset.url, '_blank', 'noopener'); });
+    });
+
+    // ── Liste indentée (mobile) : même hiérarchie, honnête et lisible ──
+    const nbLiens = {};
+    edges.forEach(function(e){ nbLiens[e.a.id] = (nbLiens[e.a.id] || 0) + 1; nbLiens[e.b.id] = (nbLiens[e.b.id] || 0) + 1; });
+    let html = '';
+    (function walk(n, prefix, last){
+      const comp = n.children.length > 0;
+      html += '<a class="li-row' + (comp ? ' composite' : '') + '"' + (n.url ? ' href="' + esc(n.url) + '" target="_blank" rel="noopener"' : '') + '>' +
+        '<span class="li-branche">' + prefix + '</span>' +
+        '<span class="li-nom">' + esc(n.label) + '</span>' +
+        (nbLiens[n.id] ? '<span class="li-liens">' + nbLiens[n.id] + ' liaison' + (nbLiens[n.id] > 1 ? 's' : '') + '</span>' : '') + '</a>';
+      n.children.forEach(function(c, i){
+        const isLast = i === n.children.length - 1;
+        walk(c, prefix.replace('└─', '  ').replace('├─', '│ ') + (isLast ? '└─' : '├─'), isLast);
+      });
+    })(t.root, '', true);
+    document.getElementById('liste').innerHTML = html;
+  }
+
+  async function fetchCarte() {
+    const r = await fetch(C.webhooks.carte, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: id_client })
+    });
+    const raw = await r.text();
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+    return JSON.parse(cleaned);
+  }
+
+  // Cache d'abord, revalidation réseau systématique.
+  async function load() {
+    const cached = (typeof kcpReadCarteCache === 'function') ? kcpReadCarteCache() : null;
+    if (cached) render(cached);
+    try {
+      const data = await fetchCarte();
+      if (typeof kcpCacheCarte === 'function') kcpCacheCarte(data);
+      render(data);
+    } catch (e) {
+      hide('s-loading');
+      if (!cached) { show('s-empty'); }
+    }
+  }
+
+  load();
+</script>
+</body>
+</html>
