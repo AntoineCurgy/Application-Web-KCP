@@ -29,9 +29,6 @@
   .massif { fill:var(--surface2); stroke:none; transition:opacity 0.15s; }
 
   .lien-forte { stroke:var(--ink-soft); stroke-width:1.6; fill:none; }
-  .lien-faible { stroke:var(--border-strong); stroke-width:1; stroke-dasharray:3 4; fill:none; opacity:0; transition:opacity 0.15s; }
-  .lien-faible.surligne { opacity:1; stroke:var(--accent-deep); }
-  .lien-faible.estompe { opacity:0; }
 
   .noeud circle { fill:var(--surface); stroke:var(--ink-soft); stroke-width:1.6; cursor:pointer; transition:fill 0.15s, stroke 0.15s; }
   .noeud.composite circle { fill:var(--ink-soft); }
@@ -40,7 +37,6 @@
   .noeud.enmassif text { stroke:var(--surface2); }
   .noeud.composite text { font-weight:500; fill:var(--ink); }
   .noeud.racine text { font-size:15px; font-weight:500; fill:var(--ink); }
-  .noeud .cnt { font-size:10px; fill:var(--muted); }
   .noeud:hover circle { stroke:var(--accent-deep); fill:var(--accent); }
   .noeud:hover text { fill:var(--ink); font-weight:500; }
   .estompe { opacity:0.18; transition:opacity 0.15s; }
@@ -58,7 +54,26 @@
   .li-row.composite .li-nom { font-weight:700; }
   .li-row.massif .li-nom { background:var(--surface2); border-radius:5px; padding:0.1rem 0.35rem; margin:0 -0.35rem; }
   .li-branche { color:var(--border-strong); font-family:var(--mono); font-size:12px; white-space:pre; }
-  .li-liens { margin-left:auto; font-size:11px; font-family:var(--mono); color:var(--muted); flex-shrink:0; }
+
+  /* ── FICHE (popover) : l'état du sujet, données seules, aucun lien ── */
+  .voile { display:none; position:fixed; inset:0; background:rgba(22,21,15,0.32); z-index:40; }
+  .voile.on { display:block; }
+  .fiche { display:none; position:fixed; z-index:41; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:min(560px, calc(100vw - 2.5rem)); max-height:82vh; overflow-y:auto;
+    background:var(--surface); border:1.5px solid var(--border-strong); border-radius:var(--r);
+    padding:1.5rem 1.6rem 1.6rem; box-shadow:0 18px 50px rgba(22,21,15,0.18); }
+  .fiche.on { display:block; }
+  .fiche-titre { font-size:19px; font-weight:700; letter-spacing:-0.01em; padding-right:2rem; }
+  .fiche-meta { font-size:12px; font-family:var(--mono); color:var(--muted); margin-top:0.35rem; }
+  .fiche-x { position:absolute; top:1rem; right:1rem; width:30px; height:30px; border:1.5px solid var(--border-strong);
+    border-radius:100px; background:var(--surface); color:var(--ink-soft); font-size:14px; cursor:pointer; line-height:1; }
+  .fiche-x:hover { border-color:var(--ink); color:var(--ink); }
+  .fiche-sec { margin-top:1.15rem; }
+  .fiche-lbl { font-size:11px; font-family:var(--mono); color:var(--ink); letter-spacing:0.08em; text-transform:uppercase; font-weight:500; }
+  .fiche-txt { font-size:14px; line-height:1.55; margin-top:0.4rem; white-space:pre-line; }
+  .fiche-li { font-size:13px; font-family:var(--mono); line-height:1.5; margin-top:0.45rem; padding-left:1rem; text-indent:-1rem; color:var(--ink-soft); }
+  .fiche-li::before { content:'› '; color:var(--border-strong); }
+  .fiche-vide { font-size:13px; font-family:var(--mono); color:var(--muted); line-height:1.5; margin-top:0.4rem; }
 
   .state { display:none; }
   .state.on { display:flex; }
@@ -93,7 +108,7 @@
 
     <div class="note">
       <span class="ico">›</span>
-      <span>La hiérarchie de tes sujets, à lire de haut en bas. Quand des sujets sont fortement liés, ils forment un massif et se regroupent sur un même fond. Ce qui n'est pas regroupé est une information aussi : tes sujets sont des mondes largement indépendants. Survole un sujet pour voir ses liaisons, clique pour l'ouvrir dans Notion.</span>
+      <span>La hiérarchie de tes sujets, à lire de haut en bas. Quand des sujets sont fortement liés, ils forment un massif et se regroupent sur un même fond. Ce qui n'est pas regroupé est une information aussi : tes sujets sont des mondes largement indépendants. Survole un sujet pour situer son massif, clique pour ouvrir sa fiche : l'état du sujet, tenu à jour par ta mémoire.</span>
     </div>
 
     <div class="state loading on" id="s-loading">
@@ -107,12 +122,14 @@
       <span class="leg"><svg width="26" height="12"><line x1="13" y1="0" x2="13" y2="12" stroke="#d3cebd" stroke-width="1.2"/></svg>hiérarchie</span>
       <span class="leg"><svg width="26" height="14"><rect x="0" y="1" width="26" height="12" rx="5" fill="#efece2"/></svg>massif</span>
       <span class="leg"><svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="#3d3b30" stroke-width="1.6"/></svg>liaison forte hors massif</span>
-      <span class="leg"><svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="#b8b2a0" stroke-width="1" stroke-dasharray="3 4"/></svg>liaison faible, au survol</span>
       <span class="leg"><svg width="14" height="14"><circle cx="7" cy="7" r="5" fill="#3d3b30"/></svg>sphère</span>
       <span class="leg"><svg width="14" height="14"><circle cx="7" cy="7" r="5" fill="#ffffff" stroke="#3d3b30" stroke-width="1.6"/></svg>sujet</span>
     </div>
 
     <div class="liste" id="liste"></div>
+
+    <div class="voile" id="voile"></div>
+    <div class="fiche" id="fiche" role="dialog" aria-modal="true"></div>
 
     <div class="empty-state" id="s-empty">Aucun sujet à afficher pour l'instant.</div>
   </div>
@@ -147,17 +164,19 @@
   const MINW = 560, MINH = 340;   // plancher de la toile, dessin centré dedans
 
   function labelW(n) { return String(n.label).length * CHAR; }
-  function rowW(n) { return TXTX + labelW(n) + (n._nb ? 12 + String(n._nb).length * 6.2 : 0); }
+  function rowW(n) { return TXTX + labelW(n); }
 
   // ── Construction de l'arbre depuis la colonne parent ──
   // Racine = le nœud sans parent connu (le Head). Ordre alphabétique
   // par libellé à chaque niveau : la carte est déterministe.
   function buildTree(sujets) {
     const byId = {};
-    // Les URLs Notion sont normalisées ici, à l'entrée : app.notion.com exige
-    // l'identifiant sans tirets. Point unique, le clic et la liste en héritent.
-    const href = function(u){ return (typeof kcpNotionHref === 'function') ? kcpNotionHref(u || '') : (u || ''); };
-    sujets.forEach(function(s){ byId[s.doc_int_id] = { id: s.doc_int_id, label: s.doc_label || s.doc_int_id, url: href(s.url), children: [], _p: null, _cols: [], _colx: [] }; });
+    // Le clic n'ouvre plus Notion : chaque nœud porte sa fiche, écrite par
+    // le cycle de la mémoire dans le référentiel. Aucun lien sortant.
+    sujets.forEach(function(s){ byId[s.doc_int_id] = { id: s.doc_int_id, label: s.doc_label || s.doc_int_id,
+      fiche: { resume: s.fiche_resume || '', doutes: s.fiche_doutes || '', risques: s.fiche_risques || '',
+               blocs: s.block_count || '', maj: s.last_update_date || '' },
+      children: [], _p: null, _cols: [], _colx: [] }; });
     let root = null;
     sujets.forEach(function(s){
       const n = byId[s.doc_int_id];
@@ -308,9 +327,7 @@
       edges.push({ a: a, b: b, forte: String(l.intensite).toLowerCase() === 'forte', type: l.type || '', objet: l.objet || '' });
     });
 
-    const nbLiens = {};
-    edges.forEach(function(e){ nbLiens[e.a.id] = (nbLiens[e.a.id] || 0) + 1; nbLiens[e.b.id] = (nbLiens[e.b.id] || 0) + 1; });
-    nodes.forEach(function(n){ n._nb = nbLiens[n.id] || 0; n._cl = null; });
+    nodes.forEach(function(n){ n._cl = null; });
 
     const uf = massifs(nodes);
     edges.forEach(function(e){
@@ -374,12 +391,14 @@
       });
     });
 
-    // ── Liaisons : celles absorbées par un massif ne sont plus tracées ──
+    // ── Liaisons : seules les fortes entre branches se tracent. Les massifs
+    // disent les fortes locales ; les faibles vivent dans la fiche du sujet. ──
     edges.forEach(function(e){
-      if (e.forte && e.a._cl != null && e.a._cl === e.b._cl) return;
+      if (!e.forte) return;
+      if (e.a._cl != null && e.a._cl === e.b._cl) return;
       const ax = px(e.a), ay = py(e.a), bx = px(e.b), by = py(e.b);
       const cx = Math.max(ax, bx) + 30, cy = (ay + by) / 2;
-      svg += '<path class="' + (e.forte ? 'lien-forte' : 'lien-faible') + '" data-n="' + esc(e.a.id) + ' ' + esc(e.b.id) +
+      svg += '<path class="lien-forte" data-n="' + esc(e.a.id) + ' ' + esc(e.b.id) +
         '" d="M' + ax.toFixed(1) + ' ' + ay.toFixed(1) + ' Q' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ' ' + bx.toFixed(1) + ' ' + by.toFixed(1) +
         '"><title>' + esc(e.type) + (e.objet ? ' — ' + esc(e.objet) : '') + '</title></path>';
     });
@@ -391,10 +410,9 @@
       let cx, cy, tx;
       if (enTete(n)) { cx = n._hdx; cy = n._hy; tx = cx + 13; }
       else { cx = n._x; cy = n._y; tx = n._tx; }
-      svg += '<g class="' + cls + '" data-id="' + esc(n.id) + '" data-url="' + esc(n.url) + '">' +
+      svg += '<g class="' + cls + '" data-id="' + esc(n.id) + '">' +
         '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="' + (n._racine ? 7.5 : comp ? 6.5 : 5.5) + '"/>' +
-        '<text x="' + tx.toFixed(1) + '" y="' + (cy + 4.6).toFixed(1) + '">' + esc(n.label) +
-        (n._nb ? '<tspan class="cnt" dx="6">·' + n._nb + '</tspan>' : '') + '</text></g>';
+        '<text x="' + tx.toFixed(1) + '" y="' + (cy + 4.6).toFixed(1) + '">' + esc(n.label) + '</text></g>';
     });
     svg += '</svg>';
 
@@ -423,18 +441,16 @@
         allRel.forEach(function(l){ l.classList.remove('estompe'); l.classList.remove('surligne'); });
         allNodes.forEach(function(o){ o.classList.remove('estompe'); });
       });
-      g.addEventListener('click', function(){ if (g.dataset.url) window.open(g.dataset.url, '_blank', 'noopener'); });
+      g.addEventListener('click', function(){ openFiche(t.byId[g.dataset.id], edges); });
     });
 
-    // ── Liste indentée (mobile) : même hiérarchie, mêmes massifs ──
+    // ── Liste indentée (mobile) : même hiérarchie, mêmes massifs, même fiche ──
     let html = '';
     (function walk(n, prefix){
       const comp = n.children.length > 0;
-      html += '<a class="li-row' + (comp ? ' composite' : '') + (n._cl != null ? ' massif' : '') + '"' +
-        (n.url ? ' href="' + esc(n.url) + '" target="_blank" rel="noopener"' : '') + '>' +
+      html += '<a class="li-row' + (comp ? ' composite' : '') + (n._cl != null ? ' massif' : '') + '" data-id="' + esc(n.id) + '">' +
         '<span class="li-branche">' + prefix + '</span>' +
-        '<span class="li-nom">' + esc(n.label) + '</span>' +
-        (n._nb ? '<span class="li-liens">' + n._nb + ' liaison' + (n._nb > 1 ? 's' : '') + '</span>' : '') + '</a>';
+        '<span class="li-nom">' + esc(n.label) + '</span></a>';
       // Même ordre qu'à l'écran : massifs contigus, puis le reste.
       const suite = groupLeaves(n.children.filter(function(c){ return !c.children.length; }))
         .reduce(function(a, g){ return a.concat(g); }, [])
@@ -445,7 +461,59 @@
       });
     })(t.root, '');
     document.getElementById('liste').innerHTML = html;
+    document.querySelectorAll('#liste .li-row').forEach(function(row){
+      row.addEventListener('click', function(){ openFiche(t.byId[row.dataset.id], edges); });
+    });
   }
+
+  // ── La fiche : l'état du sujet, écrit par le cycle, lu ici. Données seules. ──
+  function openFiche(n, edges) {
+    if (!n) return;
+    const f = n.fiche || {};
+    let h = '<button class="fiche-x" id="fiche-x" aria-label="Fermer">✕</button>' +
+      '<div class="fiche-titre">' + esc(n.label) + '</div>';
+
+    const meta = [];
+    if (f.blocs) meta.push(f.blocs + ' éléments');
+    if (f.maj) meta.push('mise à jour le ' + esc(f.maj));
+    if (meta.length) h += '<div class="fiche-meta">' + meta.join(' · ') + '</div>';
+
+    const lignes = function(txt){
+      return String(txt).split('\n').map(function(l){ return l.trim(); }).filter(Boolean)
+        .map(function(l){ return '<div class="fiche-li">' + esc(l) + '</div>'; }).join('');
+    };
+
+    if (f.resume) {
+      h += '<div class="fiche-sec"><span class="fiche-lbl">Résumé</span><div class="fiche-txt">' + esc(f.resume) + '</div></div>';
+    } else {
+      h += '<div class="fiche-sec"><div class="fiche-vide">La fiche de ce sujet sera générée au prochain cycle de ta mémoire.</div></div>';
+    }
+    if (f.doutes) h += '<div class="fiche-sec"><span class="fiche-lbl">Doutes ouverts</span>' + lignes(f.doutes) + '</div>';
+    if (f.risques) h += '<div class="fiche-sec"><span class="fiche-lbl">Risques</span>' + lignes(f.risques) + '</div>';
+
+    const liens = (edges || []).filter(function(e){ return e.a === n || e.b === n; });
+    if (liens.length) {
+      h += '<div class="fiche-sec"><span class="fiche-lbl">Liaisons</span>' +
+        liens.map(function(e){
+          const autre = e.a === n ? e.b : e.a;
+          let l = esc(autre.label) + ' · ' + (e.forte ? 'forte' : 'faible');
+          if (e.type) l += ' — ' + esc(e.type);
+          if (e.objet) l += ', ' + esc(e.objet);
+          return '<div class="fiche-li">' + l + '</div>';
+        }).join('') + '</div>';
+    }
+
+    document.getElementById('fiche').innerHTML = h;
+    document.getElementById('fiche').classList.add('on');
+    document.getElementById('voile').classList.add('on');
+    document.getElementById('fiche-x').addEventListener('click', closeFiche);
+  }
+  function closeFiche() {
+    document.getElementById('fiche').classList.remove('on');
+    document.getElementById('voile').classList.remove('on');
+  }
+  document.getElementById('voile').addEventListener('click', closeFiche);
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeFiche(); });
 
   async function fetchCarte() {
     const r = await fetch(C.webhooks.carte, {
