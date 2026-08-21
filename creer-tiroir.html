@@ -34,6 +34,16 @@
   textarea { resize:none; min-height:150px; line-height:1.5; font-weight:500; font-size:14px; }
 
   /* States */
+  /* ── Choix du mode : un sujet, ou un ensemble de sujets ── */
+  .modes { display:flex; gap:0.5rem; }
+  .mode { flex:1; font-size:13px; font-family:var(--mono); font-weight:500; padding:0.65rem 0.5rem; border-radius:10px;
+    border:1.5px solid var(--border-strong); background:var(--surface); color:var(--ink-soft); cursor:pointer; transition:all 0.15s; }
+  .mode.on { background:var(--dark); border-color:var(--dark); color:var(--accent); }
+  select { width:100%; padding:0.7rem 0.9rem; border:1.5px solid var(--border); border-radius:10px; background:var(--surface);
+    font-family:var(--mono); font-size:14px; color:var(--ink); appearance:auto; }
+  select:focus { outline:none; border-color:var(--border-strong); }
+  .sujet-bloc { border-top:1px solid var(--border); padding-top:1.1rem; }
+
   .state { display:none; }
 
   .state.on { display:flex; }
@@ -64,26 +74,97 @@
   </div>
 
   <div class="card">
-    <div class="field">
-      <label class="label" for="nom">
-        <span id="nom-label">Nom du sujet</span>
-        <span class="hint err" id="nom-hint" style="display:none">ce nom existe déjà</span>
-      </label>
-      <div class="pfx">
-        <span class="pfx-sym" id="pfx-sym">#</span>
-        <input type="text" id="nom" placeholder="" autocomplete="off" spellcheck="false" maxlength="60" oninput="onNom()">
-      </div>
+    <div class="modes">
+      <button class="mode on" id="mode-simple" onclick="setMode('simple')">Un sujet</button>
+      <button class="mode" id="mode-ensemble" onclick="setMode('ensemble')">Un ensemble de sujets</button>
     </div>
 
     <div class="field">
-      <label class="label" for="perim">
-        Périmètre
-        <span class="hint" id="perim-hint">min. 40 caractères</span>
-      </label>
-      <textarea id="perim" placeholder="Ce sujet sert à…" maxlength="2000" oninput="check()"></textarea>
-      <div class="note">
-        <span class="ico">›</span>
-        <span>Décris précisément le sujet couvert. C'est ce texte qui guide le tri de tes infos : un bon périmètre = une mémoire fiable, sans hors-sujet.</span>
+      <label class="label" for="parent">Rattaché à</label>
+      <select id="parent" onchange="check()"></select>
+    </div>
+
+    <!-- ── MODE SUJET ── -->
+    <div id="f-simple">
+      <div class="field">
+        <label class="label" for="nom">
+          <span id="nom-label">Nom du sujet</span>
+          <span class="hint err" id="nom-hint" style="display:none">ce nom existe déjà</span>
+        </label>
+        <div class="pfx">
+          <span class="pfx-sym" id="pfx-sym">#</span>
+          <input type="text" id="nom" placeholder="" autocomplete="off" spellcheck="false" maxlength="60" oninput="onNom()">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="perim">
+          Périmètre
+          <span class="hint" id="perim-hint">min. 40 caractères</span>
+        </label>
+        <textarea id="perim" placeholder="Ce sujet sert à…" maxlength="2000" oninput="check()"></textarea>
+        <div class="note">
+          <span class="ico">›</span>
+          <span>Décris précisément le sujet couvert. C'est ce texte qui guide le tri de tes infos : un bon périmètre = une mémoire fiable, sans hors-sujet.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MODE ENSEMBLE : un ensemble naît avec au moins deux sujets ── -->
+    <div id="f-ensemble" style="display:none">
+      <div class="field">
+        <label class="label" for="e-nom">
+          <span>Nom de l'ensemble</span>
+          <span class="hint err" id="e-nom-hint" style="display:none">ce nom existe déjà</span>
+        </label>
+        <input type="text" id="e-nom" placeholder="Compagnie-de-Phalsbourg" autocomplete="off" spellcheck="false" maxlength="60" oninput="onNomEnsemble()">
+      </div>
+      <div class="field">
+        <label class="label" for="e-perim">
+          Périmètre de l'ensemble
+          <span class="hint" id="e-perim-hint">min. 40 caractères</span>
+        </label>
+        <textarea id="e-perim" placeholder="Cet ensemble couvre…" maxlength="2000" oninput="check()"></textarea>
+        <div class="note">
+          <span class="ico">›</span>
+          <span>Un ensemble naît avec au moins deux sujets : c'est lui qui portera leur vue transverse. Décris sa frontière, puis celle de chacun de ses sujets.</span>
+        </div>
+      </div>
+
+      <div class="sujet-bloc field">
+        <label class="label" for="s1-nom">
+          <span>Sujet 1 — nom</span>
+          <span class="hint err" id="s1-nom-hint" style="display:none">ce nom existe déjà</span>
+        </label>
+        <div class="pfx">
+          <span class="pfx-sym">#</span>
+          <input type="text" id="s1-nom" autocomplete="off" spellcheck="false" maxlength="60" oninput="onNomSujet(this)">
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="s1-perim">
+          Sujet 1 — périmètre
+          <span class="hint" id="s1-perim-hint">min. 40 caractères</span>
+        </label>
+        <textarea id="s1-perim" placeholder="Ce sujet sert à…" maxlength="2000" oninput="check()"></textarea>
+      </div>
+
+      <div class="sujet-bloc field">
+        <label class="label" for="s2-nom">
+          <span>Sujet 2 — nom</span>
+          <span class="hint err" id="s2-nom-hint" style="display:none">nom déjà pris, ou identique au sujet 1</span>
+        </label>
+        <div class="pfx">
+          <span class="pfx-sym">#</span>
+          <input type="text" id="s2-nom" autocomplete="off" spellcheck="false" maxlength="60" oninput="onNomSujet(this)">
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="s2-perim">
+          Sujet 2 — périmètre
+          <span class="hint" id="s2-perim-hint">min. 40 caractères</span>
+        </label>
+        <textarea id="s2-perim" placeholder="Ce sujet sert à…" maxlength="2000" oninput="check()"></textarea>
       </div>
     </div>
 
@@ -119,19 +200,70 @@
 
   // Labels déjà pris (pour interdire un doublon dès la saisie ; le 409 backend reste le garde ultime).
   let existingLabels = new Set();
-  function anxLabel(nom){ nom = nom || ''; if (nom.indexOf('anx_') === 0) return nom; if (nom.indexOf('nx_') === 0) return 'a' + nom; return 'anx_' + nom; }
+  let mode = 'simple';
+  const dispLabel = (typeof kcpDocLabel === 'function') ? kcpDocLabel
+    : function(t){ return '#' + t.nom_tiroir; };
   async function loadExisting() {
     try {
       const data = await kcpLoadTiroirs();
       const list = Array.isArray(data) ? data : (data.pcp_anx || data.tous || data.pcp || []);
-      existingLabels = new Set(list.map(function(t){
-        return (String(t.type).toUpperCase() === 'ANX' ? anxLabel(t.nom_tiroir) : '#' + t.nom_tiroir).toLowerCase();
+      const noeuds = (data && data.gcp) ? data.gcp : [];
+      existingLabels = new Set(list.concat(noeuds).map(function(t){
+        return dispLabel(t).toLowerCase();
       }));
+      // Le rattachement : la racine (au prénom) et les ensembles existants.
+      // Jamais un sujet simple — un sujet ne porte pas d'enfants.
+      const sel = document.getElementById('parent');
+      sel.innerHTML = '';
+      const racine = noeuds.filter(function(t){ return (t.parent || '') === 'N/A'; });
+      const autres = noeuds.filter(function(t){ return (t.parent || '') !== 'N/A'; });
+      const first = racine.length ? racine : [{ doc_int_id: 'GCP001', type: 'GCP', parent: 'N/A', nom_tiroir: 'Head' }];
+      first.concat(autres).forEach(function(t){
+        const o = document.createElement('option');
+        o.value = t.doc_int_id;
+        o.textContent = dispLabel(t);
+        sel.appendChild(o);
+      });
       check();
     } catch (e) { /* liste indispo : on laisse le backend gérer le 409 */ }
   }
-  // Label qui serait créé avec la saisie courante. La page ne crée que des sujets.
+  // Label qui serait créé avec la saisie courante en mode sujet.
   function currentLabel() { return '#' + nomEl.value.replace(/^-+|-+$/g, ''); }
+
+  function setMode(m) {
+    mode = m;
+    document.getElementById('mode-simple').classList.toggle('on', m === 'simple');
+    document.getElementById('mode-ensemble').classList.toggle('on', m === 'ensemble');
+    document.getElementById('f-simple').style.display = m === 'simple' ? '' : 'none';
+    document.getElementById('f-ensemble').style.display = m === 'ensemble' ? '' : 'none';
+    document.getElementById('page-title').textContent = m === 'simple' ? 'Nouveau sujet' : 'Nouvel ensemble';
+    submitEl.textContent = m === 'simple' ? 'Créer le sujet →' : "Créer l'ensemble →";
+    clearErr(); hide('s-success');
+    check();
+  }
+
+  // Nom d'ensemble : accents retirés, espaces → tirets, mais la casse est
+  // conservée — un ensemble s'appelle Compagnie-de-Phalsbourg, pas #compagnie.
+  function slugifyNoeud(sv) {
+    return (sv || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9-]+/g, '-')
+      .replace(/-{2,}/g, '-')
+      .replace(/^-+/, '');
+  }
+  function onNomEnsemble() {
+    const el = document.getElementById('e-nom');
+    const clean = slugifyNoeud(el.value);
+    if (clean !== el.value) el.value = clean;
+    check();
+  }
+  function onNomSujet(el) {
+    const clean = slugifyLive(el.value);
+    if (clean !== el.value) el.value = clean;
+    check();
+  }
+  function val(id) { return document.getElementById(id).value; }
+  function trimN(v) { return v.replace(/^-+|-+$/g, ''); }
 
   // Nettoie un texte libre des caractères qui casseraient le JSON de l'automatisation (flux création = jsonString).
   function sanitize(s) { return (s || '').replace(/[\\"]/g, "'").replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim(); }
@@ -154,24 +286,44 @@
     check();
   }
 
-  function check() {
-    const cleanNom = nomEl.value.replace(/^-+|-+$/g, '');
-    const nomOk = cleanNom.length >= 2;
-    const perimLen = perimEl.value.trim().length;
-    const perimOk = perimLen >= 40;
-    const ph = document.getElementById('perim-hint');
-    if (perimLen > 0 && !perimOk) {
-      const reste = 40 - perimLen;
+  function perimHintUpd(hintId, len) {
+    const ph = document.getElementById(hintId);
+    if (len > 0 && len < 40) {
+      const reste = 40 - len;
       ph.textContent = 'encore ' + reste + ' caractère' + (reste > 1 ? 's' : '');
       ph.classList.add('err');
     } else {
       ph.textContent = 'min. 40 caractères';
       ph.classList.remove('err');
     }
-    // Doublon : le label complet existe déjà.
-    const dup = nomOk && existingLabels.has(currentLabel().toLowerCase());
-    nomHint.style.display = dup ? 'inline' : 'none';
-    submitEl.disabled = !(nomOk && perimOk && !dup);
+    return len >= 40;
+  }
+
+  function check() {
+    if (mode === 'simple') {
+      const cleanNom = nomEl.value.replace(/^-+|-+$/g, '');
+      const nomOk = cleanNom.length >= 2;
+      const perimOk = perimHintUpd('perim-hint', perimEl.value.trim().length);
+      const dup = nomOk && existingLabels.has(currentLabel().toLowerCase());
+      nomHint.style.display = dup ? 'inline' : 'none';
+      submitEl.disabled = !(nomOk && perimOk && !dup);
+      return;
+    }
+    // Mode ensemble : trois noms, trois périmètres, zéro collision.
+    const nomN = trimN(val('e-nom')), nomS1 = trimN(val('s1-nom')), nomS2 = trimN(val('s2-nom'));
+    const dupN = nomN.length >= 2 && existingLabels.has(nomN.toLowerCase());
+    const dupS1 = nomS1.length >= 2 && existingLabels.has(('#' + nomS1).toLowerCase());
+    const dupS2 = nomS2.length >= 2 && (existingLabels.has(('#' + nomS2).toLowerCase()) || (nomS1 && nomS2 === nomS1));
+    document.getElementById('e-nom-hint').style.display = dupN ? 'inline' : 'none';
+    document.getElementById('s1-nom-hint').style.display = dupS1 ? 'inline' : 'none';
+    document.getElementById('s2-nom-hint').style.display = dupS2 ? 'inline' : 'none';
+    const ok =
+      nomN.length >= 2 && nomS1.length >= 2 && nomS2.length >= 2 &&
+      perimHintUpd('e-perim-hint', val('e-perim').trim().length) &&
+      perimHintUpd('s1-perim-hint', val('s1-perim').trim().length) &&
+      perimHintUpd('s2-perim-hint', val('s2-perim').trim().length) &&
+      !dupN && !dupS1 && !dupS2;
+    submitEl.disabled = !ok;
   }
 
   function show(id) { document.getElementById(id).classList.add('on'); }
@@ -180,13 +332,32 @@
   function clearErr() { document.getElementById('s-error').classList.remove('on'); }
 
   async function submit() {
-    // Trim complet des tirets de bordure au moment de l'envoi.
-    const nom_tiroir = nomEl.value.replace(/^-+|-+$/g, '');
-    // Nettoyage des caractères qui casseraient le JSON de l'automatisation.
-    const perimetre_declare = sanitize(perimEl.value);
-    if (nom_tiroir.length < 2 || perimetre_declare.length < 40) return;
-    // Garde-fou doublon côté client (le backend renvoie aussi une 409).
-    if (existingLabels.has(currentLabel().toLowerCase())) { nomHint.style.display = 'inline'; return; }
+    const parent_id = val('parent') || 'GCP001';
+    let url, payload, okMsg;
+    if (mode === 'simple') {
+      // Trim complet des tirets de bordure au moment de l'envoi.
+      const nom_tiroir = nomEl.value.replace(/^-+|-+$/g, '');
+      const perimetre_declare = sanitize(perimEl.value);
+      if (nom_tiroir.length < 2 || perimetre_declare.length < 40) return;
+      if (existingLabels.has(currentLabel().toLowerCase())) { nomHint.style.display = 'inline'; return; }
+      url = C.webhooks.creer_tiroir;
+      payload = { id_client, nom_tiroir, perimetre_declare, parent_id };
+      okMsg = 'Sujet créé, prêt à recevoir vos réunions et vos conversations IA.';
+    } else {
+      const nom_noeud = trimN(val('e-nom'));
+      const nom_sujet_1 = trimN(val('s1-nom'));
+      const nom_sujet_2 = trimN(val('s2-nom'));
+      const perimetre_noeud = sanitize(val('e-perim'));
+      const perimetre_sujet_1 = sanitize(val('s1-perim'));
+      const perimetre_sujet_2 = sanitize(val('s2-perim'));
+      if (nom_noeud.length < 2 || nom_sujet_1.length < 2 || nom_sujet_2.length < 2) return;
+      if (perimetre_noeud.length < 40 || perimetre_sujet_1.length < 40 || perimetre_sujet_2.length < 40) return;
+      if (nom_sujet_1 === nom_sujet_2) return;
+      url = C.webhooks.creer_ensemble;
+      payload = { id_client, parent_id, nom_noeud, perimetre_noeud,
+                  nom_sujet_1, perimetre_sujet_1, nom_sujet_2, perimetre_sujet_2 };
+      okMsg = 'Ensemble créé avec ses deux premiers sujets, prêt à travailler.';
+    }
 
     clearErr();
     submitEl.style.display = 'none';
@@ -195,9 +366,9 @@
 
     let res, data = {};
     try {
-      res = await fetch(C.webhooks.creer_tiroir, {
+      res = await fetch(url, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_client, nom_tiroir, perimetre_declare })
+        body: JSON.stringify(payload)
       });
       // Lire le corps AVANT tout test de statut (la 409 porte error:label_exists).
       const raw = await res.text();
@@ -214,13 +385,19 @@
 
     if (res.ok && data.success) {
       if (typeof kcpInvalidateTiroirs === 'function') kcpInvalidateTiroirs();
-      existingLabels.add(currentLabel().toLowerCase());   // évite un doublon immédiat sans recharger
-      document.getElementById('s-msg').textContent = 'Sujet créé, prêt à recevoir vos réunions et vos conversations IA.';
+      if (mode === 'simple') { existingLabels.add(currentLabel().toLowerCase()); }
+      else {
+        existingLabels.add(trimN(val('e-nom')).toLowerCase());
+        existingLabels.add(('#' + trimN(val('s1-nom'))).toLowerCase());
+        existingLabels.add(('#' + trimN(val('s2-nom'))).toLowerCase());
+        loadExisting();   // le nouvel ensemble doit apparaître dans le sélecteur de rattachement
+      }
+      document.getElementById('s-msg').textContent = okMsg;
       show('s-success');
-    } else if (res.status === 409 || data.error === 'label_exists') {
-      existingLabels.add(currentLabel().toLowerCase());   // le backend confirme le doublon
+    } else if (res.status === 409 || data.error === 'label_exists' || data.error === 'creation_refusee') {
       submitEl.style.display = '';
-      showErr('Ce nom existe déjà, choisis-en un autre.');
+      showErr(mode === 'simple' ? 'Ce nom existe déjà, choisis-en un autre.'
+                                 : (data.message || 'Un des noms existe déjà, ou les deux sujets portent le même nom.'));
     } else {
       submitEl.style.display = '';
       showErr('Création impossible. Réessaie.');

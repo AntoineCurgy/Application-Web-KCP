@@ -119,13 +119,15 @@
   // Libellés des documents, résolus depuis la liste déjà en cache :
   // le journal des dépôts ne porte que l'identifiant, pas le libellé.
   const labels = {};
-  function anxLabel(nom){ nom = nom || ''; if (nom.indexOf('anx_') === 0) return nom; if (nom.indexOf('nx_') === 0) return 'a' + nom; return 'anx_' + nom; }
-  function dispLabel(t){ return String(t.type).toUpperCase() === 'ANX' ? anxLabel(t.nom_tiroir) : ('#' + t.nom_tiroir); }
+  const dispLabel = (typeof kcpDocLabel === 'function') ? kcpDocLabel
+    : function(t){ return '#' + t.nom_tiroir; };
 
   async function loadLabels() {
     try {
       const data = await kcpLoadTiroirs();
-      const list = Array.isArray(data) ? data : (data.pcp_anx || data.tous || data.pcp || []);
+      let list = Array.isArray(data) ? data : (data.pcp_anx || data.tous || data.pcp || []);
+      // Les nœuds aussi : un doute ou une capture peut porter leur identifiant.
+      if (data && data.gcp) list = list.concat(data.gcp);
       list.forEach(function(t){ if (t.doc_int_id) labels[t.doc_int_id] = dispLabel(t); });
     } catch (e) { /* sans libellé, on affiche l'identifiant */ }
   }
