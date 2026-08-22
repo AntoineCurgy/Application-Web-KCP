@@ -76,7 +76,10 @@
   .footer { display:flex; align-items:center; justify-content:center; gap:0.5rem; }
 
   /* ── Le « ? » du périmètre et sa fenêtre d'explication ── */
-  .qmark { width:17px; height:17px; border-radius:50%; border:1.5px solid var(--border-strong); background:var(--surface); color:var(--ink-soft); font-family:var(--mono); font-size:11px; font-weight:500; line-height:1; cursor:pointer; padding:0; display:inline-flex; align-items:center; justify-content:center; margin-left:0.45rem; vertical-align:-3px; }
+  /* Le libellé centre lui-même son « ? » : aucun décalage codé en dur, donc
+     juste quelle que soit la police. */
+  .label > span:first-child { display:inline-flex; align-items:center; gap:0.45rem; }
+  .qmark { width:17px; height:17px; border-radius:50%; border:1.5px solid var(--border-strong); background:var(--surface); color:var(--ink-soft); font-family:var(--mono); font-size:11px; font-weight:500; line-height:1; cursor:pointer; padding:0; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
   .qmark:hover { border-color:var(--ink); color:var(--ink); }
   .pop-voile { position:fixed; inset:0; background:rgba(22,21,15,0.45); z-index:60; display:none; }
   .pop-voile.on { display:block; }
