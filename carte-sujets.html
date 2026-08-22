@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#f6f4ee">
-<title>KCP — Carte des sujets</title>
+<title>KCP — Carte</title>
 <link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
 <link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
 <script src="./config.js"></script>
@@ -42,9 +42,6 @@
   .estompe { opacity:0.18; transition:opacity 0.15s; }
   .surligne.lien-forte { stroke:var(--accent-deep); stroke-width:2.2; }
 
-  .legende { display:flex; flex-wrap:wrap; gap:1.4rem; align-items:center; font-size:13px; font-family:var(--mono); color:var(--muted); }
-  .leg { display:inline-flex; align-items:center; gap:0.5rem; }
-  .leg svg { flex-shrink:0; }
 
   /* ── LISTE (mobile) ── */
   .liste { display:none; flex-direction:column; }
@@ -86,7 +83,7 @@
 
   @media(max-width:680px){
     body { padding:2rem 1.25rem 3rem; }
-    .map-box, .legende { display:none; }
+    .map-box { display:none; }
     .liste { display:flex; }
   }
 </style>
@@ -97,18 +94,18 @@
   <div>
     <a href="./index.html" class="back">← Retour</a>
     <span class="kcp-tag">KCP — Knowledge Context Protocol</span>
-    <h1 class="page-title">Carte des sujets</h1>
+    <h1 class="page-title">Carte</h1>
   </div>
 
   <div class="card">
     <span class="label">
-      Ta mémoire, vue de haut
+      Ton univers
       <span class="hint" id="count"></span>
     </span>
 
     <div class="note">
       <span class="ico">›</span>
-      <span>La hiérarchie de tes sujets, à lire de haut en bas. Quand des sujets sont fortement liés, ils forment un massif et se regroupent sur un même fond. Ce qui n'est pas regroupé est une information aussi : tes sujets sont des mondes largement indépendants. Survole un sujet pour situer son massif, clique pour ouvrir sa fiche : l'état du sujet, tenu à jour par ta mémoire.</span>
+      <span>La hiérarchie de tes sujets, à lire de haut en bas. Clique sur un sujet pour ouvrir sa fiche : son état, tenu à jour par ta mémoire.</span>
     </div>
 
     <div class="state loading on" id="s-loading">
@@ -117,14 +114,6 @@
     </div>
 
     <div class="map-box" id="map"></div>
-
-    <div class="legende" id="legende" style="display:none;">
-      <span class="leg"><svg width="26" height="12"><line x1="13" y1="0" x2="13" y2="12" stroke="#d3cebd" stroke-width="1.2"/></svg>hiérarchie</span>
-      <span class="leg"><svg width="26" height="14"><rect x="0" y="1" width="26" height="12" rx="5" fill="#efece2"/></svg>massif</span>
-      <span class="leg"><svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="#3d3b30" stroke-width="1.6"/></svg>liaison forte hors massif</span>
-      <span class="leg"><svg width="14" height="14"><circle cx="7" cy="7" r="5" fill="#3d3b30"/></svg>sphère</span>
-      <span class="leg"><svg width="14" height="14"><circle cx="7" cy="7" r="5" fill="#ffffff" stroke="#3d3b30" stroke-width="1.6"/></svg>sujet</span>
-    </div>
 
     <div class="liste" id="liste"></div>
 
@@ -338,7 +327,7 @@
       if (e.a._p !== e.b._p) return;                            // même parent seulement
       uf.union(e.a, e.b);
     });
-    const nbMassifs = uf.seal();
+    uf.seal();   // assigne les _cl : le dessin des massifs en dépend
 
     measure(t.root);
     place(t.root, 0, 0);
@@ -419,9 +408,7 @@
     svg += '</svg>';
 
     document.getElementById('map').innerHTML = svg;
-    document.getElementById('legende').style.display = '';
-    document.getElementById('count').textContent = sujets.length + ' sujet' + (sujets.length > 1 ? 's' : '') +
-      ' · ' + nbMassifs + ' massif' + (nbMassifs > 1 ? 's' : '');
+    document.getElementById('count').textContent = sujets.length + ' sujet' + (sujets.length > 1 ? 's' : '');
 
     // Survol : le sujet, son massif et ses liaisons restent nets, le reste s'estompe.
     // La charpente ne bouge pas — c'est la structure, pas une réponse à la lecture.
@@ -536,7 +523,7 @@
 
     const liens = (edges || []).filter(function(e){ return e.a === n || e.b === n; });
     if (liens.length) {
-      h += '<div class="fiche-sec"><span class="fiche-lbl">Liaisons</span>' +
+      h += '<div class="fiche-sec"><span class="fiche-lbl">Relations</span>' +
         liens.map(function(e){
           const autre = e.a === n ? e.b : e.a;
           let l = esc(autre.label) + ' · ' + (e.forte ? 'forte' : 'faible');

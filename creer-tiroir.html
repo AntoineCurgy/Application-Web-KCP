@@ -42,7 +42,46 @@
   select { width:100%; padding:0.7rem 0.9rem; border:1.5px solid var(--border); border-radius:10px; background:var(--surface);
     font-family:var(--mono); font-size:14px; color:var(--ink); appearance:auto; }
   select:focus { outline:none; border-color:var(--border-strong); }
-  .sujet-bloc { border-top:1px solid var(--border); padding-top:1.1rem; }
+
+  /* Espacement : un peu plus d'air entre libellés et champs, et entre blocs. */
+  .card { gap:1.4rem; }
+  .field { gap:0.6rem; }
+  #f-simple, #f-ensemble, .bloc-ensemble, .s-col { display:flex; flex-direction:column; gap:1.4rem; }
+
+  /* Aperçu du nom final, mis à jour à la frappe : la normalisation est
+     visible avant la création, jamais subie après. */
+  .apercu { font-size:12.5px; font-family:var(--mono); color:var(--muted); word-break:break-all; }
+
+  /* ── Mode ensemble : l'ensemble en panneau teinté, la fourchette CSS,
+     les deux sujets côte à côte (desktop). ── */
+  body.large { max-width:940px; }
+  .bloc-ensemble { background:var(--surface2); border:1.5px solid var(--border-strong); border-radius:12px; padding:1.15rem; }
+  .bloc-ensemble input, .bloc-ensemble textarea { background:var(--surface); }
+  .duo { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+  .fourche { height:30px; position:relative; margin:-0.4rem 0; }
+  .fourche::before { content:''; position:absolute; left:50%; top:0; height:15px; border-left:1.5px solid var(--border-strong); }
+  .fourche::after { content:''; position:absolute; top:15px; left:calc((100% - 1.5rem) / 4); right:calc((100% - 1.5rem) / 4); border-top:1.5px solid var(--border-strong); }
+  .s-col { position:relative; }
+  .s-col::before { content:''; position:absolute; left:50%; top:-15.4px; height:15px; border-left:1.5px solid var(--border-strong); }
+  @media(max-width:860px){
+    .duo { grid-template-columns:1fr; }
+    .fourche, .s-col::before { display:none; }
+    .s-col { border-top:1px solid var(--border); padding-top:1.15rem; }
+  }
+
+  /* ── Le « ? » du périmètre et sa fenêtre d'explication ── */
+  .qmark { width:17px; height:17px; border-radius:50%; border:1.5px solid var(--border-strong); background:var(--surface); color:var(--ink-soft); font-family:var(--mono); font-size:11px; font-weight:500; line-height:1; cursor:pointer; padding:0; display:inline-flex; align-items:center; justify-content:center; margin-left:0.45rem; vertical-align:-3px; }
+  .qmark:hover { border-color:var(--ink); color:var(--ink); }
+  .pop-voile { position:fixed; inset:0; background:rgba(22,21,15,0.45); z-index:60; display:none; }
+  .pop-voile.on { display:block; }
+  .pop { position:fixed; z-index:61; left:50%; top:50%; transform:translate(-50%,-50%); width:min(480px, calc(100vw - 2.5rem)); max-height:85vh; overflow:auto; background:var(--surface); border:1.5px solid var(--border-strong); border-radius:14px; padding:1.5rem; display:none; flex-direction:column; gap:0.9rem; box-shadow:0 18px 50px rgba(22,21,15,0.25); }
+  .pop.on { display:flex; }
+  .pop-titre { font-size:17px; font-weight:700; }
+  .pop-corps { display:flex; flex-direction:column; gap:0.75rem; font-size:13.5px; line-height:1.55; color:var(--ink-soft); }
+  .pop-corps .ex-t { font-family:var(--mono); font-size:11.5px; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted); margin-bottom:-0.45rem; }
+  .pop-corps .ex { padding:0.7rem 0.85rem; border-radius:8px; font-size:13px; line-height:1.5; }
+  .pop-corps .ex.bad { background:rgba(138,47,47,0.07); border:1px solid rgba(138,47,47,0.2); }
+  .pop-corps .ex.good { background:rgba(77,107,20,0.07); border:1px solid rgba(77,107,20,0.2); }
 
   .state { display:none; }
 
@@ -95,14 +134,15 @@
           <span class="pfx-sym" id="pfx-sym">#</span>
           <input type="text" id="nom" placeholder="" autocomplete="off" spellcheck="false" maxlength="60" oninput="onNom()">
         </div>
+        <div class="apercu" id="nom-apercu" style="display:none"></div>
       </div>
 
       <div class="field">
         <label class="label" for="perim">
-          Périmètre
+          <span>Périmètre<button type="button" class="qmark" onclick="popBtn(event, 'sujet')" aria-label="À quoi sert le périmètre ?">?</button></span>
           <span class="hint" id="perim-hint">min. 40 caractères</span>
         </label>
-        <textarea id="perim" placeholder="Ce sujet sert à…" maxlength="2000" oninput="check()"></textarea>
+        <textarea id="perim" maxlength="2000" oninput="check()"></textarea>
         <div class="note">
           <span class="ico">›</span>
           <span>Décris précisément le sujet couvert. C'est ce texte qui guide le tri de tes infos : un bon périmètre = une mémoire fiable, sans hors-sujet.</span>
@@ -112,59 +152,72 @@
 
     <!-- ── MODE ENSEMBLE : un ensemble naît avec au moins deux sujets ── -->
     <div id="f-ensemble" style="display:none">
-      <div class="field">
-        <label class="label" for="e-nom">
-          <span>Nom de l'ensemble</span>
-          <span class="hint err" id="e-nom-hint" style="display:none">ce nom existe déjà</span>
-        </label>
-        <input type="text" id="e-nom" placeholder="Compagnie-de-Phalsbourg" autocomplete="off" spellcheck="false" maxlength="60" oninput="onNomEnsemble()">
-      </div>
-      <div class="field">
-        <label class="label" for="e-perim">
-          Périmètre de l'ensemble
-          <span class="hint" id="e-perim-hint">min. 40 caractères</span>
-        </label>
-        <textarea id="e-perim" placeholder="Cet ensemble couvre…" maxlength="2000" oninput="check()"></textarea>
-        <div class="note">
-          <span class="ico">›</span>
-          <span>Un ensemble naît avec au moins deux sujets : c'est lui qui portera leur vue transverse. Décris sa frontière, puis celle de chacun de ses sujets.</span>
+      <div class="bloc-ensemble">
+        <div class="field">
+          <label class="label" for="e-nom">
+            <span>Nom de l'ensemble</span>
+            <span class="hint err" id="e-nom-hint" style="display:none">ce nom existe déjà</span>
+          </label>
+          <input type="text" id="e-nom" autocomplete="off" spellcheck="false" maxlength="60" oninput="onNomEnsemble()">
+          <div class="apercu" id="e-nom-apercu" style="display:none"></div>
+        </div>
+        <div class="field">
+          <label class="label" for="e-perim">
+            <span>Périmètre de l'ensemble<button type="button" class="qmark" onclick="popBtn(event, 'ensemble')" aria-label="À quoi sert le périmètre d'un ensemble ?">?</button></span>
+            <span class="hint" id="e-perim-hint">min. 40 caractères</span>
+          </label>
+          <textarea id="e-perim" maxlength="2000" oninput="check()"></textarea>
+          <div class="note">
+            <span class="ico">›</span>
+            <span>Un ensemble naît avec deux sujets : c'est lui qui portera leur vue transverse. Décris sa frontière, puis celle de chacun de ses sujets.</span>
+          </div>
         </div>
       </div>
 
-      <div class="sujet-bloc field">
-        <label class="label" for="s1-nom">
-          <span>Sujet 1 — nom</span>
-          <span class="hint err" id="s1-nom-hint" style="display:none">ce nom existe déjà</span>
-        </label>
-        <div class="pfx">
-          <span class="pfx-sym">#</span>
-          <input type="text" id="s1-nom" autocomplete="off" spellcheck="false" maxlength="60" oninput="onNomSujet(this)">
-        </div>
-      </div>
-      <div class="field">
-        <label class="label" for="s1-perim">
-          Sujet 1 — périmètre
-          <span class="hint" id="s1-perim-hint">min. 40 caractères</span>
-        </label>
-        <textarea id="s1-perim" placeholder="Ce sujet sert à…" maxlength="2000" oninput="check()"></textarea>
-      </div>
+      <div class="fourche" aria-hidden="true"></div>
 
-      <div class="sujet-bloc field">
-        <label class="label" for="s2-nom">
-          <span>Sujet 2 — nom</span>
-          <span class="hint err" id="s2-nom-hint" style="display:none">nom déjà pris, ou identique au sujet 1</span>
-        </label>
-        <div class="pfx">
-          <span class="pfx-sym">#</span>
-          <input type="text" id="s2-nom" autocomplete="off" spellcheck="false" maxlength="60" oninput="onNomSujet(this)">
+      <div class="duo">
+        <div class="s-col">
+          <div class="field">
+            <label class="label" for="s1-nom">
+              <span>Sujet 1 — nom</span>
+              <span class="hint err" id="s1-nom-hint" style="display:none">ce nom existe déjà</span>
+            </label>
+            <div class="pfx">
+              <span class="pfx-sym">#</span>
+              <input type="text" id="s1-nom" autocomplete="off" spellcheck="false" maxlength="60" oninput="onNomSujet(this)">
+            </div>
+            <div class="apercu" id="s1-nom-apercu" style="display:none"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="s1-perim">
+              <span>Sujet 1 — périmètre<button type="button" class="qmark" onclick="popBtn(event, 'sujet')" aria-label="À quoi sert le périmètre ?">?</button></span>
+              <span class="hint" id="s1-perim-hint">min. 40 caractères</span>
+            </label>
+            <textarea id="s1-perim" maxlength="2000" oninput="check()"></textarea>
+          </div>
         </div>
-      </div>
-      <div class="field">
-        <label class="label" for="s2-perim">
-          Sujet 2 — périmètre
-          <span class="hint" id="s2-perim-hint">min. 40 caractères</span>
-        </label>
-        <textarea id="s2-perim" placeholder="Ce sujet sert à…" maxlength="2000" oninput="check()"></textarea>
+
+        <div class="s-col">
+          <div class="field">
+            <label class="label" for="s2-nom">
+              <span>Sujet 2 — nom</span>
+              <span class="hint err" id="s2-nom-hint" style="display:none">nom déjà pris, ou identique au sujet 1</span>
+            </label>
+            <div class="pfx">
+              <span class="pfx-sym">#</span>
+              <input type="text" id="s2-nom" autocomplete="off" spellcheck="false" maxlength="60" oninput="onNomSujet(this)">
+            </div>
+            <div class="apercu" id="s2-nom-apercu" style="display:none"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="s2-perim">
+              <span>Sujet 2 — périmètre<button type="button" class="qmark" onclick="popBtn(event, 'sujet')" aria-label="À quoi sert le périmètre ?">?</button></span>
+              <span class="hint" id="s2-perim-hint">min. 40 caractères</span>
+            </label>
+            <textarea id="s2-perim" maxlength="2000" oninput="check()"></textarea>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -185,6 +238,14 @@
   <div class="footer"><div class="dot"></div><span class="footer-text">système actif · KCP V2</span></div>
 
 </div>
+
+<div class="pop-voile" id="pop-voile" onclick="closePop()"></div>
+<div class="pop" id="pop" role="dialog" aria-modal="true" aria-labelledby="pop-titre">
+  <div class="pop-titre" id="pop-titre"></div>
+  <div class="pop-corps" id="pop-corps"></div>
+  <button class="btn-dark" onclick="closePop()">Compris</button>
+</div>
+
 <script>
   const C = KCP_CONFIG;
 
@@ -228,7 +289,7 @@
     } catch (e) { /* liste indispo : on laisse le backend gérer le 409 */ }
   }
   // Label qui serait créé avec la saisie courante en mode sujet.
-  function currentLabel() { return '#' + nomEl.value.replace(/^-+|-+$/g, ''); }
+  function currentLabel() { return '#' + slugFinal(nomEl.value); }
 
   function setMode(m) {
     mode = m;
@@ -237,33 +298,46 @@
     document.getElementById('f-simple').style.display = m === 'simple' ? '' : 'none';
     document.getElementById('f-ensemble').style.display = m === 'ensemble' ? '' : 'none';
     document.getElementById('page-title').textContent = m === 'simple' ? 'Nouveau sujet' : 'Nouvel ensemble';
+    document.body.classList.toggle('large', m === 'ensemble');
     submitEl.textContent = m === 'simple' ? 'Créer le sujet →' : "Créer l'ensemble →";
     clearErr(); hide('s-success');
     check();
   }
 
-  // Nom d'ensemble : accents retirés, espaces → tirets, mais la casse est
-  // conservée — un ensemble s'appelle Compagnie-de-Phalsbourg, pas #compagnie.
+  // Nom d'ensemble : accents retirés, espaces → tirets, casse stricte —
+  // première lettre en majuscule, tout le reste en minuscules. C'est le
+  // standard : Compagnie-de-phalsbourg, jamais #compagnie.
   function slugifyNoeud(sv) {
     return (sv || '')
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-zA-Z0-9-]+/g, '-')
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, '-')
       .replace(/-{2,}/g, '-')
       .replace(/^-+/, '');
   }
+  // Formes finales : la saisie reste brute dans le champ, la normalisation
+  // s'affiche dans l'aperçu et ne s'applique qu'aux valeurs envoyées.
+  function slugFinal(v) { return slugifyLive(v).replace(/^-+|-+$/g, ''); }
+  function noeudFinal(v) {
+    const f = slugifyNoeud(v).replace(/^-+|-+$/g, '');
+    return f ? f.charAt(0).toUpperCase() + f.slice(1) : '';
+  }
+  function apercuUpd(id, txt) {
+    const el = document.getElementById(id);
+    el.textContent = txt;
+    el.style.display = txt ? '' : 'none';
+  }
   function onNomEnsemble() {
-    const el = document.getElementById('e-nom');
-    const clean = slugifyNoeud(el.value);
-    if (clean !== el.value) el.value = clean;
+    const f = noeudFinal(val('e-nom'));
+    apercuUpd('e-nom-apercu', f);
     check();
   }
   function onNomSujet(el) {
-    const clean = slugifyLive(el.value);
-    if (clean !== el.value) el.value = clean;
+    const f = slugFinal(el.value);
+    apercuUpd(el.id + '-apercu', f ? '#' + f : '');
     check();
   }
   function val(id) { return document.getElementById(id).value; }
-  function trimN(v) { return v.replace(/^-+|-+$/g, ''); }
 
   // Nettoie un texte libre des caractères qui casseraient le JSON de l'automatisation (flux création = jsonString).
   function sanitize(s) { return (s || '').replace(/[\\"]/g, "'").replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim(); }
@@ -280,9 +354,8 @@
   }
 
   function onNom() {
-    const raw = nomEl.value;
-    const clean = slugifyLive(raw);
-    if (clean !== raw) nomEl.value = clean;
+    const f = slugFinal(nomEl.value);
+    apercuUpd('nom-apercu', f ? '#' + f : '');
     check();
   }
 
@@ -299,18 +372,25 @@
     return len >= 40;
   }
 
+  // Le minimum de 40 caractères porte sur ce que l'utilisateur ajoute
+  // après l'amorce, pas sur le champ entier : l'exigence reste la même.
+  function ajoutLen(id, amorce) {
+    const v = val(id);
+    return (v.indexOf(amorce) === 0 ? v.slice(amorce.length) : v).trim().length;
+  }
+
   function check() {
     if (mode === 'simple') {
-      const cleanNom = nomEl.value.replace(/^-+|-+$/g, '');
+      const cleanNom = slugFinal(nomEl.value);
       const nomOk = cleanNom.length >= 2;
-      const perimOk = perimHintUpd('perim-hint', perimEl.value.trim().length);
+      const perimOk = perimHintUpd('perim-hint', ajoutLen('perim', AMORCE_SUJET));
       const dup = nomOk && existingLabels.has(currentLabel().toLowerCase());
       nomHint.style.display = dup ? 'inline' : 'none';
       submitEl.disabled = !(nomOk && perimOk && !dup);
       return;
     }
     // Mode ensemble : trois noms, trois périmètres, zéro collision.
-    const nomN = trimN(val('e-nom')), nomS1 = trimN(val('s1-nom')), nomS2 = trimN(val('s2-nom'));
+    const nomN = noeudFinal(val('e-nom')), nomS1 = slugFinal(val('s1-nom')), nomS2 = slugFinal(val('s2-nom'));
     const dupN = nomN.length >= 2 && existingLabels.has(nomN.toLowerCase());
     const dupS1 = nomS1.length >= 2 && existingLabels.has(('#' + nomS1).toLowerCase());
     const dupS2 = nomS2.length >= 2 && (existingLabels.has(('#' + nomS2).toLowerCase()) || (nomS1 && nomS2 === nomS1));
@@ -319,9 +399,9 @@
     document.getElementById('s2-nom-hint').style.display = dupS2 ? 'inline' : 'none';
     const ok =
       nomN.length >= 2 && nomS1.length >= 2 && nomS2.length >= 2 &&
-      perimHintUpd('e-perim-hint', val('e-perim').trim().length) &&
-      perimHintUpd('s1-perim-hint', val('s1-perim').trim().length) &&
-      perimHintUpd('s2-perim-hint', val('s2-perim').trim().length) &&
+      perimHintUpd('e-perim-hint', ajoutLen('e-perim', AMORCE_ENSEMBLE)) &&
+      perimHintUpd('s1-perim-hint', ajoutLen('s1-perim', AMORCE_SUJET)) &&
+      perimHintUpd('s2-perim-hint', ajoutLen('s2-perim', AMORCE_SUJET)) &&
       !dupN && !dupS1 && !dupS2;
     submitEl.disabled = !ok;
   }
@@ -335,23 +415,23 @@
     const parent_id = val('parent') || 'GCP001';
     let url, payload, okMsg;
     if (mode === 'simple') {
-      // Trim complet des tirets de bordure au moment de l'envoi.
-      const nom_tiroir = nomEl.value.replace(/^-+|-+$/g, '');
+      // La normalisation ne s'applique qu'ici : le champ garde la saisie brute.
+      const nom_tiroir = slugFinal(nomEl.value);
       const perimetre_declare = sanitize(perimEl.value);
-      if (nom_tiroir.length < 2 || perimetre_declare.length < 40) return;
+      if (nom_tiroir.length < 2 || ajoutLen('perim', AMORCE_SUJET) < 40) return;
       if (existingLabels.has(currentLabel().toLowerCase())) { nomHint.style.display = 'inline'; return; }
       url = C.webhooks.creer_tiroir;
       payload = { id_client, nom_tiroir, perimetre_declare, parent_id };
       okMsg = 'Sujet créé, prêt à recevoir vos réunions et vos conversations IA.';
     } else {
-      const nom_noeud = trimN(val('e-nom'));
-      const nom_sujet_1 = trimN(val('s1-nom'));
-      const nom_sujet_2 = trimN(val('s2-nom'));
+      const nom_noeud = noeudFinal(val('e-nom'));
+      const nom_sujet_1 = slugFinal(val('s1-nom'));
+      const nom_sujet_2 = slugFinal(val('s2-nom'));
       const perimetre_noeud = sanitize(val('e-perim'));
       const perimetre_sujet_1 = sanitize(val('s1-perim'));
       const perimetre_sujet_2 = sanitize(val('s2-perim'));
       if (nom_noeud.length < 2 || nom_sujet_1.length < 2 || nom_sujet_2.length < 2) return;
-      if (perimetre_noeud.length < 40 || perimetre_sujet_1.length < 40 || perimetre_sujet_2.length < 40) return;
+      if (ajoutLen('e-perim', AMORCE_ENSEMBLE) < 40 || ajoutLen('s1-perim', AMORCE_SUJET) < 40 || ajoutLen('s2-perim', AMORCE_SUJET) < 40) return;
       if (nom_sujet_1 === nom_sujet_2) return;
       url = C.webhooks.creer_ensemble;
       payload = { id_client, parent_id, nom_noeud, perimetre_noeud,
@@ -387,9 +467,9 @@
       if (typeof kcpInvalidateTiroirs === 'function') kcpInvalidateTiroirs();
       if (mode === 'simple') { existingLabels.add(currentLabel().toLowerCase()); }
       else {
-        existingLabels.add(trimN(val('e-nom')).toLowerCase());
-        existingLabels.add(('#' + trimN(val('s1-nom'))).toLowerCase());
-        existingLabels.add(('#' + trimN(val('s2-nom'))).toLowerCase());
+        existingLabels.add(noeudFinal(val('e-nom')).toLowerCase());
+        existingLabels.add(('#' + slugFinal(val('s1-nom'))).toLowerCase());
+        existingLabels.add(('#' + slugFinal(val('s2-nom'))).toLowerCase());
         loadExisting();   // le nouvel ensemble doit apparaître dans le sélecteur de rattachement
       }
       document.getElementById('s-msg').textContent = okMsg;
@@ -403,6 +483,72 @@
       showErr('Création impossible. Réessaie.');
     }
   }
+
+  // ── Amorces de périmètre : le texte est réellement dans le champ, la
+  // phrase se continue. Reposé si le champ a été entièrement vidé. ──
+  const AMORCE_SUJET = 'Ce sujet couvre ';
+  const AMORCE_ENSEMBLE = 'Cet ensemble couvre ';
+  [['perim', AMORCE_SUJET, 'sujet'],
+   ['s1-perim', AMORCE_SUJET, 'sujet'],
+   ['s2-perim', AMORCE_SUJET, 'sujet'],
+   ['e-perim', AMORCE_ENSEMBLE, 'ensemble']].forEach(function(cfg) {
+    const el = document.getElementById(cfg[0]);
+    el.value = cfg[1];
+    el.addEventListener('focus', function() {
+      if (!el.value.trim()) el.value = cfg[1];
+      if (el.value === cfg[1]) el.setSelectionRange(el.value.length, el.value.length);
+      autoPop(cfg[2]);
+    });
+  });
+
+  // ── Fenêtre d'explication du périmètre : ouverte seule une fois par
+  // variante et par session, et à volonté par le « ? ». ──
+  const POP_TEXTES = {
+    sujet: {
+      titre: 'À quoi sert le périmètre ?',
+      paras: [
+        'Le périmètre dit ce que ce sujet couvre, et surtout ce qu\'il ne couvre pas.',
+        'C\'est avec ce texte que le système trie. Chaque fois qu\'une information arrive, il s\'y réfère pour décider si elle appartient à ce sujet ou à un autre. Il est critique, rien n\'est figé pour autant, tu peux le modifier à tout moment.'
+      ],
+      mauvais: '« Ce sujet couvre le recrutement. »',
+      bon: '« Ce sujet couvre le recrutement des postes commerciaux : définition du besoin, entretiens, décision d\'embauche. Ne couvre pas l\'intégration une fois la personne arrivée. »'
+    },
+    ensemble: {
+      titre: 'À quoi sert le périmètre d\'un ensemble ?',
+      paras: [
+        'Un ensemble regroupe plusieurs sujets. Son périmètre dit ce qui les réunit, pas ce que chacun contient dans le détail.',
+        'C\'est avec ce texte que le système trie. Il s\'y réfère pour savoir ce qui relève de cet ensemble et ce qui reste en dehors. Il est critique, rien n\'est figé pour autant, tu peux le modifier à tout moment.',
+        'Le détail de chaque sujet se déclare juste en dessous, dans son propre périmètre.'
+      ],
+      mauvais: '« Cet ensemble couvre les RH. »',
+      bon: '« Cet ensemble couvre tout ce qui touche aux personnes de l\'entreprise : recrutement, paie, formation. Ne couvre pas les prestataires externes. »'
+    }
+  };
+  function escHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+  function openPop(variante) {
+    const t = POP_TEXTES[variante];
+    document.getElementById('pop-titre').textContent = t.titre;
+    document.getElementById('pop-corps').innerHTML =
+      t.paras.map(function(x){ return '<p>' + escHtml(x) + '</p>'; }).join('') +
+      '<div class="ex-t">Mauvais exemple</div><div class="ex bad">' + escHtml(t.mauvais) + '</div>' +
+      '<div class="ex-t">Bon exemple</div><div class="ex good">' + escHtml(t.bon) + '</div>';
+    document.getElementById('pop-voile').classList.add('on');
+    document.getElementById('pop').classList.add('on');
+  }
+  function closePop() {
+    document.getElementById('pop-voile').classList.remove('on');
+    document.getElementById('pop').classList.remove('on');
+  }
+  function popBtn(e, variante) { e.preventDefault(); e.stopPropagation(); openPop(variante); }
+  function autoPop(variante) {
+    const k = 'kcp_pop_perim_' + variante;
+    try {
+      if (sessionStorage.getItem(k)) return;
+      sessionStorage.setItem(k, '1');
+    } catch (err) { return; }
+    openPop(variante);
+  }
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closePop(); });
 
   loadExisting();
 </script>

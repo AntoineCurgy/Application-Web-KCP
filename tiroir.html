@@ -242,6 +242,7 @@
   const MAX_ADD = 5;
   let secondItems = [];            // liste PCP + ANX (2e menu)
   const selected = new Map();      // key -> item sélectionné
+  const docIds = {};               // nom_tiroir -> doc_int_id (l'automatisation cherche par identifiant)
 
   function keyOf(it){ return it.id || it.nom_tiroir; }
   function isAnx(it){ return (it.type && String(it.type).toUpperCase() === 'ANX') || /^ANX/i.test(it.id || ''); }
@@ -257,7 +258,7 @@
       let pcp, all;
       if (Array.isArray(data)) { pcp = data; all = data; }
       else { pcp = data.pcp || data.principaux || []; all = data.pcp_anx || data.tous || pcp; }
-      pcp.forEach(t => { const o=document.createElement('option'); o.value=t.nom_tiroir; o.textContent='#'+t.nom_tiroir; sel.appendChild(o); });
+      pcp.forEach(t => { docIds[t.nom_tiroir] = t.doc_int_id; const o=document.createElement('option'); o.value=t.nom_tiroir; o.textContent='#'+t.nom_tiroir; sel.appendChild(o); });
       secondItems = all;
     } catch(e) { console.warn('Tiroirs unavailable'); }
   }
@@ -357,7 +358,7 @@
     const liens_additionnels = ajouts.map(a => a.id).filter(Boolean).join('\n');
     const r = await fetch(C.webhooks.prompt, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ client_id:C.client_id, nom_tiroir:sel.value, ajouts, liens_additionnels, llm })
+      body:JSON.stringify({ client_id:C.client_id, doc_int_id:docIds[sel.value], ajouts, liens_additionnels, llm })
     });
     const d = await r.json();
     const raw = d.prompt || d.content || d.text || '';
