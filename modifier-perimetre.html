@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#f6f4ee">
-<title>KCP — Modifier un périmètre</title>
+<title>KCP — Modifier un sujet</title>
 <link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
 <link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
 <script src="./config.js"></script>
@@ -19,13 +19,35 @@
 
   .hint.err { color:#8a2f2f; }
 
-  textarea { width:100%; background:var(--surface2); color:var(--ink); border:1.5px solid var(--border); border-radius:10px; padding:0.85rem 1rem; font-family:var(--font); font-size:14px; font-weight:500; outline:none; resize:none; min-height:150px; line-height:1.5; transition:border-color 0.15s; }
+  /* Espacement : un peu plus d'air entre libellés et champs, et entre blocs. */
+  .card { gap:1.4rem; }
+  .field { gap:0.6rem; }
+  #f-perim, #f-nom { display:flex; flex-direction:column; gap:1.4rem; }
 
-  textarea::placeholder { color:var(--muted); font-weight:400; }
+  input[type=text], textarea { width:100%; background:var(--surface2); color:var(--ink); border:1.5px solid var(--border); border-radius:10px; padding:0.85rem 1rem; font-family:var(--font); font-size:14px; font-weight:500; outline:none; transition:border-color 0.15s; }
 
-  textarea:focus { border-color:var(--ink); background:var(--surface); }
+  input[type=text] { font-size:15px; font-weight:600; }
 
-  textarea:disabled { opacity:0.55; cursor:not-allowed; }
+  textarea { resize:none; min-height:150px; line-height:1.5; }
+
+  input::placeholder, textarea::placeholder { color:var(--muted); font-weight:400; }
+
+  input:focus, textarea:focus { border-color:var(--ink); background:var(--surface); }
+
+  input:disabled, textarea:disabled { opacity:0.55; cursor:not-allowed; }
+
+  /* Deux modes, même motif que Nouveau sujet. */
+  .modes { display:flex; gap:0.5rem; }
+  .mode { flex:1; font-size:13px; font-family:var(--mono); font-weight:500; padding:0.65rem 0.5rem; border-radius:10px;
+    border:1.5px solid var(--border-strong); background:var(--surface); color:var(--ink-soft); cursor:pointer; transition:all 0.15s; }
+  .mode.on { background:var(--dark); border-color:var(--dark); color:var(--accent); }
+
+  .pfx { position:relative; }
+  .pfx-sym { position:absolute; left:1rem; top:50%; transform:translateY(-50%); font-size:15px; font-weight:600; color:var(--ink-soft); pointer-events:none; font-family:var(--mono); }
+  .pfx.avec input { padding-left:1.65rem; font-family:var(--mono); }
+
+  /* Aperçu du nom final, mis à jour à la frappe. */
+  .apercu { font-size:12.5px; font-family:var(--mono); color:var(--muted); word-break:break-all; }
 
   .sel-wrap { position:relative; }
 
@@ -53,8 +75,22 @@
 
   .footer { display:flex; align-items:center; justify-content:center; gap:0.5rem; }
 
+  /* ── Le « ? » du périmètre et sa fenêtre d'explication ── */
+  .qmark { width:17px; height:17px; border-radius:50%; border:1.5px solid var(--border-strong); background:var(--surface); color:var(--ink-soft); font-family:var(--mono); font-size:11px; font-weight:500; line-height:1; cursor:pointer; padding:0; display:inline-flex; align-items:center; justify-content:center; margin-left:0.45rem; vertical-align:-3px; }
+  .qmark:hover { border-color:var(--ink); color:var(--ink); }
+  .pop-voile { position:fixed; inset:0; background:rgba(22,21,15,0.45); z-index:60; display:none; }
+  .pop-voile.on { display:block; }
+  .pop { position:fixed; z-index:61; left:50%; top:50%; transform:translate(-50%,-50%); width:min(480px, calc(100vw - 2.5rem)); max-height:85vh; overflow:auto; background:var(--surface); border:1.5px solid var(--border-strong); border-radius:14px; padding:1.5rem; display:none; flex-direction:column; gap:0.9rem; box-shadow:0 18px 50px rgba(22,21,15,0.25); }
+  .pop.on { display:flex; }
+  .pop-titre { font-size:17px; font-weight:700; }
+  .pop-corps { display:flex; flex-direction:column; gap:0.75rem; font-size:13.5px; line-height:1.55; color:var(--ink-soft); }
+  .pop-corps .ex-t { font-family:var(--mono); font-size:11.5px; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted); margin-bottom:-0.45rem; }
+  .pop-corps .ex { padding:0.7rem 0.85rem; border-radius:8px; font-size:13px; line-height:1.5; }
+  .pop-corps .ex.bad { background:rgba(138,47,47,0.07); border:1px solid rgba(138,47,47,0.2); }
+  .pop-corps .ex.good { background:rgba(77,107,20,0.07); border:1px solid rgba(77,107,20,0.2); }
+
   /* iOS : >=16px sur les champs pour éviter le zoom automatique au focus */
-  @media(max-width:600px){ body{border-radius:0; min-height:100vh} textarea, select{ font-size:16px; } }
+  @media(max-width:600px){ body{border-radius:0; min-height:100vh} input[type=text], textarea, select{ font-size:16px; } }
 </style>
 </head>
 <body>
@@ -63,7 +99,7 @@
   <div>
     <a href="./index.html" class="back">← Retour</a>
     <span class="kcp-tag">KCP — Knowledge Context Protocol</span>
-    <h1 class="page-title">Modifier un périmètre</h1>
+    <h1 class="page-title">Modifier un sujet</h1>
   </div>
 
   <div class="card">
@@ -77,15 +113,42 @@
       </div>
     </div>
 
-    <div class="field">
-      <label class="label" for="perim">
-        Périmètre
-        <span class="hint" id="perim-hint">min. 40 caractères</span>
-      </label>
-      <textarea id="perim" placeholder="Sélectionne d'abord un sujet…" maxlength="2000" oninput="check()" disabled></textarea>
+    <div class="modes">
+      <button class="mode on" id="mode-perim" onclick="setMode('perim')">Périmètre</button>
+      <button class="mode" id="mode-nom" onclick="setMode('nom')">Nom</button>
+    </div>
+
+    <!-- ── MODE PÉRIMÈTRE ── -->
+    <div id="f-perim">
+      <div class="field">
+        <label class="label" for="perim">
+          <span>Périmètre<button type="button" class="qmark" onclick="popBtn(event)" aria-label="À quoi sert le périmètre ?">?</button></span>
+          <span class="hint" id="perim-hint">min. 40 caractères</span>
+        </label>
+        <textarea id="perim" placeholder="Sélectionne d'abord un sujet…" maxlength="2000" oninput="check()" disabled></textarea>
+        <div class="note">
+          <span class="ico">›</span>
+          <span>Décris précisément le sujet couvert. C'est ce texte qui guide le tri de tes infos : un bon périmètre = une mémoire fiable, sans hors-sujet.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MODE NOM ── -->
+    <div id="f-nom" style="display:none">
+      <div class="field">
+        <label class="label" for="nom">
+          <span>Nouveau nom</span>
+          <span class="hint err" id="nom-hint" style="display:none">ce nom existe déjà</span>
+        </label>
+        <div class="pfx avec" id="nom-pfx">
+          <span class="pfx-sym" id="pfx-sym">#</span>
+          <input type="text" id="nom" placeholder="Sélectionne d'abord un sujet…" autocomplete="off" spellcheck="false" maxlength="60" oninput="onNom()" disabled>
+        </div>
+        <div class="apercu" id="nom-apercu" style="display:none"></div>
+      </div>
       <div class="note">
         <span class="ico">›</span>
-        <span>Décris précisément le sujet couvert. C'est ce texte qui guide le tri de tes infos : un bon périmètre = une mémoire fiable, sans hors-sujet.</span>
+        <span>Renommer ne change que le nom affiché. Le sujet garde son identité et tout son historique.</span>
       </div>
     </div>
 
@@ -100,12 +163,20 @@
   </div>
 
   <div class="state success" id="s-success">
-    <span class="s-msg">Périmètre mis à jour.</span>
+    <span class="s-msg" id="s-msg">Périmètre mis à jour.</span>
   </div>
 
   <div class="footer"><div class="dot"></div><span class="footer-text">système actif · KCP V2</span></div>
 
 </div>
+
+<div class="pop-voile" id="pop-voile" onclick="closePop()"></div>
+<div class="pop" id="pop" role="dialog" aria-modal="true" aria-labelledby="pop-titre">
+  <div class="pop-titre" id="pop-titre"></div>
+  <div class="pop-corps" id="pop-corps"></div>
+  <button class="btn-dark" onclick="closePop()">Compris</button>
+</div>
+
 <script>
   const C = KCP_CONFIG;
 
@@ -115,14 +186,25 @@
 
   const sel = document.getElementById('sel');
   const perimEl = document.getElementById('perim');
+  const nomEl = document.getElementById('nom');
   const submitEl = document.getElementById('submit');
   const perimHint = document.getElementById('perim-hint');
+  const nomHint = document.getElementById('nom-hint');
 
-  const items = {};        // doc_int_id -> item {nom_tiroir, type, perimetre_declare, ...}
-  let original = '';       // périmètre actuel du sujet sélectionné
+  const items = {};           // doc_int_id -> item {nom_tiroir, type, perimetre_declare, ...}
+  let existingLabels = new Set();  // tous les labels du client, pour le contrôle de doublon
+  let mode = 'perim';
+  let original = '';          // périmètre actuel du sujet sélectionné
+  let nomOriginal = '';       // nom actuel (sans préfixe) du sujet sélectionné
+  let amorcePerim = '';       // amorce posée si le périmètre était vide ('' sinon)
+
+  const AMORCE_SUJET = 'Ce sujet couvre ';
+  const AMORCE_ENSEMBLE = 'Cet ensemble couvre ';
 
   const dispLabel = (typeof kcpDocLabel === 'function') ? kcpDocLabel
     : function(t){ return '#' + t.nom_tiroir; };
+
+  function isNode(it) { return String((it && it.type) || '').toUpperCase() === 'GCP'; }
 
   async function loadTiroirs() {
     try {
@@ -130,9 +212,13 @@
       let list = Array.isArray(data) ? data : (data.pcp_anx || data.tous || data.pcp || []);
       // Les nœuds sont éditables ici — leur périmètre est human-owned et
       // l'application est son seul chemin d'édition. La racine reste hors
-      // liste : son périmètre est le primer, invariant.
+      // liste : son périmètre est le primer, invariant. Les annexes aussi :
+      // elles sont le débordement d'un sujet, pas un sujet.
       const noeuds = (data && data.gcp ? data.gcp : []).filter(function(t){ return (t.parent || '') !== 'N/A'; });
-      list = noeuds.concat(list);
+      existingLabels = new Set(list.concat(data && data.gcp ? data.gcp : []).map(function(t){
+        return dispLabel(t).toLowerCase();
+      }));
+      list = noeuds.concat(list.filter(function(t){ return String(t.type || '').toUpperCase() !== 'ANX'; }));
       list.forEach(t => {
         if (!t.doc_int_id) return;
         items[t.doc_int_id] = t;
@@ -144,33 +230,109 @@
     } catch(e) { console.warn('Tiroirs unavailable'); }
   }
 
+  function setMode(m) {
+    mode = m;
+    document.getElementById('mode-perim').classList.toggle('on', m === 'perim');
+    document.getElementById('mode-nom').classList.toggle('on', m === 'nom');
+    document.getElementById('f-perim').style.display = m === 'perim' ? '' : 'none';
+    document.getElementById('f-nom').style.display = m === 'nom' ? '' : 'none';
+    submitEl.textContent = m === 'perim' ? 'Mettre à jour →' : 'Renommer →';
+    hideAll();
+    check();
+  }
+
   function onSelect() {
     hideAll();
     const it = items[sel.value];
     sel.classList.toggle('empty', !sel.value);
     if (!it) {
-      perimEl.value = ''; perimEl.disabled = true; original = '';
+      perimEl.value = ''; perimEl.disabled = true; original = ''; amorcePerim = '';
+      nomEl.value = ''; nomEl.disabled = true; nomOriginal = '';
+      apercuUpd('');
     } else {
       original = it.perimetre_declare || '';
-      perimEl.value = original;
+      // Amorce uniquement si le périmètre existant est vide : on ne préfixe
+      // jamais un texte que le client a déjà rédigé.
+      amorcePerim = original.trim() ? '' : (isNode(it) ? AMORCE_ENSEMBLE : AMORCE_SUJET);
+      perimEl.value = original.trim() ? original : amorcePerim;
       perimEl.disabled = false;
+      // Nom courant, sans préfixe : un sujet porte le #, un ensemble non.
+      nomOriginal = it.nom_tiroir || '';
+      nomEl.value = nomOriginal;
+      nomEl.disabled = false;
+      document.getElementById('pfx-sym').style.display = isNode(it) ? 'none' : '';
+      document.getElementById('nom-pfx').classList.toggle('avec', !isNode(it));
+      onNom();
     }
     check();
   }
 
+  /* ── Formes finales des noms : mêmes règles qu'à la création. ── */
+  function slugFinal(v) {
+    return (v || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, '-')
+      .replace(/-{2,}/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+  function noeudFinal(v) {
+    const f = slugFinal(v);
+    return f ? f.charAt(0).toUpperCase() + f.slice(1) : '';
+  }
+  function finalNom() {
+    const it = items[sel.value];
+    return isNode(it) ? noeudFinal(nomEl.value) : slugFinal(nomEl.value);
+  }
+  function finalLabel() {
+    const it = items[sel.value];
+    const f = finalNom();
+    return f ? (isNode(it) ? f : '#' + f) : '';
+  }
+  function apercuUpd(txt) {
+    const el = document.getElementById('nom-apercu');
+    el.textContent = txt;
+    el.style.display = txt ? '' : 'none';
+  }
+  function onNom() {
+    apercuUpd(sel.value ? finalLabel() : '');
+    check();
+  }
+
+  // Le minimum de 40 caractères porte sur ce que le client écrit : si une
+  // amorce a été posée (périmètre vide), elle ne compte pas.
+  function perimLen() {
+    const v = perimEl.value;
+    const reste = (amorcePerim && v.indexOf(amorcePerim) === 0) ? v.slice(amorcePerim.length) : v;
+    return reste.trim().length;
+  }
+
   function check() {
-    const val = perimEl.value.trim();
-    const len = val.length;
-    if (len > 0 && len < 40) {
-      const reste = 40 - len;
-      perimHint.textContent = 'encore ' + reste + ' caractère' + (reste > 1 ? 's' : '');
-      perimHint.classList.add('err');
-    } else {
-      perimHint.textContent = 'min. 40 caractères';
-      perimHint.classList.remove('err');
+    if (mode === 'perim') {
+      nomHint.style.display = 'none';
+      const len = perimLen();
+      if (len > 0 && len < 40) {
+        const reste = 40 - len;
+        perimHint.textContent = 'encore ' + reste + ' caractère' + (reste > 1 ? 's' : '');
+        perimHint.classList.add('err');
+      } else {
+        perimHint.textContent = 'min. 40 caractères';
+        perimHint.classList.remove('err');
+      }
+      // actif si un sujet choisi, périmètre >= 40, ET modifié
+      submitEl.disabled = !(sel.value && len >= 40 && perimEl.value.trim() !== original.trim());
+      return;
     }
-    // actif si un sujet choisi, périmètre >= 40, ET modifié
-    submitEl.disabled = !(sel.value && len >= 40 && val !== original.trim());
+    // Mode nom : forme finale valide, différente du nom actuel, sans
+    // doublon — le label courant du document est exclu du contrôle, pour
+    // qu'un ancien label puisse être normalisé vers sa propre forme stricte.
+    const f = finalNom();
+    const lbl = finalLabel();
+    const it = items[sel.value];
+    const propre = it ? dispLabel(it).toLowerCase() : '';
+    const dup = !!lbl && lbl.toLowerCase() !== propre && existingLabels.has(lbl.toLowerCase());
+    nomHint.style.display = dup ? 'inline' : 'none';
+    submitEl.disabled = !(sel.value && f.length >= 2 && f !== nomOriginal && !dup);
   }
 
   function show(id) { document.getElementById(id).classList.add('on'); }
@@ -179,9 +341,14 @@
   function showErr(m) { const e = document.getElementById('s-error'); e.textContent = m; e.classList.add('on'); }
 
   async function submit() {
+    if (mode === 'perim') return submitPerim();
+    return submitNom();
+  }
+
+  async function submitPerim() {
     const doc_int_id = sel.value;
     const perimetre_declare = perimEl.value.trim();
-    if (!doc_int_id || perimetre_declare.length < 40) return;
+    if (!doc_int_id || perimLen() < 40) return;
 
     hideAll();
     submitEl.style.display = 'none';
@@ -208,14 +375,113 @@
       if (items[doc_int_id]) items[doc_int_id].perimetre_declare = perimetre_declare;
       if (typeof kcpInvalidateTiroirs === 'function') kcpInvalidateTiroirs();
       original = perimetre_declare;
+      amorcePerim = '';
       submitEl.style.display = '';
       submitEl.disabled = true;
+      document.getElementById('s-msg').textContent = 'Périmètre mis à jour.';
       show('s-success');
     } else {
       submitEl.style.display = '';
       showErr('Mise à jour impossible. Réessaie.');
     }
   }
+
+  async function submitNom() {
+    const doc_int_id = sel.value;
+    const it = items[doc_int_id];
+    const nouveau_nom = finalNom();
+    if (!doc_int_id || nouveau_nom.length < 2 || nouveau_nom === nomOriginal) return;
+    const lbl = finalLabel().toLowerCase();
+    if (lbl !== dispLabel(it).toLowerCase() && existingLabels.has(lbl)) { nomHint.style.display = 'inline'; return; }
+
+    hideAll();
+    submitEl.style.display = 'none';
+    show('s-loading');
+
+    let res, data = {};
+    try {
+      res = await fetch(C.webhooks.renommer, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ client_id: id_client, doc_int_id, nouveau_nom })
+      });
+      const raw = await res.text();
+      const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      try { data = JSON.parse(cleaned); } catch (e) { data = {}; }
+    } catch (e) {
+      hide('s-loading'); submitEl.style.display = ''; showErr('Renommage impossible. Réessaie.');
+      return;
+    }
+
+    hide('s-loading');
+
+    if (res.ok && data.success) {
+      // Le référentiel est le foyer du label : l'application reflète tout de
+      // suite, le document du parent suivra à son prochain cycle.
+      existingLabels.delete(dispLabel(it).toLowerCase());
+      it.nom_tiroir = nouveau_nom;
+      existingLabels.add(dispLabel(it).toLowerCase());
+      const opt = sel.querySelector('option[value="' + doc_int_id + '"]');
+      if (opt) opt.textContent = dispLabel(it);
+      nomOriginal = nouveau_nom;
+      nomEl.value = nouveau_nom;
+      onNom();
+      if (typeof kcpInvalidateTiroirs === 'function') kcpInvalidateTiroirs();
+      submitEl.style.display = '';
+      submitEl.disabled = true;
+      document.getElementById('s-msg').textContent = 'Nom mis à jour.';
+      show('s-success');
+    } else if (res.status === 409 || data.error === 'label_exists') {
+      submitEl.style.display = '';
+      showErr('Ce nom existe déjà, choisis-en un autre.');
+    } else {
+      submitEl.style.display = '';
+      showErr('Renommage impossible. Réessaie.');
+    }
+  }
+
+  /* ── Fenêtre d'explication du périmètre, ouverte par le « ? ».
+     La variante suit la nature du sujet sélectionné. ── */
+  const POP_TEXTES = {
+    sujet: {
+      titre: 'À quoi sert le périmètre ?',
+      paras: [
+        'Le périmètre dit ce que ce sujet couvre, et surtout ce qu\'il ne couvre pas.',
+        'C\'est avec ce texte que le système trie. Chaque fois qu\'une information arrive, il s\'y réfère pour décider si elle appartient à ce sujet ou à un autre. Il est critique, rien n\'est figé pour autant, tu peux le modifier à tout moment.'
+      ],
+      mauvais: '« Ce sujet couvre le recrutement. »',
+      bon: '« Ce sujet couvre le recrutement des postes commerciaux : définition du besoin, entretiens, décision d\'embauche. Ne couvre pas l\'intégration une fois la personne arrivée. »'
+    },
+    ensemble: {
+      titre: 'À quoi sert le périmètre d\'un ensemble ?',
+      paras: [
+        'Un ensemble regroupe plusieurs sujets. Son périmètre dit ce qui les réunit, pas ce que chacun contient dans le détail.',
+        'C\'est avec ce texte que le système trie. Il s\'y réfère pour savoir ce qui relève de cet ensemble et ce qui reste en dehors. Il est critique, rien n\'est figé pour autant, tu peux le modifier à tout moment.',
+        'Le détail de chaque sujet se déclare dans son propre périmètre.'
+      ],
+      mauvais: '« Cet ensemble couvre les RH. »',
+      bon: '« Cet ensemble couvre tout ce qui touche aux personnes de l\'entreprise : recrutement, paie, formation. Ne couvre pas les prestataires externes. »'
+    }
+  };
+  function escHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+  function openPop(variante) {
+    const t = POP_TEXTES[variante];
+    document.getElementById('pop-titre').textContent = t.titre;
+    document.getElementById('pop-corps').innerHTML =
+      t.paras.map(function(x){ return '<p>' + escHtml(x) + '</p>'; }).join('') +
+      '<div class="ex-t">Mauvais exemple</div><div class="ex bad">' + escHtml(t.mauvais) + '</div>' +
+      '<div class="ex-t">Bon exemple</div><div class="ex good">' + escHtml(t.bon) + '</div>';
+    document.getElementById('pop-voile').classList.add('on');
+    document.getElementById('pop').classList.add('on');
+  }
+  function closePop() {
+    document.getElementById('pop-voile').classList.remove('on');
+    document.getElementById('pop').classList.remove('on');
+  }
+  function popBtn(e) {
+    e.preventDefault(); e.stopPropagation();
+    openPop(isNode(items[sel.value]) ? 'ensemble' : 'sujet');
+  }
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closePop(); });
 
   loadTiroirs();
 </script>

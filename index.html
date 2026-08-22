@@ -145,7 +145,7 @@
       </a>
     </div>
     <div class="group">
-      <div class="group-hdr">Ma mémoire</div>
+      <div class="group-hdr">Mon Univers</div>
       <a href="./informations-capturees.html" class="group-row">
         <span class="row-main">
           <span class="row-title">Informations capturées</span>
@@ -163,8 +163,8 @@
       </a>
       <a href="./carte-sujets.html" class="group-row">
         <span class="row-main">
-          <span class="row-title">Carte des sujets</span>
-          <span class="row-sub">la hiérarchie de tes sujets et leurs liaisons</span>
+          <span class="row-title">Carte</span>
+          <span class="row-sub">la hiérarchie de tes sujets et leurs relations</span>
         </span>
         <span class="row-arr">→</span>
       </a>
@@ -180,8 +180,8 @@
       </a>
       <a href="./modifier-perimetre.html" class="group-row">
         <span class="row-main">
-          <span class="row-title">Modifier un périmètre</span>
-          <span class="row-sub">mettre à jour le périmètre d'un sujet</span>
+          <span class="row-title">Modifier un sujet</span>
+          <span class="row-sub">corriger le périmètre ou le nom d'un sujet</span>
         </span>
         <span class="row-arr">→</span>
       </a>
@@ -191,10 +191,6 @@
   <div class="groups-2">
   <div class="group">
     <div class="group-hdr">Notion</div>
-    <a id="n-tiroirs" href="#" class="notion-row" target="_blank" rel="noopener">
-      <div class="notion-left"><span>🗂</span><span class="notion-label">Mes sujets</span></div>
-      <span class="notion-arr">→</span>
-    </a>
     <a id="n-reunions" href="#" class="notion-row" target="_blank" rel="noopener">
       <div class="notion-left"><span>📋</span><span class="notion-label">Réunions</span></div>
       <span class="notion-arr">→</span>
@@ -218,7 +214,6 @@
 
 <script>
   document.getElementById('c-name').textContent = KCP_CONFIG.client_name;
-  if (KCP_CONFIG.notion.tiroirs)  document.getElementById('n-tiroirs').href = kcpNotionHref(KCP_CONFIG.notion.tiroirs);
   if (KCP_CONFIG.notion.reunions) document.getElementById('n-reunions').href = kcpNotionHref(KCP_CONFIG.notion.reunions);
   if (KCP_CONFIG.guide)           document.getElementById('n-guide').href    = KCP_CONFIG.guide;
   document.title = 'KCP — ' + KCP_CONFIG.client_name;
