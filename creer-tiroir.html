@@ -52,25 +52,39 @@
      visible avant la création, jamais subie après. */
   .apercu { font-size:12.5px; font-family:var(--mono); color:var(--muted); word-break:break-all; }
 
+  /* L'en-tête du formulaire existe dans les deux modes : sa largeur ne suit
+     pas l'élargissement de la carte, sinon il sauterait à chaque bascule. */
+  .modes, .card > .field { width:100%; max-width:485px; align-self:center; }
+
   /* ── Mode ensemble : l'ensemble en panneau teinté, la fourchette CSS,
      les deux sujets côte à côte (desktop). ── */
   body.large { max-width:940px; }
-  .bloc-ensemble { background:var(--surface2); border:1.5px solid var(--border-strong); border-radius:12px; padding:1.15rem; }
+  /* Le panneau se cale sur les boutons de mode, ses champs sur une colonne
+     de sujet : les deux alignements verticaux tombent juste ensemble. */
+  .bloc-ensemble { background:var(--surface2); border:1.5px solid var(--border-strong); border-radius:12px; padding:1.15rem;
+    width:100%; max-width:485px; align-self:center; }
+  .bloc-ensemble .field { width:min(400.5px, 100%); align-self:center; }
   .bloc-ensemble input, .bloc-ensemble textarea { background:var(--surface); }
   .duo { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
-  .fourche { height:30px; position:relative; margin:-0.4rem 0; }
-  .fourche::before { content:''; position:absolute; left:50%; top:0; height:15px; border-left:1.5px solid var(--border-strong); }
-  .fourche::after { content:''; position:absolute; top:15px; left:calc((100% - 1.5rem) / 4); right:calc((100% - 1.5rem) / 4); border-top:1.5px solid var(--border-strong); }
-  .s-col { position:relative; }
-  .s-col::before { content:''; position:absolute; left:50%; top:-15.4px; height:15px; border-left:1.5px solid var(--border-strong); }
+  /* La fourchette occupe tout l'espace entre le panneau et les deux blocs
+     (les marges négatives annulent l'écart de la colonne). Barre et jambes
+     sont les bords d'une SEULE boîte : elles ne peuvent pas se détacher. */
+  .fourche { height:62px; position:relative; margin:-1.4rem 0; }
+  .fourche::before { content:''; position:absolute; left:50%; top:0; height:31px; border-left:1.5px solid var(--border-strong); }
+  .fourche::after { content:''; position:absolute; top:31px; bottom:0;
+    left:calc((100% - 1.5rem) / 4); right:calc((100% - 1.5rem) / 4);
+    border:1.5px solid var(--border-strong); border-bottom:0; }
   @media(max-width:860px){
     .duo { grid-template-columns:1fr; }
-    .fourche, .s-col::before { display:none; }
+    .fourche { display:none; }
     .s-col { border-top:1px solid var(--border); padding-top:1.15rem; }
   }
 
   /* ── Le « ? » du périmètre et sa fenêtre d'explication ── */
-  .qmark { width:17px; height:17px; border-radius:50%; border:1.5px solid var(--border-strong); background:var(--surface); color:var(--ink-soft); font-family:var(--mono); font-size:11px; font-weight:500; line-height:1; cursor:pointer; padding:0; display:inline-flex; align-items:center; justify-content:center; margin-left:0.45rem; vertical-align:-3px; }
+  /* Le libellé centre lui-même son « ? » : aucun décalage codé en dur, donc
+     juste quelle que soit la police. */
+  .label > span:first-child { display:inline-flex; align-items:center; gap:0.45rem; }
+  .qmark { width:17px; height:17px; border-radius:50%; border:1.5px solid var(--border-strong); background:var(--surface); color:var(--ink-soft); font-family:var(--mono); font-size:11px; font-weight:500; line-height:1; cursor:pointer; padding:0; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
   .qmark:hover { border-color:var(--ink); color:var(--ink); }
   .pop-voile { position:fixed; inset:0; background:rgba(22,21,15,0.45); z-index:60; display:none; }
   .pop-voile.on { display:block; }
