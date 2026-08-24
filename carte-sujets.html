@@ -396,7 +396,9 @@
 
     // ── Nœuds : pastille d'en-tête pour les porteurs, ligne pour les sujets ──
     nodes.forEach(function(n){
-      const comp = n.children.length > 0;
+      // La nature vient de l'identifiant, jamais du nombre d'enfants :
+      // un noeud vide de ses enfants reste un noeud.
+      const comp = String(n.id || '').indexOf('GCP') === 0;
       const cls = 'noeud' + (comp ? ' composite' : '') + (n._racine ? ' racine' : '') + (n._cl != null ? ' enmassif' : '');
       let cx, cy, tx;
       if (enTete(n)) { cx = n._hdx; cy = n._hy; tx = cx + 13; }
@@ -436,7 +438,9 @@
     // ── Liste indentée (mobile) : même hiérarchie, mêmes massifs, même fiche ──
     let html = '';
     (function walk(n, prefix){
-      const comp = n.children.length > 0;
+      // La nature vient de l'identifiant, jamais du nombre d'enfants :
+      // un noeud vide de ses enfants reste un noeud.
+      const comp = String(n.id || '').indexOf('GCP') === 0;
       html += '<a class="li-row' + (comp ? ' composite' : '') + (n._cl != null ? ' massif' : '') + '" data-id="' + esc(n.id) + '">' +
         '<span class="li-branche">' + prefix + '</span>' +
         '<span class="li-nom">' + esc(n.label) + '</span></a>';
