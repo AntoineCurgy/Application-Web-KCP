@@ -119,6 +119,7 @@
     <div class="modes">
       <button class="mode on" id="mode-perim" onclick="setMode('perim')">Périmètre</button>
       <button class="mode" id="mode-nom" onclick="setMode('nom')">Nom</button>
+      <button class="mode" id="mode-depl" onclick="setMode('depl')">Déplacer</button>
     </div>
 
     <!-- ── MODE PÉRIMÈTRE ── -->
@@ -152,6 +153,26 @@
       <div class="note">
         <span class="ico">›</span>
         <span>Renommer ne change que le nom affiché. Le sujet garde son identité et tout son historique.</span>
+      </div>
+    </div>
+
+    <!-- ── MODE DÉPLACER ── -->
+    <div id="f-depl" style="display:none">
+      <div class="field">
+        <label class="label" for="parent">
+          <span>Nouvel ensemble parent</span>
+          <span class="hint err" id="depl-hint" style="display:none">un ensemble ne se déplace pas</span>
+        </label>
+        <div class="sel-wrap">
+          <select id="parent" class="empty" onchange="check()" disabled>
+            <option value="">— choisir un ensemble —</option>
+          </select>
+          <span class="arr">▾</span>
+        </div>
+      </div>
+      <div class="note">
+        <span class="ico">›</span>
+        <span>Le sujet change de place, rien d'autre : il garde son identité, son contenu et son historique. Si le déplacement t'oblige à réécrire le périmètre, ce n'était pas un déplacement.</span>
       </div>
     </div>
 
@@ -193,6 +214,8 @@
   const submitEl = document.getElementById('submit');
   const perimHint = document.getElementById('perim-hint');
   const nomHint = document.getElementById('nom-hint');
+  const parentEl = document.getElementById('parent');
+  const deplHint = document.getElementById('depl-hint');
 
   const items = {};           // doc_int_id -> item {nom_tiroir, type, perimetre_declare, ...}
   let existingLabels = new Set();  // tous les labels du client, pour le contrôle de doublon
@@ -200,6 +223,7 @@
   let original = '';          // périmètre actuel du sujet sélectionné
   let nomOriginal = '';       // nom actuel (sans préfixe) du sujet sélectionné
   let amorcePerim = '';       // amorce posée si le périmètre était vide ('' sinon)
+  let noeudsTous = [];        // tous les ensembles, racine comprise : cibles de rattachement
 
   const AMORCE_SUJET = 'Ce sujet couvre ';
   const AMORCE_ENSEMBLE = 'Cet ensemble couvre ';
@@ -217,6 +241,7 @@
       // l'application est son seul chemin d'édition. La racine reste hors
       // liste : son périmètre est le primer, invariant. Les annexes aussi :
       // elles sont le débordement d'un sujet, pas un sujet.
+      noeudsTous = (data && data.gcp ? data.gcp : []).slice();
       const noeuds = (data && data.gcp ? data.gcp : []).filter(function(t){ return (t.parent || '') !== 'N/A'; });
       existingLabels = new Set(list.concat(data && data.gcp ? data.gcp : []).map(function(t){
         return dispLabel(t).toLowerCase();
@@ -235,11 +260,11 @@
 
   function setMode(m) {
     mode = m;
-    document.getElementById('mode-perim').classList.toggle('on', m === 'perim');
-    document.getElementById('mode-nom').classList.toggle('on', m === 'nom');
-    document.getElementById('f-perim').style.display = m === 'perim' ? '' : 'none';
-    document.getElementById('f-nom').style.display = m === 'nom' ? '' : 'none';
-    submitEl.textContent = m === 'perim' ? 'Mettre à jour →' : 'Renommer →';
+    ['perim','nom','depl'].forEach(function(k){
+      document.getElementById('mode-' + k).classList.toggle('on', m === k);
+      document.getElementById('f-' + k).style.display = m === k ? '' : 'none';
+    });
+    submitEl.textContent = m === 'perim' ? 'Mettre à jour →' : (m === 'nom' ? 'Renommer →' : 'Déplacer →');
     hideAll();
     check();
   }
@@ -267,7 +292,29 @@
       document.getElementById('nom-pfx').classList.toggle('avec', !isNode(it));
       onNom();
     }
+    majParents();
     check();
+  }
+
+  /* ── Cibles de rattachement : tous les ensembles sauf le parent actuel.
+     Un ensemble ne se déplace pas — la profondeur de sa descendance devrait
+     être recalculée —, donc la liste reste vide pour un ensemble. ── */
+  function majParents() {
+    const it = items[sel.value];
+    parentEl.innerHTML = '<option value="">— choisir un ensemble —</option>';
+    const bloque = !it || isNode(it);
+    deplHint.style.display = (it && isNode(it)) ? 'inline' : 'none';
+    parentEl.disabled = bloque;
+    parentEl.classList.add('empty');
+    if (bloque) return;
+    noeudsTous
+      .filter(function(n){ return n.doc_int_id && n.doc_int_id !== (it.parent || ''); })
+      .forEach(function(n){
+        const o = document.createElement('option');
+        o.value = n.doc_int_id;
+        o.textContent = dispLabel(n);
+        parentEl.appendChild(o);
+      });
   }
 
   /* ── Formes finales des noms : mêmes règles qu'à la création. ── */
@@ -311,6 +358,12 @@
   }
 
   function check() {
+    if (mode === 'depl') {
+      const it = items[sel.value];
+      parentEl.classList.toggle('empty', !parentEl.value);
+      submitEl.disabled = !(sel.value && it && !isNode(it) && parentEl.value);
+      return;
+    }
     if (mode === 'perim') {
       nomHint.style.display = 'none';
       const len = perimLen();
@@ -345,7 +398,51 @@
 
   async function submit() {
     if (mode === 'perim') return submitPerim();
+    if (mode === 'depl') return submitDeplacer();
     return submitNom();
+  }
+
+  async function submitDeplacer() {
+    const doc_int_id = sel.value;
+    const nouveau_parent_id = parentEl.value;
+    const it = items[doc_int_id];
+    if (!doc_int_id || !nouveau_parent_id || !it || isNode(it)) return;
+
+    hideAll();
+    submitEl.style.display = 'none';
+    show('s-loading');
+
+    let res, data = {};
+    try {
+      res = await fetch(C.webhooks.deplacer, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ id_client, doc_int_id, nouveau_parent_id })
+      });
+      const raw = await res.text();
+      const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      try { data = JSON.parse(cleaned); } catch (e) { data = {}; }
+    } catch (e) {
+      hide('s-loading'); submitEl.style.display = ''; showErr('Déplacement impossible. Réessaie.');
+      return;
+    }
+
+    hide('s-loading');
+    submitEl.style.display = '';
+
+    if (res.ok && data.success) {
+      // Le référentiel est le foyer de la topologie : on reflète tout de
+      // suite, les cartes des deux nœuds suivront à leur prochain cycle.
+      it.parent = nouveau_parent_id;
+      if (typeof kcpInvalidateTiroirs === 'function') kcpInvalidateTiroirs();
+      majParents();
+      submitEl.disabled = true;
+      document.getElementById('s-msg').textContent = 'Sujet rattaché. Les cartes des deux ensembles seront à jour au prochain cycle.';
+      show('s-success');
+    } else if (data.error === 'noeud_non_deplacable' || data.error === 'racine_intouchable') {
+      showErr(data.message || 'Ce document ne peut pas être déplacé.');
+    } else {
+      showErr('Déplacement impossible. Réessaie.');
+    }
   }
 
   async function submitPerim() {

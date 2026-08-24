@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f6f4ee">
+<title>KCP — Restructurer un sujet</title>
+<link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
+<link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
+<script src="./config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./kcp.css">
+<style>
+  body { background:var(--bg); color:var(--ink); font-family:var(--font); max-width:600px; margin:0 auto;  min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:2.5rem 2rem 3rem; }
+
+  .back { display:inline-flex; align-items:center; gap:0.4rem; font-size:13px; font-family:var(--mono); font-weight:500; color:var(--ink-soft); text-decoration:none; padding:0.45rem 0.9rem; border:1.5px solid var(--border-strong); border-radius:100px; background:var(--surface); transition:all 0.15s; align-self:flex-start; margin-bottom:1.4rem; }
+
+  .label { font-size:12px; font-family:var(--mono); color:var(--ink); letter-spacing:0.08em; text-transform:uppercase; font-weight:500; display:flex; align-items:center; justify-content:space-between; }
+
+  .hint.err { color:#8a2f2f; }
+
+  /* Espacement : un peu plus d'air entre libellés et champs, et entre blocs. */
+  .card { gap:1.4rem; }
+  .field { gap:0.6rem; }
+  #f-perim, #f-nom { display:flex; flex-direction:column; gap:1.4rem; }
+
+  input[type=text], textarea { width:100%; background:var(--surface2); color:var(--ink); border:1.5px solid var(--border); border-radius:10px; padding:0.85rem 1rem; font-family:var(--font); font-size:14px; font-weight:500; outline:none; transition:border-color 0.15s; }
+
+  input[type=text] { font-size:15px; font-weight:600; }
+
+  textarea { resize:none; min-height:150px; line-height:1.5; }
+
+  input::placeholder, textarea::placeholder { color:var(--muted); font-weight:400; }
+
+  input:focus, textarea:focus { border-color:var(--ink); background:var(--surface); }
+
+  input:disabled, textarea:disabled { opacity:0.55; cursor:not-allowed; }
+
+  /* Deux modes, même motif que Nouveau sujet. */
+  .modes { display:flex; gap:0.5rem; }
+  .mode { flex:1; font-size:13px; font-family:var(--mono); font-weight:500; padding:0.65rem 0.5rem; border-radius:10px;
+    border:1.5px solid var(--border-strong); background:var(--surface); color:var(--ink-soft); cursor:pointer; transition:all 0.15s; }
+  .mode.on { background:var(--dark); border-color:var(--dark); color:var(--accent); }
+
+  .pfx { position:relative; }
+  .pfx-sym { position:absolute; left:1rem; top:50%; transform:translateY(-50%); font-size:15px; font-weight:600; color:var(--ink-soft); pointer-events:none; font-family:var(--mono); }
+  .pfx.avec input { padding-left:1.65rem; font-family:var(--mono); }
+
+  /* Aperçu du nom final, mis à jour à la frappe. */
+  .apercu { font-size:12.5px; font-family:var(--mono); color:var(--muted); word-break:break-all; }
+
+  .sel-wrap { position:relative; }
+
+  select { width:100%; background:var(--surface2); color:var(--ink); border:1.5px solid var(--border); border-radius:10px; padding:0.85rem 2.5rem 0.85rem 1rem; font-family:var(--mono); font-size:14px; font-weight:500; appearance:none; cursor:pointer; outline:none; transition:border-color 0.15s; }
+
+  select.empty { color:var(--muted); }
+
+  select:focus { border-color:var(--ink); background:var(--surface); }
+
+  .arr { position:absolute; right:1rem; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--ink-soft); font-size:12px; }
+
+  .state { display:none; }
+
+  .state.on { display:flex; }
+
+  .loading { align-items:center; gap:0.75rem; padding:1rem; background:var(--surface2); border:1.5px solid var(--border); border-radius:10px; }
+
+  .spinner { width:16px; height:16px; border:2px solid var(--border-strong); border-top-color:var(--ink); border-radius:50%; animation:spin 0.7s linear infinite; flex-shrink:0; }
+
+  .success { flex-direction:column; gap:0.6rem; padding:1.25rem; background:var(--dark); border:1.5px solid var(--dark-border); border-radius:10px; position:relative; overflow:hidden; }
+
+  .s-msg { font-size:14px; font-family:var(--mono); color:var(--dark-text); }
+
+  .error-state.on { display:block; }
+
+  .footer { display:flex; align-items:center; justify-content:center; gap:0.5rem; }
+
+  /* ── Le « ? » du périmètre et sa fenêtre d'explication ── */
+  /* Le libellé centre lui-même son « ? » : aucun décalage codé en dur, donc
+     juste quelle que soit la police. */
+  .label > span:first-child { display:inline-flex; align-items:center; gap:0.45rem; }
+  .qmark { width:17px; height:17px; border-radius:50%; border:1.5px solid var(--border-strong); background:var(--surface); color:var(--ink-soft); font-family:var(--mono); font-size:11px; font-weight:500; line-height:1; cursor:pointer; padding:0; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .qmark:hover { border-color:var(--ink); color:var(--ink); }
+  .pop-voile { position:fixed; inset:0; background:rgba(22,21,15,0.45); z-index:60; display:none; }
+  .pop-voile.on { display:block; }
+  .pop { position:fixed; z-index:61; left:50%; top:50%; transform:translate(-50%,-50%); width:min(480px, calc(100vw - 2.5rem)); max-height:85vh; overflow:auto; background:var(--surface); border:1.5px solid var(--border-strong); border-radius:14px; padding:1.5rem; display:none; flex-direction:column; gap:0.9rem; box-shadow:0 18px 50px rgba(22,21,15,0.25); }
+  .pop.on { display:flex; }
+  .pop-titre { font-size:17px; font-weight:700; }
+  .pop-corps { display:flex; flex-direction:column; gap:0.75rem; font-size:13.5px; line-height:1.55; color:var(--ink-soft); }
+  .pop-corps .ex-t { font-family:var(--mono); font-size:11.5px; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted); margin-bottom:-0.45rem; }
+  .pop-corps .ex { padding:0.7rem 0.85rem; border-radius:8px; font-size:13px; line-height:1.5; }
+  .pop-corps .ex.bad { background:rgba(138,47,47,0.07); border:1px solid rgba(138,47,47,0.2); }
+  .pop-corps .ex.good { background:rgba(77,107,20,0.07); border:1px solid rgba(77,107,20,0.2); }
+
+  /* iOS : >=16px sur les champs pour éviter le zoom automatique au focus */
+  @media(max-width:600px){ body{border-radius:0; min-height:100vh} input[type=text], textarea, select{ font-size:16px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <a href="./index.html" class="back">← Retour</a>
+    <span class="kcp-tag">KCP — Knowledge Context Protocol</span>
+    <h1 class="page-title">Restructurer un sujet</h1>
+  </div>
+
+  <div class="card">
+    <div class="modes">
+      <button class="mode on" id="mode-scinder" onclick="setMode('scinder')">Scinder</button>
+      <button class="mode" id="mode-fusionner" onclick="setMode('fusionner')">Fusionner</button>
+      <button class="mode" id="mode-archiver" onclick="setMode('archiver')">Archiver</button>
+    </div>
+
+    <div class="note" style="margin-bottom:1.2rem">
+      <span class="ico">›</span>
+      <span id="intro-txt">Ces trois gestes créent ou retirent des documents. Le sujet d'origine est archivé, jamais supprimé, et son identifiant n'est jamais réattribué.</span>
+    </div>
+
+    <div class="field">
+      <label class="label" for="src1"><span id="lbl-src1">Sujet à scinder</span></label>
+      <div class="sel-wrap">
+        <select id="src1" class="empty" onchange="onSrc()"><option value="">— choisir un sujet —</option></select>
+        <span class="arr">▾</span>
+      </div>
+    </div>
+
+    <div class="field" id="f-src2" style="display:none">
+      <label class="label" for="src2">
+        <span>Second sujet à fusionner</span>
+        <span class="hint err" id="src2-hint" style="display:none">choisis deux sujets différents</span>
+      </label>
+      <div class="sel-wrap">
+        <select id="src2" class="empty" onchange="check()"><option value="">— choisir un sujet —</option></select>
+        <span class="arr">▾</span>
+      </div>
+      <div class="note">
+        <span class="ico">›</span>
+        <span>Une fusion ne prend que deux sujets à la fois : elle additionne les volumes. Pour en fusionner trois, fusionne deux fois — la première passe compresse avant la seconde.</span>
+      </div>
+    </div>
+
+    <!-- ── SCINDER ── -->
+    <div id="f-scinder">
+      <div class="field">
+        <label class="label"><span>Forme du découpage</span></label>
+        <div class="modes">
+          <button class="mode on" id="forme-plat" onclick="setForme('plat')">Sujets frères</button>
+          <button class="mode" id="forme-noeud" onclick="setForme('noeud')">Sous un nouvel ensemble</button>
+        </div>
+        <div class="note">
+          <span class="ico">›</span>
+          <span id="forme-txt">Les nouveaux sujets prennent la place de l'ancien, au même niveau, sous le même ensemble parent.</span>
+        </div>
+      </div>
+
+      <div id="bloc-noeud" style="display:none">
+        <div class="field">
+          <label class="label" for="n-nom"><span>Nom de l'ensemble</span><span class="hint err" id="n-nom-hint" style="display:none">ce nom existe déjà</span></label>
+          <div class="pfx" id="n-pfx"><input type="text" id="n-nom" placeholder="ex. Yardi" autocomplete="off" spellcheck="false" maxlength="60" oninput="check()"></div>
+          <div class="apercu" id="n-apercu" style="display:none"></div>
+        </div>
+        <div class="field">
+          <label class="label" for="n-perim"><span>Périmètre de l'ensemble</span><span class="hint" id="n-perim-hint">min. 40 caractères</span></label>
+          <textarea id="n-perim" placeholder="Ce que ce nouvel ensemble borne…" maxlength="2000" oninput="check()"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CIBLES ── -->
+    <div id="f-cibles">
+      <div id="cibles"></div>
+      <button class="mode" id="btn-add" onclick="addCible()" style="width:100%;margin-bottom:1.2rem">+ ajouter un sujet</button>
+    </div>
+
+    <!-- ── ARCHIVER ── -->
+    <div id="f-archiver" style="display:none">
+      <div class="note">
+        <span class="ico">›</span>
+        <span>Le sujet quitte la carte de son ensemble et cesse d'être mis à jour. Sa page reste lisible, avec une dernière ligne qui date son archivage. Rien n'est supprimé.</span>
+      </div>
+    </div>
+
+    <button class="btn-dark" id="submit" onclick="submit()" disabled>Restructurer →</button>
+
+    <div class="state loading" id="s-loading">
+      <div class="spinner"></div>
+      <span class="loading-txt">Restructuration en cours…</span>
+    </div>
+
+    <div class="error-state" id="s-error"></div>
+  </div>
+
+  <div class="state success" id="s-success">
+    <span class="s-msg" id="s-msg"></span>
+  </div>
+
+  <div class="footer"><div class="dot"></div><span class="footer-text">système actif · KCP V2</span></div>
+
+</div>
+
+<script>
+  const C = KCP_CONFIG;
+  const id_client = C.client_id;
+
+  const sel1 = document.getElementById('src1');
+  const sel2 = document.getElementById('src2');
+  const submitEl = document.getElementById('submit');
+
+  const items = {};
+  let existingLabels = new Set();
+  let mode = 'scinder';
+  let forme = 'plat';
+  let nCibles = 0;
+
+  const dispLabel = (typeof kcpDocLabel === 'function') ? kcpDocLabel
+    : function(t){ return '#' + t.nom_tiroir; };
+  function isNode(it) { return String((it && it.type) || '').toUpperCase() === 'GCP'; }
+
+  /* ── Mêmes règles de nom qu'à la création et au renommage. ── */
+  function slugFinal(v) {
+    return (v || '')
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, '-')
+      .replace(/-{2,}/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+  function noeudFinal(v) { const f = slugFinal(v); return f ? f.charAt(0).toUpperCase() + f.slice(1) : ''; }
+
+  async function loadTiroirs() {
+    try {
+      const data = await kcpLoadTiroirs();
+      const list = Array.isArray(data) ? data : (data.pcp_anx || data.tous || data.pcp || []);
+      const gcp  = (data && data.gcp) ? data.gcp : [];
+      existingLabels = new Set(list.concat(gcp).map(function(t){ return dispLabel(t).toLowerCase(); }));
+      // Seuls les sujets terminaux se restructurent. Un ensemble ne se scinde
+      // pas et deux ensembles ne se fusionnent pas : ces gestes demanderaient
+      // de redistribuer des enfants, ce que le système ne sait pas encore faire.
+      list.filter(function(t){ return String(t.type || '').toUpperCase() === 'PCP'; })
+          .forEach(function(t){
+            if (!t.doc_int_id) return;
+            items[t.doc_int_id] = t;
+            [sel1, sel2].forEach(function(s){
+              const o = document.createElement('option');
+              o.value = t.doc_int_id; o.textContent = dispLabel(t);
+              s.appendChild(o);
+            });
+          });
+    } catch(e) { console.warn('Tiroirs unavailable'); }
+  }
+
+  function setMode(m) {
+    mode = m;
+    ['scinder','fusionner','archiver'].forEach(function(k){
+      document.getElementById('mode-' + k).classList.toggle('on', m === k);
+    });
+    document.getElementById('f-scinder').style.display  = m === 'scinder' ? '' : 'none';
+    document.getElementById('f-archiver').style.display = m === 'archiver' ? '' : 'none';
+    document.getElementById('f-src2').style.display     = m === 'fusionner' ? '' : 'none';
+    document.getElementById('f-cibles').style.display   = m === 'archiver' ? 'none' : '';
+    document.getElementById('btn-add').style.display    = m === 'scinder' ? '' : 'none';
+    document.getElementById('lbl-src1').textContent =
+      m === 'scinder' ? 'Sujet à scinder' : (m === 'fusionner' ? 'Premier sujet à fusionner' : 'Sujet à archiver');
+    document.getElementById('intro-txt').textContent =
+      m === 'scinder'  ? "Le sujet d'origine est archivé et chaque nouveau sujet reçoit une copie intégrale de son contenu. C'est son périmètre qui décidera de ce qu'il garde, au prochain cycle."
+    : m === 'fusionner'? "Les deux sujets sont archivés et le nouveau reçoit la concaténation de leurs contenus. Les contradictions entre les deux ne seront pas arbitrées : elles partiront en points à clarifier."
+    :                    "Le sujet quitte la carte de son ensemble et cesse d'être mis à jour. Rien n'est supprimé.";
+    // Une fusion produit exactement un sujet ; une scission au moins deux.
+    resetCibles(m === 'fusionner' ? 1 : 2);
+    hideAll(); check();
+  }
+
+  function setForme(f) {
+    forme = f;
+    document.getElementById('forme-plat').classList.toggle('on', f === 'plat');
+    document.getElementById('forme-noeud').classList.toggle('on', f === 'noeud');
+    document.getElementById('bloc-noeud').style.display = f === 'noeud' ? '' : 'none';
+    document.getElementById('forme-txt').textContent = f === 'plat'
+      ? "Les nouveaux sujets prennent la place de l'ancien, au même niveau, sous le même ensemble parent."
+      : "Un ensemble est créé à la place de l'ancien sujet, et les nouveaux sujets deviennent ses enfants.";
+    check();
+  }
+
+  /* ── Cibles : chaque nouveau sujet est un nom et un périmètre. ── */
+  function cibleHTML(i) {
+    return '<div class="field" data-cible="' + i + '">'
+      + '<label class="label"><span>Nouveau sujet ' + i + '</span>'
+      + '<span class="hint err" id="c-hint-' + i + '" style="display:none">nom déjà utilisé</span></label>'
+      + '<div class="pfx avec"><span class="pfx-sym">#</span>'
+      + '<input type="text" id="c-nom-' + i + '" placeholder="nom du sujet" autocomplete="off" spellcheck="false" maxlength="60" oninput="check()"></div>'
+      + '<div class="apercu" id="c-apercu-' + i + '" style="display:none"></div>'
+      + '<textarea id="c-perim-' + i + '" placeholder="Périmètre de ce sujet…" maxlength="2000" oninput="check()" style="margin-top:0.6rem"></textarea>'
+      + '</div>';
+  }
+  function resetCibles(n) {
+    document.getElementById('cibles').innerHTML = '';
+    nCibles = 0;
+    for (let k = 0; k < n; k++) addCible();
+  }
+  function addCible() {
+    nCibles += 1;
+    document.getElementById('cibles').insertAdjacentHTML('beforeend', cibleHTML(nCibles));
+    check();
+  }
+
+  function lireCibles() {
+    const out = [];
+    for (let i = 1; i <= nCibles; i++) {
+      const nomEl = document.getElementById('c-nom-' + i);
+      const perEl = document.getElementById('c-perim-' + i);
+      if (!nomEl) continue;
+      out.push({ i: i, nom: slugFinal(nomEl.value), label: slugFinal(nomEl.value) ? '#' + slugFinal(nomEl.value) : '',
+                 perimetre: (perEl.value || '').trim() });
+    }
+    return out;
+  }
+
+  function onSrc() {
+    sel1.classList.toggle('empty', !sel1.value);
+    hideAll(); check();
+  }
+
+  function check() {
+    const cibles = lireCibles();
+    // aperçus et doublons
+    let dup = false;
+    const vus = new Set();
+    cibles.forEach(function(c){
+      const ap = document.getElementById('c-apercu-' + c.i);
+      if (ap) { ap.textContent = c.label; ap.style.display = c.label ? '' : 'none'; }
+      const bad = !!c.label && (existingLabels.has(c.label.toLowerCase()) || vus.has(c.label.toLowerCase()));
+      const h = document.getElementById('c-hint-' + c.i);
+      if (h) h.style.display = bad ? 'inline' : 'none';
+      if (c.label) vus.add(c.label.toLowerCase());
+      if (bad) dup = true;
+    });
+
+    if (mode === 'archiver') { submitEl.disabled = !sel1.value; submitEl.textContent = 'Archiver →'; return; }
+    submitEl.textContent = mode === 'scinder' ? 'Scinder →' : 'Fusionner →';
+
+    const cOk = cibles.length > 0 && cibles.every(function(c){ return c.nom.length >= 2 && c.perimetre.length >= 40; });
+
+    if (mode === 'fusionner') {
+      sel2.classList.toggle('empty', !sel2.value);
+      const meme = !!sel1.value && sel1.value === sel2.value;
+      document.getElementById('src2-hint').style.display = meme ? 'inline' : 'none';
+      submitEl.disabled = !(sel1.value && sel2.value && !meme && cOk && !dup);
+      return;
+    }
+
+    // scinder : au moins deux sujets, et si composite, un ensemble complet
+    let nOk = true;
+    if (forme === 'noeud') {
+      const nf = noeudFinal(document.getElementById('n-nom').value);
+      const np = (document.getElementById('n-perim').value || '').trim();
+      const ap = document.getElementById('n-apercu');
+      ap.textContent = nf; ap.style.display = nf ? '' : 'none';
+      const nd = !!nf && existingLabels.has(nf.toLowerCase());
+      document.getElementById('n-nom-hint').style.display = nd ? 'inline' : 'none';
+      const reste = 40 - np.length;
+      const nh = document.getElementById('n-perim-hint');
+      nh.textContent = np.length > 0 && np.length < 40 ? 'encore ' + reste + ' caractère' + (reste > 1 ? 's' : '') : 'min. 40 caractères';
+      nh.classList.toggle('err', np.length > 0 && np.length < 40);
+      nOk = nf.length >= 2 && np.length >= 40 && !nd;
+    }
+    submitEl.disabled = !(sel1.value && cibles.length >= 2 && cOk && nOk && !dup);
+  }
+
+  function show(id) { document.getElementById(id).classList.add('on'); }
+  function hide(id) { document.getElementById(id).classList.remove('on'); }
+  function hideAll() { hide('s-loading'); hide('s-success'); document.getElementById('s-error').classList.remove('on'); }
+  function showErr(m) { const e = document.getElementById('s-error'); e.textContent = m; e.classList.add('on'); }
+
+  async function submit() {
+    if (submitEl.disabled) return;
+    const cibles = mode === 'archiver' ? [] : lireCibles().map(function(c){ return { label: c.label, perimetre: c.perimetre }; });
+    const payload = {
+      id_client: id_client,
+      operation: mode,
+      source_1: sel1.value,
+      source_2: mode === 'fusionner' ? sel2.value : '',
+      cibles: cibles
+    };
+    if (mode === 'scinder' && forme === 'noeud') {
+      payload.noeud = { label: noeudFinal(document.getElementById('n-nom').value),
+                        perimetre: (document.getElementById('n-perim').value || '').trim() };
+    }
+
+    hideAll();
+    submitEl.style.display = 'none';
+    show('s-loading');
+
+    let res, data = {};
+    try {
+      res = await fetch(C.webhooks.restructurer, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      });
+      const raw = await res.text();
+      const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      try { data = JSON.parse(cleaned); } catch (e) { data = {}; }
+    } catch (e) {
+      hide('s-loading'); submitEl.style.display = ''; showErr('Restructuration impossible. Réessaie.');
+      return;
+    }
+
+    hide('s-loading');
+    submitEl.style.display = '';
+
+    if (res.ok && data.success) {
+      if (typeof kcpInvalidateTiroirs === 'function') kcpInvalidateTiroirs();
+      submitEl.disabled = true;
+      document.getElementById('s-msg').textContent = mode === 'archiver'
+        ? 'Sujet archivé. Il disparaît de la carte de son ensemble au prochain cycle.'
+        : 'Documents créés. Ils sont indisponibles jusqu’au prochain cycle, demain à 08h00 — le temps qu’ils deviennent eux-mêmes.';
+      show('s-success');
+    } else {
+      showErr((data && data.message) || 'Restructuration impossible. Réessaie.');
+    }
+  }
+
+  loadTiroirs().then(function(){ setMode('scinder'); });
+</script>
+</body>
+</html>
