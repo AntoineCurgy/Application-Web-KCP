@@ -19,7 +19,7 @@
 
   .hint.err { color:#8a2f2f; }
 
-  input[type=text] { width:100%; background:var(--surface2); color:var(--ink); border:1.5px solid var(--border); border-radius:10px; padding:0.85rem 1rem; font-family:var(--mono); font-size:14px; font-weight:500; outline:none; appearance:none; transition:border-color 0.15s; }
+  input[type=text], select { width:100%; background:var(--surface2); color:var(--ink); border:1.5px solid var(--border); border-radius:10px; padding:0.85rem 1rem; font-family:var(--mono); font-size:14px; font-weight:500; outline:none; appearance:none; transition:border-color 0.15s; }
 
   input::placeholder { color:var(--muted); font-weight:400; }
 
@@ -45,7 +45,7 @@
   .wrap > :nth-child(4){animation-delay:.17s}
 
   /* iOS : >=16px sur les champs pour éviter le zoom automatique au focus */
-  @media(max-width:600px){ body{border-radius:0; min-height:100vh} input[type=text]{ font-size:16px; } }
+  @media(max-width:600px){ body{border-radius:0; min-height:100vh} input[type=text], select{ font-size:16px; } }
 </style>
 </head>
 <body>
@@ -72,6 +72,18 @@
         <span class="hint" id="titre-hint">requis</span>
       </label>
       <input type="text" id="titre" placeholder="" autocomplete="off" spellcheck="false" maxlength="120" oninput="check()">
+    </div>
+
+    <div class="field">
+      <label class="label" for="langue">
+        Langue de la réunion
+        <span class="hint" id="langue-hint">aide la transcription</span>
+      </label>
+      <select id="langue">
+        <option value="fr" selected>Français</option>
+        <option value="en">English</option>
+        <option value="">Je ne sais pas — détection automatique</option>
+      </select>
     </div>
 
     <div class="note">
@@ -107,6 +119,7 @@
 
   const urlEl = document.getElementById('url');
   const titreEl = document.getElementById('titre');
+  const langueEl = document.getElementById('langue');
   const submitEl = document.getElementById('submit');
   const urlHint = document.getElementById('url-hint');
 
@@ -148,7 +161,7 @@
     try {
       res = await fetch(C.webhooks.creer_bot, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_client, meeting_url, titre_reunion })
+        body: JSON.stringify({ id_client, meeting_url, titre_reunion, langue: langueEl.value })
       });
       const raw = await res.text();
       const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
