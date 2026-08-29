@@ -564,7 +564,17 @@
   }
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closePop(); });
 
-  loadExisting();
+  // Pré-remplissage depuis une proposition du système ; l'utilisateur relit et confirme lui-même.
+  function prefill() {
+    const q = new URLSearchParams(location.search);
+    const nom = q.get('nom') || '';
+    const per = q.get('perimetre') || '';
+    if (nom) { nomEl.value = nom; onNom(); }
+    if (per) { perimEl.value = per; }
+    if (nom || per) check();
+  }
+
+  loadExisting().then(prefill, prefill);
 </script>
 </body>
 </html>

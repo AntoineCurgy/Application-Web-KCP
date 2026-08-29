@@ -104,16 +104,28 @@
 
   // La page qui exécute le geste, pré-remplie avec ce que le système propose.
   // L'utilisateur y relit et confirme : c'est là que la frontière change, jamais ici.
+  // Le champ cibles porte les valeurs structurées à injecter : nom|perimetre, couples séparés par ';;'.
+  // L'utilisateur relit et confirme sur la page de destination ; rien n'est écrit sans son clic.
+  function cibles(p) {
+    return p.cibles ? '&cibles=' + encodeURIComponent(p.cibles) : '';
+  }
+  function premiereCible(p) {
+    const c = String(p.cibles || '').split(';;')[0] || '';
+    const i = c.indexOf('|');
+    if (i < 1) return '';
+    return '?nom=' + encodeURIComponent(c.slice(0, i)) + '&perimetre=' + encodeURIComponent(c.slice(i + 1));
+  }
+
   function pageFor(p) {
     const enc = encodeURIComponent;
     switch (p.type) {
-      case 'renommage':   return './modifier-perimetre.html?mode=nom&doc=' + enc(p.doc_a) + '&valeur=' + enc(p.doc_b || '');
+      case 'renommage':   return './modifier-perimetre.html?mode=nom&doc=' + enc(p.doc_a) + '&valeur=' + enc(p.changement || '');
       case 'deplacement': return './modifier-perimetre.html?mode=depl&doc=' + enc(p.doc_a) + '&valeur=' + enc(p.doc_b || '');
       case 'perimetre':   return './modifier-perimetre.html?mode=perim&doc=' + enc(p.doc_a) + '&valeur=' + enc(p.changement || '');
-      case 'scission':    return './restructurer.html?mode=scinder&src=' + enc(p.doc_a);
-      case 'fusion':      return './restructurer.html?mode=fusionner&src=' + enc(p.doc_a) + '&src2=' + enc(p.doc_b || '');
+      case 'scission':    return './restructurer.html?mode=scinder&src=' + enc(p.doc_a) + cibles(p);
+      case 'fusion':      return './restructurer.html?mode=fusionner&src=' + enc(p.doc_a) + '&src2=' + enc(p.doc_b || '') + cibles(p);
       case 'archiver':    return './restructurer.html?mode=archiver&src=' + enc(p.doc_a);
-      case 'creation':    return './creer-tiroir.html';
+      case 'creation':    return './creer-tiroir.html' + premiereCible(p);
       default:            return null;
     }
   }
