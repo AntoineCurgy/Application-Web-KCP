@@ -24,6 +24,8 @@ const KCP_WEBHOOKS = {
   carte: 'https://hook.eu2.make.com/5ewsvcp5me3femarcgozfpwvh02glfmy', // Make: KCP - WebApp - Carte
   deplacer: 'https://hook.eu2.make.com/mmjhid1rmuralwj4cqgott05jgnjj3ux', // Make: KCP - Deplacer Sujet
   restructurer: 'https://hook.eu2.make.com/0mwtqehwa8c85n4don6hqt1cxkluiggp', // Make: KCP - Restructurer
+  propositions: 'https://hook.eu2.make.com/w7a7cjlruolk1l6lecayiy5k8c8rqt6t', // Make: KCP - WebApp - Propositions
+  reponse_proposition: 'https://hook.eu2.make.com/lp4hd6igjskrirfp29ma2fsuv58c43fo', // Make: KCP - WebApp - Reponse Proposition
 };
 
 // Guide d'utilisation, Google Doc partage en lecture. L'identifiant d'un

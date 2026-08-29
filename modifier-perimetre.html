@@ -246,7 +246,7 @@
       existingLabels = new Set(list.concat(data && data.gcp ? data.gcp : []).map(function(t){
         return dispLabel(t).toLowerCase();
       }));
-      list = noeuds.concat(list.filter(function(t){ return String(t.type || '').toUpperCase() !== 'ANX'; }));
+      list = noeuds.concat(list.filter(function(t){ return String(t.type || '').toUpperCase() !== 'ANX'; })).filter(function(t){ return String(t.attente_cycle || '').toLowerCase() !== 'oui'; });
       list.forEach(t => {
         if (!t.doc_int_id) return;
         items[t.doc_int_id] = t;
@@ -583,7 +583,20 @@
   }
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closePop(); });
 
-  loadTiroirs();
+  // Pré-remplissage depuis une proposition du système : la page reste le seul chemin
+  // d'exécution, l'utilisateur relit et confirme lui-même.
+  async function prefill() {
+    await loadTiroirs();
+    const q = new URLSearchParams(location.search);
+    const doc = q.get('doc'); if (!doc || !items[doc]) return;
+    sel.value = doc; onSelect();
+    const m = q.get('mode'); if (m === 'nom' || m === 'perim' || m === 'depl') setMode(m);
+    const v = q.get('valeur') || '';
+    if (m === 'nom' && v) { nomEl.value = v; onNom(); }
+    if (m === 'perim' && v) { perimEl.value = v; amorcePerim = ''; check(); }
+    if (m === 'depl' && v) { parentEl.value = v; check(); }
+  }
+  prefill();
 </script>
 </body>
 </html>

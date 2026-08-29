@@ -161,6 +161,14 @@
         <span class="pastille" id="points-pastille" hidden></span>
         <span class="row-arr">→</span>
       </a>
+      <a href="./propositions.html" class="group-row">
+        <span class="row-main">
+          <span class="row-title">Propositions</span>
+          <span class="row-sub">ce que le système propose de changer dans tes sujets</span>
+        </span>
+        <span class="pastille" id="propositions-pastille" hidden></span>
+        <span class="row-arr">→</span>
+      </a>
       <a href="./carte-sujets.html" class="group-row">
         <span class="row-main">
           <span class="row-title">Carte</span>
@@ -244,6 +252,19 @@
       .then(function(r){ return r.json(); })
       .then(function(data){ if (typeof kcpCachePoints === 'function') kcpCachePoints(data); setCount(data); })
       .catch(function(){ /* réseau indisponible : la pastille en cache reste */ });
+  })();
+
+  // Pastille « Propositions » : nombre de propositions en attente d'une décision.
+  (function propositionsPastille(){
+    var el = document.getElementById('propositions-pastille');
+    if (!KCP_WEBHOOKS.propositions) return;
+    fetch(KCP_WEBHOOKS.propositions, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: KCP_CONFIG.client_id })
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(data){ var n = (data && data.propositions || []).length; if (n > 0) { el.textContent = n; el.hidden = false; } })
+      .catch(function(){ /* réseau indisponible : pas de pastille */ });
   })();
 </script>
 </body>

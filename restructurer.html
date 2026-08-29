@@ -237,7 +237,7 @@
       // Seuls les sujets terminaux se restructurent. Un ensemble ne se scinde
       // pas et deux ensembles ne se fusionnent pas : ces gestes demanderaient
       // de redistribuer des enfants, ce que le système ne sait pas encore faire.
-      list.filter(function(t){ return String(t.type || '').toUpperCase() === 'PCP'; })
+      list.filter(function(t){ return String(t.type || '').toUpperCase() === 'PCP'; }).filter(function(t){ return String(t.attente_cycle || '').toLowerCase() !== 'oui'; })
           .forEach(function(t){
             if (!t.doc_int_id) return;
             items[t.doc_int_id] = t;
@@ -420,7 +420,23 @@
     }
   }
 
-  loadTiroirs().then(function(){ setMode('scinder'); });
+  // Pré-remplissage depuis une proposition du système ; l'utilisateur relit et confirme lui-même.
+  loadTiroirs().then(function(){
+    const q = new URLSearchParams(location.search);
+    const m = q.get('mode');
+    setMode(m === 'fusionner' || m === 'archiver' ? m : 'scinder');
+    const src = q.get('src'); if (src && items[src]) { sel1.value = src; onSrc(); }
+    const src2 = q.get('src2'); if (m === 'fusionner' && src2 && items[src2]) { sel2.value = src2; }
+    const cibles = (q.get('cibles') || '').split(';;').filter(Boolean);
+    if (cibles.length) {
+      resetCibles(Math.max(cibles.length, m === 'fusionner' ? 1 : 2));
+      cibles.forEach(function(c, k){
+        const p = c.split('|'); const nomEl = document.getElementById('c-nom-' + (k + 1)); const perEl = document.getElementById('c-perim-' + (k + 1));
+        if (nomEl) nomEl.value = p[0] || ''; if (perEl) perEl.value = p.slice(1).join('|') || '';
+      });
+    }
+    check();
+  });
 </script>
 </body>
 </html>
