@@ -258,6 +258,13 @@
       let pcp, all;
       if (Array.isArray(data)) { pcp = data; all = data; }
       else { pcp = data.pcp || data.principaux || []; all = data.pcp_anx || data.tous || pcp; }
+      // Un sujet qui attend son premier cycle n'est pas encore lui-même : on ne le charge pas.
+      const pret = function(t){ return String(t.attente_cycle || '').toLowerCase() !== 'oui'; };
+      pcp = pcp.filter(pret); all = all.filter(pret);
+      // « Autre » : la session sans sujet. Ce qui en sort part dans le sas, et le système le range ensuite.
+      docIds['autre'] = 'SAS';
+      const oAutre = document.createElement('option'); oAutre.value = 'autre'; oAutre.textContent = '#autre — je ne sais pas encore'; sel.appendChild(oAutre);
+      const oSep = document.createElement('option'); oSep.disabled = true; oSep.textContent = '— — —'; sel.appendChild(oSep);
       pcp.forEach(t => { docIds[t.nom_tiroir] = t.doc_int_id; const o=document.createElement('option'); o.value=t.nom_tiroir; o.textContent='#'+t.nom_tiroir; sel.appendChild(o); });
       secondItems = all;
     } catch(e) { console.warn('Tiroirs unavailable'); }

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f6f4ee">
+<title>KCP — Propositions</title>
+<link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
+<link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
+<script src="./config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./kcp.css">
+<style>
+  body { background:var(--bg); color:var(--ink); font-family:var(--font); max-width:600px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:2.5rem 2rem 3rem; }
+  .back { display:inline-flex; align-items:center; gap:0.4rem; font-size:13px; font-family:var(--mono); font-weight:500; color:var(--ink-soft); text-decoration:none; padding:0.45rem 0.9rem; border:1.5px solid var(--border-strong); border-radius:100px; background:var(--surface); transition:all 0.15s; align-self:flex-start; margin-bottom:1.4rem; }
+  .label { font-size:12px; font-family:var(--mono); color:var(--ink); letter-spacing:0.08em; text-transform:uppercase; font-weight:500; display:flex; align-items:center; justify-content:space-between; }
+  .props { display:flex; flex-direction:column; gap:1rem; }
+  .pr { border:1.5px solid var(--border); border-radius:10px; padding:1rem 1.1rem; background:var(--surface2); display:flex; flex-direction:column; gap:0.6rem; }
+  .pr.busy { opacity:0.5; pointer-events:none; }
+  .pr-type { font-size:11px; font-family:var(--mono); color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; }
+  .pr-question { font-size:15px; font-weight:600; line-height:1.45; }
+  .pr-constat { font-size:13px; color:var(--ink-soft); line-height:1.5; }
+  .pr-changement { font-size:13px; font-family:var(--mono); color:var(--ink); line-height:1.5; padding:0.7rem 0.85rem; background:var(--surface); border:1px solid var(--border); border-radius:8px; white-space:pre-wrap; }
+  .pr-actions { display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.2rem; }
+  .btn { font-family:var(--mono); font-size:13px; font-weight:500; padding:0.55rem 0.9rem; border-radius:8px; border:1.5px solid var(--border-strong); background:var(--surface); color:var(--ink-soft); cursor:pointer; transition:all 0.15s; }
+  .btn.primary { background:var(--dark); border-color:var(--dark); color:var(--accent); }
+  .btn.ghost { border-color:transparent; background:none; color:var(--muted); }
+  .btn:hover { border-color:var(--ink); color:var(--ink); }
+  .btn.primary:hover { color:#fff; }
+  .state { display:none; }
+  .state.on { display:flex; }
+  .loading { align-items:center; gap:0.75rem; padding:1rem; background:var(--surface2); border:1.5px solid var(--border); border-radius:10px; }
+  .spinner { width:16px; height:16px; border:2px solid var(--border-strong); border-top-color:var(--ink); border-radius:50%; animation:spin 0.7s linear infinite; flex-shrink:0; }
+  .empty-state { display:none; font-size:13px; font-family:var(--mono); color:var(--muted); line-height:1.5; }
+  .empty-state.on { display:block; }
+  .error-state.on { display:block; }
+  .footer { display:flex; align-items:center; justify-content:center; gap:0.5rem; }
+  @media(max-width:600px){ body{border-radius:0; min-height:100vh} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div>
+    <a href="./index.html" class="back">← Retour</a>
+    <span class="kcp-tag">KCP — Knowledge Context Protocol</span>
+    <h1 class="page-title">Propositions</h1>
+  </div>
+
+  <div class="card">
+    <span class="label">
+      Ce que le système propose
+      <span class="hint" id="count"></span>
+    </span>
+
+    <div class="note">
+      <span class="ico">›</span>
+      <span>Le système observe tes sujets et, quand un signal se répète, propose de bouger une frontière : scinder, fusionner, renommer, rattacher ailleurs, corriger un périmètre, créer ou archiver. Rien ne change sans ton accord : accepter t'amène sur la page où tu relis et confirmes toi-même.</span>
+    </div>
+
+    <div class="state loading on" id="s-loading">
+      <div class="spinner"></div>
+      <span class="loading-txt">Chargement…</span>
+    </div>
+
+    <div class="props" id="props" aria-live="polite"></div>
+
+    <div class="empty-state" id="s-empty">Aucune proposition en attente. Le système n'a rien observé qui mérite ton arbitrage.</div>
+
+    <div class="error-state" id="s-error"></div>
+  </div>
+
+  <div class="footer"><div class="dot"></div><span class="footer-text">système actif · KCP V2</span></div>
+
+</div>
+<script>
+  const C = KCP_CONFIG;
+
+  const _session = (typeof kcpGetSession === 'function') ? kcpGetSession() : JSON.parse(localStorage.getItem('kcp_session') || 'null');
+  if (!_session || !_session.client_id) { location.replace('./login.html'); }
+  const id_client = _session ? _session.client_id : null;
+
+  const propsEl = document.getElementById('props');
+  const countEl = document.getElementById('count');
+  let props = [];
+
+  // Libellés des sujets : la proposition ne porte que des identifiants.
+  const labels = {};
+  const dispLabel = (typeof kcpDocLabel === 'function') ? kcpDocLabel : function(t){ return '#' + t.nom_tiroir; };
+  async function loadLabels() {
+    try {
+      const data = await kcpLoadTiroirs();
+      let list = Array.isArray(data) ? data : (data.pcp_anx || data.tous || data.pcp || []);
+      if (data && data.gcp) list = list.concat(data.gcp);
+      list.forEach(function(t){ if (t.doc_int_id) labels[t.doc_int_id] = dispLabel(t); });
+    } catch (e) { /* sans libellé, l'identifiant s'affiche */ }
+  }
+  function lbl(id) { return labels[id] || id || ''; }
+
+  const TYPES = {
+    scission: 'Scinder', fusion: 'Fusionner', renommage: 'Renommer', deplacement: 'Rattacher ailleurs',
+    perimetre: 'Corriger le périmètre', creation: 'Créer un sujet', archiver: 'Archiver'
+  };
+
+  // La page qui exécute le geste, pré-remplie avec ce que le système propose.
+  // L'utilisateur y relit et confirme : c'est là que la frontière change, jamais ici.
+  function pageFor(p) {
+    const enc = encodeURIComponent;
+    switch (p.type) {
+      case 'renommage':   return './modifier-perimetre.html?mode=nom&doc=' + enc(p.doc_a) + '&valeur=' + enc(p.doc_b || '');
+      case 'deplacement': return './modifier-perimetre.html?mode=depl&doc=' + enc(p.doc_a) + '&valeur=' + enc(p.doc_b || '');
+      case 'perimetre':   return './modifier-perimetre.html?mode=perim&doc=' + enc(p.doc_a) + '&valeur=' + enc(p.changement || '');
+      case 'scission':    return './restructurer.html?mode=scinder&src=' + enc(p.doc_a);
+      case 'fusion':      return './restructurer.html?mode=fusionner&src=' + enc(p.doc_a) + '&src2=' + enc(p.doc_b || '');
+      case 'archiver':    return './restructurer.html?mode=archiver&src=' + enc(p.doc_a);
+      case 'creation':    return './creer-tiroir.html';
+      default:            return null;
+    }
+  }
+
+  function render(data) {
+    props = (data && data.propositions) ? data.propositions.slice() : [];
+    hide('s-loading');
+    propsEl.textContent = '';
+    if (!props.length) { show('s-empty'); countEl.textContent = ''; return; }
+    hide('s-empty');
+    countEl.textContent = props.length + (props.length > 1 ? ' propositions' : ' proposition');
+
+    props.forEach(function(p) {
+      const item = document.createElement('div');
+      item.className = 'pr';
+
+      const type = document.createElement('div'); type.className = 'pr-type';
+      type.textContent = (TYPES[p.type] || p.type) + ' · ' + lbl(p.doc_a) + (p.doc_b && p.type !== 'renommage' ? ' · ' + lbl(p.doc_b) : '');
+      const q = document.createElement('div'); q.className = 'pr-question'; q.textContent = p.question || '';
+      const c = document.createElement('div'); c.className = 'pr-constat'; c.textContent = p.constat || '';
+      item.appendChild(type); item.appendChild(q); item.appendChild(c);
+      if (p.changement) { const ch = document.createElement('div'); ch.className = 'pr-changement'; ch.textContent = p.changement; item.appendChild(ch); }
+
+      const actions = document.createElement('div'); actions.className = 'pr-actions';
+      const mk = function(label, cls, fn) { const b = document.createElement('button'); b.className = 'btn ' + cls; b.textContent = label; b.onclick = fn; return b; };
+      const cible = pageFor(p);
+      if (cible) actions.appendChild(mk('Accepter →', 'primary', function(){ answer(item, p, 'accepte', cible); }));
+      actions.appendChild(mk('Refuser', '', function(){ answer(item, p, 'refuse', null); }));
+      actions.appendChild(mk('Pas maintenant', 'ghost', function(){ answer(item, p, 'pas_maintenant', null); }));
+      item.appendChild(actions);
+      propsEl.appendChild(item);
+    });
+  }
+
+  async function answer(item, p, action, cible) {
+    item.classList.add('busy');
+    try {
+      const r = await fetch(C.webhooks.reponse_proposition, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: id_client, proposition_id: p.proposition_id, action: action, reponse: '' })
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      props = props.filter(function(x){ return x.proposition_id !== p.proposition_id; });
+      item.remove();
+      countEl.textContent = props.length ? (props.length + (props.length > 1 ? ' propositions' : ' proposition')) : '';
+      if (!props.length) show('s-empty');
+      if (cible) location.href = cible;
+    } catch (e) {
+      item.classList.remove('busy');
+      showErr("La réponse n'a pas pu être envoyée. Réessaie dans un instant.");
+      setTimeout(function(){ hide('s-error'); }, 4000);
+    }
+  }
+
+  function show(id) { document.getElementById(id).classList.add('on'); }
+  function hide(id) { document.getElementById(id).classList.remove('on'); }
+  function showErr(m) { const e = document.getElementById('s-error'); e.textContent = m; e.classList.add('on'); }
+
+  async function load() {
+    await loadLabels();
+    try {
+      const r = await fetch(C.webhooks.propositions, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: id_client })
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      render(await r.json());
+    } catch (e) {
+      hide('s-loading');
+      showErr('Impossible de charger les propositions. Réessaie dans un instant.');
+    }
+  }
+  load();
+</script>
+</body>
+</html>

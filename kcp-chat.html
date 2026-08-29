@@ -292,7 +292,7 @@
     const oHead = document.createElement('option'); oHead.value = 'Head'; oHead.textContent = 'Head'; sel.appendChild(oHead);
     try {
       const data = await kcpLoadTiroirs();
-      const list = Array.isArray(data) ? data : (data.pcp || data.principaux || []);
+      const list = (Array.isArray(data) ? data : (data.pcp || data.principaux || [])).filter(function(t){ return String(t.attente_cycle || '').toLowerCase() !== 'oui'; });
       list.forEach((t, i) => {
         const o = document.createElement('option');
         o.value = t.nom_tiroir;
