@@ -1,0 +1,684 @@
+/* ═══════════════════════════════════════════════════════════════
+   KCP — socle propose. Commun aux six maquettes.
+   Ce fichier est la PROPOSITION : la palette de kcp.css est reprise
+   telle quelle (c'est l'identite de KCP, on n'y touche pas).
+   Ce qui change : la typographie, l'echelle, et le rythme vertical.
+   ═══════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* ── Palette : INCHANGEE, reprise de kcp.css ── */
+  --bg:#f6f4ee; --surface:#ffffff; --surface2:#efece2; --surface3:#e7e3d3;
+  --border:#d3cebd; --border-strong:#b8b2a0;
+  --ink:#16150f; --ink-soft:#3d3b30; --muted:#524e3e;
+  --accent:#c8f55a; --accent-deep:#4d6b14;
+  --dark:#14160f; --dark-soft:#1d2016; --dark-border:#2c2f22;
+  --dark-text:#eef0e5; --dark-muted:#9aa088;
+  --danger:#8a2f2f; --danger-bg:rgba(138,47,47,0.06); --danger-br:rgba(138,47,47,0.28);
+
+  /* ── CE QUI CHANGE 1 : trois polices, trois roles ── */
+  --brand:'Syne', system-ui, sans-serif;        /* MARQUE SEULE : le K et le mot KCP */
+  --display:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+            Helvetica, Arial, sans-serif;        /* titres : police systeme, standard */
+  --text:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+         Helvetica, Arial, sans-serif;           /* NOUVEAU : tout texte suivi */
+  --mono:'DM Mono', ui-monospace, monospace;     /* donnees seules : dates, ids, #slug */
+
+  /* ── CE QUI CHANGE 2 : six pas au lieu de quatorze tailles ── */
+  --t-meta:12px; --t-sm:14px; --t-body:16px;
+  --t-lg:20px;   --t-xl:24px; --t-display:32px;
+
+  /* ── CE QUI CHANGE 3 : un rythme unique, plus de surcharge par page ── */
+  --s1:0.5rem; --s2:0.75rem; --s3:1rem; --s4:1.5rem; --s5:2rem; --s6:3rem;
+  --r:14px; --r-sm:10px;
+  --lh:1.55;
+}
+
+html { background:var(--bg); }
+body {
+  background:var(--bg); color:var(--ink);
+  font-family:var(--text); font-size:var(--t-body); line-height:var(--lh);
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── Typographie ─────────────────────────────────────────────── */
+h1,h2,h3 { font-family:var(--display); letter-spacing:-0.015em; line-height:1.25; color:var(--ink); }
+h1 { font-size:var(--t-xl); font-weight:700; }      /* 24, pas 32 : moins de declamation */
+h2 { font-size:var(--t-lg); font-weight:700; }
+h3 { font-size:var(--t-body); font-weight:700; }
+p  { max-width:68ch; }                    /* mesure de lecture bornee */
+.sub  { color:var(--muted); font-size:var(--t-sm); }
+.meta { font-family:var(--mono); font-size:var(--t-meta); color:var(--muted); }
+.data { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+.eyebrow { font-family:var(--mono); font-size:var(--t-meta); color:var(--accent-deep);
+  letter-spacing:0.14em; text-transform:uppercase; }
+.sect-h { font-family:var(--mono); font-size:var(--t-meta); color:var(--muted);
+  letter-spacing:0.12em; text-transform:uppercase; }
+
+/* ── Titre de section DANS un contenu (fiche, note, panneau).
+   Il pese plus que le texte qu'il coiffe : c'est la hierarchie, pas un ornement.
+   Le filet fait le travail de separation que l'ancienne etiquette mono ne faisait pas. ── */
+.sect-title { font-family:var(--display); font-size:var(--t-body); font-weight:700;
+  color:var(--ink); letter-spacing:0; text-transform:none;
+  padding-bottom:var(--s1); border-bottom:1.5px solid var(--border);
+  margin-top:var(--s4); margin-bottom:var(--s2); }
+.sect-title:first-child { margin-top:0; }
+
+/* ── Barre laterale (modele : Wispr Flow / Excalidraw) ───────── */
+.shell { display:grid; grid-template-columns:248px 1fr; min-height:100vh; }
+.side { background:var(--surface2); border-right:1.5px solid var(--border);
+  display:flex; flex-direction:column; padding:var(--s3); gap:var(--s4); position:sticky; top:0; height:100vh; }
+.side-brand { display:flex; align-items:center; gap:var(--s2); padding:var(--s1) var(--s2); }
+.mark { width:30px; height:30px; border-radius:8px; background:var(--accent); color:var(--dark);
+  display:grid; place-items:center; font-family:var(--brand); font-weight:700; font-size:var(--t-sm); }
+.side-name { font-family:var(--brand); font-weight:700; font-size:var(--t-body); }
+.tag-beta { font-family:var(--mono); font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
+  background:var(--accent); color:var(--accent-deep); padding:2px 6px; border-radius:5px; font-weight:500; }
+.side nav { display:flex; flex-direction:column; gap:2px; }
+.side-grp { font-family:var(--mono); font-size:10px; letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--muted); padding:var(--s2) var(--s2) var(--s1); }
+.nav-i { display:flex; align-items:center; gap:var(--s2); padding:0.5rem var(--s2);
+  border-radius:var(--r-sm); color:var(--ink-soft); text-decoration:none; font-size:var(--t-sm);
+  transition:background .12s;
+  /* un <button> centre son texte et n'herite pas de la police : on force les deux */
+  width:100%; text-align:left; font-family:inherit; border:none; background:none; cursor:pointer; }
+.nav-i:hover { background:var(--surface3); color:var(--ink); }
+.nav-i[aria-current="page"] { background:var(--surface); color:var(--ink); font-weight:600;
+  box-shadow:0 1px 3px rgba(22,21,15,.06); }
+.nav-i .ico { width:17px; flex-shrink:0; opacity:.75; }
+.nav-i .n { margin-left:auto; background:var(--accent-deep); color:#fff; font-family:var(--mono);
+  font-size:10px; min-width:19px; height:19px; border-radius:10px; display:grid; place-items:center; padding:0 5px; }
+.side-foot { margin-top:auto; border-top:1.5px solid var(--border); padding-top:var(--s2); }
+.who { display:flex; align-items:center; gap:var(--s2); padding:var(--s2); border-radius:var(--r-sm);
+  text-decoration:none; color:var(--ink); }
+.who:hover { background:var(--surface3); }
+.avatar { width:30px; height:30px; border-radius:50%; background:var(--dark); color:var(--accent);
+  display:grid; place-items:center; font-family:var(--brand); font-weight:700; font-size:var(--t-sm); }
+.who-n { font-size:var(--t-sm); font-weight:600; line-height:1.25; }
+.who-s { font-size:var(--t-meta); color:var(--muted); }
+
+/* ── Zone principale ─────────────────────────────────────────── */
+.main { padding:var(--s5) var(--s5) var(--s6); max-width:1080px; }
+.stack { display:flex; flex-direction:column; gap:var(--s4); }
+
+/* ── Cartes et lignes ────────────────────────────────────────── */
+.card { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r);
+  box-shadow:0 1px 6px rgba(22,21,15,.06); }
+.card-pad { padding:var(--s4); }
+.card-h { padding:var(--s2) var(--s4); border-bottom:1.5px solid var(--border); background:var(--surface2);
+  border-radius:var(--r) var(--r) 0 0; display:flex; align-items:center; justify-content:space-between; }
+.row { display:flex; align-items:center; gap:var(--s3); padding:var(--s3) var(--s4);
+  border-top:1px solid var(--border); text-decoration:none; color:inherit; }
+.row:first-of-type { border-top:none; }
+.row:hover { background:var(--surface2); }
+.row-t { font-family:var(--display); font-weight:600; font-size:var(--t-body); }
+.kpi b, .plan-n { font-family:var(--display); }
+.row-s { font-size:var(--t-sm); color:var(--muted); }
+.row-arr { margin-left:auto; color:var(--border-strong); }
+.pill { background:var(--accent-deep); color:#fff; font-family:var(--mono); font-size:var(--t-meta);
+  min-width:22px; height:22px; border-radius:11px; display:grid; place-items:center; padding:0 7px; }
+
+/* ── Boutons ─────────────────────────────────────────────────── */
+.btn { font-family:var(--display); font-size:var(--t-sm); font-weight:600; padding:0.6rem 1rem;
+  border-radius:var(--r-sm); border:1.5px solid var(--border-strong); background:var(--surface);
+  color:var(--ink); cursor:pointer; text-decoration:none; display:inline-flex; align-items:center;
+  gap:var(--s1); }
+.btn:hover { border-color:var(--ink); }
+.btn-1 { background:var(--dark); color:var(--dark-text); border-color:var(--dark); }
+.btn-1:hover { background:var(--dark-soft); }
+.btn-danger { color:var(--danger); border-color:var(--danger-br); background:transparent; }
+.btn-danger:hover { background:var(--danger-bg); border-color:var(--danger); }
+
+/* ── Note ────────────────────────────────────────────────────── */
+.note { display:flex; gap:var(--s2); padding:var(--s3); background:rgba(77,107,20,.06);
+  border:1px solid rgba(77,107,20,.18); border-left:3px solid var(--accent-deep);
+  border-radius:var(--r-sm); font-size:var(--t-sm); color:var(--ink-soft); }
+.note b { color:var(--accent-deep); }
+
+/* ── Focus visible : jamais d'outline supprime sans remplacant ── */
+a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible {
+  outline:2px solid var(--accent-deep); outline-offset:2px; }
+
+/* ── Mouvement : respecte la preference systeme ──────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration:.001ms !important; transition-duration:.001ms !important; }
+}
+@media (max-width:880px) {
+  .shell { grid-template-columns:1fr; }
+  .side { position:static; height:auto; flex-direction:row; align-items:center; overflow-x:auto; }
+  .side nav, .side-grp { display:none; }
+  .main { padding:var(--s4) var(--s3) var(--s5); }
+}
+
+/* ═══ v3 — navigation par niveau, fiche ═══════════════════════════ */
+
+/* Fil d'Ariane : on descend d'un niveau a la fois, on doit pouvoir remonter. */
+.fil { display:flex; align-items:center; gap:var(--s1); flex-wrap:wrap; font-size:var(--t-sm); }
+.fil a { color:var(--muted); text-decoration:none; }
+.fil a:hover { color:var(--ink); text-decoration:underline; }
+.fil .sep { color:var(--border-strong); }
+.fil .ici { color:var(--ink); font-weight:600; }
+
+/* Carte d'un enfant direct. Le noeud et le tiroir ne se ressemblent pas :
+   la nature se lit au prefixe de l'identifiant, jamais au nombre d'enfants. */
+.doc { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r);
+  padding:var(--s3); position:relative; display:flex; flex-direction:column; gap:var(--s1); min-height:132px; }
+.doc:hover { border-color:var(--border-strong); box-shadow:0 2px 10px rgba(22,21,15,.07); }
+.doc:focus-within { border-color:var(--ink); }
+.doc-h { display:flex; align-items:center; justify-content:space-between; gap:var(--s2); }
+.doc-n a { color:inherit; text-decoration:none; }
+.doc-n a::after { content:''; position:absolute; inset:0; border-radius:var(--r); }
+.doc-r { font-size:var(--t-sm); color:var(--ink-soft); line-height:1.5; }
+.doc-f { margin-top:auto; display:flex; gap:var(--s2); align-items:center; }
+.doc.sujet .doc-n { font-family:var(--mono); font-size:var(--t-sm); font-weight:500; color:var(--accent-deep); }
+.doc.ens { background:var(--surface2); }
+.doc.ens .doc-n { font-family:var(--display); font-size:var(--t-body); font-weight:700; color:var(--ink); }
+.doc.alerte { border-color:var(--accent-deep); }
+.grid-doc { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:var(--s3); }
+
+/* Fiche : les cinq sections du modele, dans l'ordre. Titres en S3. */
+.fiche-sec { margin-top:var(--s4); }
+.fiche-sec .sect-title { margin-top:0; }
+.fiche-ul { margin:0 0 0 1.15rem; }
+.fiche-ul li { margin-bottom:.4rem; font-size:var(--t-body); color:var(--ink-soft); }
+.fiche-ul li::marker { color:var(--accent-deep); }
+.fiche-vide { font-size:var(--t-sm); color:var(--muted); font-style:italic; }
+
+/* ═══ v4 — moins d'elements, plus d'air ═════════════════════════ */
+
+/* Filtre discret : il vit dans la ligne du titre, pas en bandeau plein. */
+.ligne-titre { display:flex; align-items:center; justify-content:space-between; gap:var(--s3);
+  border-bottom:1.5px solid var(--border); padding-bottom:var(--s1); margin-bottom:var(--s3); }
+.ligne-titre .sect-title { border:none; margin:0; padding:0; }
+.filtre { display:flex; align-items:center; gap:var(--s1); background:var(--surface);
+  border:1.5px solid var(--border); border-radius:8px; padding:.3rem .6rem; min-width:190px; }
+.filtre:focus-within { border-color:var(--ink); }
+.filtre input { flex:1; border:none; outline:none; background:transparent; font-family:var(--text);
+  font-size:var(--t-sm); color:var(--ink); min-width:0; }
+
+/* Portfolio en liste : une ligne par entree. Neuf lignes tiennent a l'ecran. */
+.pf { border:1.5px solid var(--border); border-radius:var(--r); background:var(--surface); overflow:hidden; }
+.pf-l { display:grid; grid-template-columns:210px 1fr auto; gap:var(--s3); align-items:baseline;
+  padding:var(--s3) var(--s4); border-top:1px solid var(--border); position:relative; }
+.pf-l:first-child { border-top:none; }
+.pf-l:hover { background:var(--surface2); }
+.pf-n a { text-decoration:none; color:inherit; }
+.pf-n a::after { content:''; position:absolute; inset:0; }
+.pf-l.ens .pf-n { font-family:var(--display); font-weight:700; font-size:var(--t-body); }
+.pf-l.sujet .pf-n { font-family:var(--mono); font-size:var(--t-sm); font-weight:500; color:var(--accent-deep); }
+.pf-r { font-size:var(--t-sm); color:var(--ink-soft); line-height:1.5; }
+.pf-m { display:flex; align-items:center; gap:var(--s2); white-space:nowrap; }
+.pf-l.frais { box-shadow:inset 3px 0 0 var(--accent-deep); }
+@media(max-width:760px){ .pf-l{ grid-template-columns:1fr; gap:var(--s1); } }
+
+/* Arbre : la carte, en organigramme descendant. Ordre alphabetique stable. */
+.arbre { display:block; margin:0 auto; }
+.arbre text { font-family:var(--text); }
+.arbre .lien { stroke:var(--border-strong); stroke-width:1.4; fill:none; }
+.arbre .b-ens { fill:var(--surface2); stroke:var(--border-strong); stroke-width:1.5; }
+.arbre .b-suj { fill:var(--surface); stroke:var(--border); stroke-width:1.5; }
+.arbre .b-head { fill:var(--dark); stroke:var(--dark); }
+.arbre .n-ens { font-size:15px; font-weight:700; fill:var(--ink); }
+.arbre .n-suj { font-family:'DM Mono',monospace; font-size:13.5px; fill:var(--accent-deep); }
+.arbre .n-head { font-size:15px; font-weight:700; fill:var(--dark-text); }
+.arbre .cnt { font-family:'DM Mono',monospace; font-size:12.5px; fill:var(--muted); }
+.arbre .chevron { font-size:19px; fill:var(--ink-soft); }
+.arbre .chev:hover .chevron { fill:var(--ink); }
+.arbre g.item { cursor:pointer; }
+.arbre g.item:hover rect { stroke:var(--ink); }
+.arbre g.item.on rect { stroke:var(--accent-deep); stroke-width:2.5; }
+
+/* ═══ v5 ═════════════════════════════════════════════════════════ */
+
+/* Groupes de la barre laterale, mieux delimites : de l'air au-dessus et un
+   filet. Separer par du blanc plutot que par des traits partout — le filet
+   ne sert qu'a ouvrir un groupe, pas a encadrer chaque entree. */
+.side-grp { padding:var(--s4) var(--s2) var(--s1); margin-top:var(--s1);
+  border-top:1px solid var(--border); color:var(--ink-soft); font-weight:500; }
+.side nav > .side-grp:first-child { border-top:none; margin-top:0; padding-top:var(--s2); }
+
+/* La carte deborde en largeur : elle defile dans son propre cadre, jamais la page. */
+.carte-cadre { border:1.5px solid var(--border); border-radius:var(--r); background:var(--surface);
+  padding:var(--s4) var(--s3); overflow-x:auto; }
+
+/* Sujets d'un ensemble, en liste nue : le nom seul, pas de resume. */
+.puces { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:var(--s1) var(--s3); }
+.puces a { display:block; padding:.4rem .6rem; border-radius:8px; text-decoration:none;
+  font-family:var(--mono); font-size:var(--t-sm); color:var(--accent-deep); }
+.puces a:hover { background:var(--surface2); }
+
+/* Section vide : elle s'affiche comme les autres, avec sa mention. */
+.rien { font-size:var(--t-sm); color:var(--muted); }
+
+/* ═══ v6 ═════════════════════════════════════════════════════════ */
+
+/* Une ligne ENTRE les questions, jamais avant la premiere. */
+.q + .q { border-top:1px solid var(--border); }
+
+/* Sujets d'un ensemble — proposition A : ligne dense a trois colonnes. */
+.lst { border:1.5px solid var(--border); border-radius:var(--r); background:var(--surface); overflow:hidden; }
+.lst-l { display:grid; grid-template-columns:200px 1fr auto; gap:var(--s3); align-items:baseline;
+  padding:var(--s2) var(--s3); border-top:1px solid var(--border); position:relative; }
+.lst-l:first-child { border-top:none; }
+.lst-l:hover { background:var(--surface2); }
+.lst-n { font-family:var(--mono); font-size:var(--t-sm); color:var(--accent-deep); }
+.lst-n a { color:inherit; text-decoration:none; }
+.lst-n a::after { content:''; position:absolute; inset:0; }
+.lst-r { font-size:var(--t-sm); color:var(--ink-soft); }
+.lst-m { font-family:var(--mono); font-size:var(--t-meta); color:var(--muted); white-space:nowrap; }
+.lst-l.frais { box-shadow:inset 3px 0 0 var(--accent-deep); }
+@media(max-width:820px){ .lst-l{grid-template-columns:1fr;gap:2px} }
+
+/* Proposition B : vignettes compactes, deux lignes. */
+.vign { display:grid; grid-template-columns:repeat(auto-fill,minmax(232px,1fr)); gap:var(--s2); }
+.vign > div { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r-sm);
+  padding:var(--s2) var(--s3); position:relative; }
+.vign > div:hover { border-color:var(--border-strong); }
+.vign .t { font-family:var(--mono); font-size:var(--t-sm); color:var(--accent-deep); }
+.vign .t a { color:inherit; text-decoration:none; }
+.vign .t a::after { content:''; position:absolute; inset:0; border-radius:var(--r-sm); }
+.vign .m { font-family:var(--mono); font-size:var(--t-meta); color:var(--muted); margin-top:2px; }
+
+/* Proposition C : deux paquets, ce qui a bouge et le reste. */
+.paquet + .paquet { margin-top:var(--s4); }
+.paquet-h { display:flex; align-items:center; gap:var(--s2); margin-bottom:var(--s2); }
+.paquet-h .lb { font-family:var(--display); font-size:var(--t-sm); font-weight:700; }
+.paquet-h .n { font-family:var(--mono); font-size:var(--t-meta); color:var(--muted); }
+
+/* Chat — depose et interrogation partagent le meme chassis. */
+.fil-msg { display:flex; flex-direction:column; gap:var(--s3); }
+.msg { max-width:76%; padding:var(--s2) var(--s3); border-radius:var(--r-sm); font-size:var(--t-body); line-height:var(--lh); }
+.msg.moi { align-self:flex-end; background:var(--dark); color:var(--dark-text); }
+.msg.lui { align-self:flex-start; background:var(--surface); border:1.5px solid var(--border); }
+.saisie { display:flex; gap:var(--s2); align-items:flex-end; background:var(--surface);
+  border:1.5px solid var(--border); border-radius:var(--r); padding:var(--s2); }
+.saisie textarea { flex:1; border:none; outline:none; resize:none; background:transparent; min-height:56px;
+  font-family:var(--text); font-size:var(--t-body); line-height:var(--lh); color:var(--ink); }
+.cible { display:flex; align-items:center; gap:var(--s2); flex-wrap:wrap; }
+
+/* Champs de formulaire, communs a toutes les pages de saisie. */
+.champ { display:flex; flex-direction:column; gap:var(--s1); }
+.champ label { font-size:var(--t-sm); font-weight:600; color:var(--ink); }
+.champ .aide { font-size:var(--t-sm); color:var(--muted); }
+.champ input[type=text], .champ input[type=email], .champ input[type=password],
+.champ select, .champ textarea, .cible select, .saisie textarea {
+  width:100%; background:var(--surface2); border:1.5px solid var(--border); border-radius:8px;
+  padding:.6rem .8rem; font-family:var(--text); font-size:var(--t-body); color:var(--ink); outline:none; }
+.champ input:focus, .champ select:focus, .champ textarea:focus, .cible select:focus {
+  border-color:var(--ink); background:var(--surface); }
+.champ select, .cible select { appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink-soft) 50%),
+  linear-gradient(135deg,var(--ink-soft) 50%,transparent 50%);
+  background-position:calc(100% - 18px) 52%, calc(100% - 13px) 52%;
+  background-size:5px 5px, 5px 5px; background-repeat:no-repeat; padding-right:2.4rem; }
+/* Une zone de texte ne s'agrandit qu'en hauteur : l'etirer en largeur casse la
+   colonne de lecture et deborde de la carte. */
+textarea { resize:vertical; }
+
+/* Onglets, pour les modules qui en portent. */
+.ong { display:flex; gap:var(--s1); border-bottom:1.5px solid var(--border); }
+.ong button { font-family:var(--display); font-size:var(--t-sm); font-weight:600; padding:.5rem .9rem;
+  border:none; background:none; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent;
+  margin-bottom:-1.5px; }
+.ong button[aria-selected="true"] { color:var(--ink); border-bottom-color:var(--accent-deep); }
+
+/* Etat vide, partout le meme. */
+.vide-etat { padding:var(--s6) var(--s4); text-align:center; color:var(--muted); font-size:var(--t-sm); }
+
+/* ═══ v7 ═════════════════════════════════════════════════════════ */
+
+/* Un element a traiter est un BLOC : cadre, fond, respiration. Le traiter le
+   fait disparaitre et la file remonte — on nettoie, et ca se voit. */
+.bloc { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r);
+  padding:var(--s3) var(--s4); }
+.bloc + .bloc { margin-top:var(--s3); }
+.bloc-h { display:flex; align-items:center; gap:var(--s2); flex-wrap:wrap; margin-bottom:var(--s2); }
+.bloc-q { font-size:var(--t-body); line-height:var(--lh); }
+.bloc-a { margin-top:var(--s3); display:grid; grid-template-columns:1fr auto auto; gap:var(--s2); align-items:stretch; }
+.bloc-a textarea { min-height:44px; }
+.bloc-a .btn { white-space:nowrap; }
+.bloc.parti { opacity:0; transform:translateY(-6px); transition:opacity .18s, transform .18s; }
+.etiq { font-family:var(--display); font-size:var(--t-sm); font-weight:700; color:var(--ink); }
+.raison { font-size:var(--t-sm); color:var(--muted); margin-top:var(--s1); }
+
+/* Le « ? » des champs qui demandent une explication — repris de la production. */
+.lbl-q { display:flex; align-items:center; justify-content:space-between; gap:var(--s2); }
+.lbl-q > span:first-child { display:inline-flex; align-items:center; gap:.45rem; }
+.qmark { width:17px; height:17px; border-radius:50%; border:1.5px solid var(--border-strong);
+  background:var(--surface); color:var(--ink-soft); font-family:var(--mono); font-size:11px;
+  line-height:1; cursor:pointer; padding:0; display:inline-flex; align-items:center; justify-content:center; }
+.qmark:hover { border-color:var(--ink); color:var(--ink); }
+.pop-voile { position:fixed; inset:0; background:rgba(22,21,15,.45); z-index:60; display:none; }
+.pop-voile.on { display:block; }
+.pop { position:fixed; z-index:61; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:min(480px,calc(100vw - 2.5rem)); max-height:85vh; overflow:auto; background:var(--surface);
+  border:1.5px solid var(--border-strong); border-radius:var(--r); padding:var(--s4); display:none;
+  flex-direction:column; gap:var(--s3); box-shadow:0 18px 50px rgba(22,21,15,.25); }
+.pop.on { display:flex; }
+.ex-t { font-family:var(--mono); font-size:var(--t-meta); letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+.ex { padding:var(--s2) var(--s3); border-radius:8px; font-size:var(--t-sm); line-height:1.5; }
+.ex.bad { background:rgba(138,47,47,.07); border:1px solid rgba(138,47,47,.2); }
+.ex.good { background:rgba(77,107,20,.07); border:1px solid rgba(77,107,20,.2); }
+
+/* Multi-selection a puces — le motif de la production, conserve. */
+.ms { position:relative; }
+.ms-trigger { width:100%; display:flex; align-items:center; justify-content:space-between;
+  background:var(--surface2); border:1.5px solid var(--border); border-radius:8px; padding:.6rem .8rem;
+  font-family:var(--text); font-size:var(--t-body); color:var(--ink); cursor:pointer; text-align:left; }
+.ms-trigger.vide { color:var(--muted); }
+.ms-panel { position:absolute; top:calc(100% + .3rem); left:0; right:0; z-index:20; display:none;
+  flex-direction:column; max-height:230px; overflow-y:auto; background:var(--surface);
+  border:1.5px solid var(--border-strong); border-radius:8px; box-shadow:0 10px 26px rgba(22,21,15,.14); }
+.ms-panel.on { display:flex; }
+.ms-panel button { text-align:left; background:none; border:none; padding:.5rem .8rem; cursor:pointer;
+  font-family:var(--mono); font-size:var(--t-sm); color:var(--accent-deep); }
+.ms-panel button:hover { background:var(--surface2); }
+.ms-panel button[disabled] { color:var(--muted); cursor:not-allowed; }
+.puces-sel { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:var(--s2); }
+.puce { display:inline-flex; align-items:center; gap:.4rem; font-family:var(--mono); font-size:var(--t-meta);
+  background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:3px 8px; color:var(--accent-deep); }
+.puce button { border:none; background:none; color:var(--muted); cursor:pointer; padding:0; font-size:13px; line-height:1; }
+.puce button:hover { color:var(--danger); }
+
+/* Chat : la conversation occupe toute la hauteur, dans son cadre. */
+.chat { display:flex; flex-direction:column; height:calc(100vh - 2 * var(--s5)); gap:var(--s3); }
+.chat-fil { flex:1; overflow-y:auto; background:var(--surface); border:1.5px solid var(--border);
+  border-radius:var(--r); padding:var(--s4); display:flex; flex-direction:column; gap:var(--s3); }
+.chat-fil.depot { background:var(--surface2); }
+
+/* Champ en lecture seule : on montre l'etat courant sans le rendre modifiable. */
+.fige { background:var(--surface3); border:1.5px solid var(--border); border-radius:8px;
+  padding:.6rem .8rem; font-size:var(--t-body); color:var(--ink-soft); }
+
+/* Les questions d'une fiche, quand on veut les distinguer de l'etat. */
+.zone-q { background:var(--surface2); border:1.5px solid var(--border); border-radius:var(--r);
+  padding:var(--s3) var(--s4); margin-top:var(--s3); }
+.qf { display:grid; grid-template-columns:1fr auto; gap:var(--s3); align-items:center; padding:var(--s2) 0; }
+.qf + .qf { border-top:1px solid var(--border); }
+.btn-s { font-size:var(--t-meta); padding:.35rem .7rem; }
+
+/* ═══ v8 ═════════════════════════════════════════════════════════ */
+
+/* Accueil est le point d'ancrage : il se distingue toujours, sans etre allume.
+   Un liseré discret quand on n'y est pas, le fond plein quand on y est. */
+.nav-i.ancre:not([aria-current]) { border:1px solid var(--border); background:rgba(255,255,255,.45); }
+.nav-i.ancre:not([aria-current]):hover { border-color:var(--border-strong); }
+
+/* Criticite d'une question : trois niveaux, lisibles sans legende. */
+.crit { display:inline-flex; align-items:center; gap:.35rem; font-family:var(--mono);
+  font-size:var(--t-meta); padding:2px 8px; border-radius:6px; }
+.crit .pt { width:6px; height:6px; border-radius:50%; }
+.crit.haute { background:rgba(138,47,47,.08); color:var(--danger); }
+.crit.haute .pt { background:var(--danger); }
+.crit.moyenne { background:rgba(77,107,20,.09); color:var(--accent-deep); }
+.crit.moyenne .pt { background:var(--accent-deep); }
+.crit.basse { background:var(--surface2); color:var(--muted); }
+.crit.basse .pt { background:var(--border-strong); }
+.bloc.haute { border-left:3px solid var(--danger); }
+.bloc.moyenne { border-left:3px solid var(--accent-deep); }
+.bloc.basse { border-left:3px solid var(--border-strong); }
+
+/* La pastille du sujet, sur fond tenu — plus de blanc sur blanc. */
+.chip-s { font-family:var(--mono); font-size:var(--t-meta); color:var(--accent-deep);
+  background:rgba(77,107,20,.10); border:1px solid rgba(77,107,20,.22); border-radius:6px; padding:2px 8px; }
+
+/* Une question a traiter : l'entete deborde du cadre a droite pour la date. */
+.q-tete { display:flex; align-items:center; justify-content:space-between; gap:var(--s2);
+  margin-bottom:var(--s1); }
+.q-date { font-family:var(--mono); font-size:var(--t-meta); color:var(--muted); }
+
+/* Zone de reponse : le meme confort que le depot. Les boutons restent en haut
+   quand la zone s'agrandit, ils ne s'etirent plus avec elle. */
+.rep-zone { display:grid; grid-template-columns:1fr auto auto; gap:var(--s2); align-items:start;
+  margin-top:var(--s3); }
+.rep-zone textarea { width:100%; min-height:76px; background:var(--surface2);
+  border:1.5px solid var(--border); border-radius:var(--r-sm); padding:var(--s2) var(--s3);
+  font-family:var(--text); font-size:var(--t-body); line-height:var(--lh); color:var(--ink);
+  outline:none; resize:vertical; }
+.rep-zone textarea:focus { border-color:var(--ink); background:var(--surface); }
+.rep-zone .btn { white-space:nowrap; }
+
+/* Titre d'un sujet : un badge tenu, plus une ligne de mono nue. */
+.badge-sujet { display:inline-flex; align-items:center; gap:.15rem; font-family:var(--mono);
+  font-size:var(--t-lg); font-weight:500; color:var(--accent-deep);
+  background:rgba(77,107,20,.10); border:1.5px solid rgba(77,107,20,.24);
+  border-radius:10px; padding:.35rem .8rem; }
+.badge-sujet .h { color:var(--border-strong); }
+
+/* Actions d'un document : deux colonnes de trois, memes libelles partout. */
+.actions-2 { display:grid; grid-template-columns:1fr 1fr; gap:var(--s1) var(--s3); }
+.actions-2 a { font-size:var(--t-sm); color:var(--ink-soft); text-decoration:none; padding:.15rem 0; }
+.actions-2 a:hover { color:var(--ink); text-decoration:underline; }
+
+/* Petite fenetre de reponse : on repond sans quitter le sujet. */
+.mini-voile { position:fixed; inset:0; background:rgba(22,21,15,.45); z-index:60; display:none; }
+.mini-voile.on { display:block; }
+.mini { position:fixed; z-index:61; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:min(560px,calc(100vw - 2.5rem)); background:var(--surface); border:1.5px solid var(--border-strong);
+  border-radius:var(--r); padding:var(--s4); display:none; flex-direction:column; gap:var(--s3);
+  box-shadow:0 18px 50px rgba(22,21,15,.25); }
+.mini.on { display:flex; }
+.mini textarea { width:100%; min-height:120px; background:var(--surface2); border:1.5px solid var(--border);
+  border-radius:var(--r-sm); padding:var(--s2) var(--s3); font-family:var(--text); font-size:var(--t-body);
+  line-height:var(--lh); color:var(--ink); outline:none; resize:vertical; }
+.mini textarea:focus { border-color:var(--ink); background:var(--surface); }
+
+/* Choix multiple : un V discret marque ce qui est pris, le menu reste ouvert. */
+.ms-panel { max-height:320px; }
+.ms-panel button { display:flex; align-items:center; justify-content:space-between; gap:var(--s2); }
+.ms-panel .v { color:var(--accent-deep); font-size:13px; visibility:hidden; }
+.ms-panel button.pris .v { visibility:visible; }
+.ms-panel button.pris { color:var(--ink-soft); }
+
+/* Deux boutons cote a cote, centres, qui ne prennent pas toute la largeur. */
+.duo-btn { display:flex; gap:var(--s3); justify-content:center; }
+.duo-btn .btn { flex:0 1 200px; justify-content:center; }
+
+/* Reglages : le premier groupe respire comme les suivants. */
+.m-nav .side-grp:first-child { padding-top:var(--s2); border-top:none; margin-top:0; }
+.m-nav .side-grp { border-top:1px solid var(--border); }
+
+/* ═══ v9 ═══════════════════════════════════════════════════════════ */
+
+/* La carte respire : le cadre a une hauteur de confort, le dessin est centre. */
+.carte-cadre { min-height:340px; display:flex; align-items:center; justify-content:center; }
+
+/* Chevron de depliage, distinct du nom : cliquer le nom descend, cliquer le
+   chevron deplie. Deux cibles, deux gestes. */
+.arbre .chev { cursor:pointer; }
+.arbre .chev rect { fill:transparent; stroke:none; }
+.arbre .chev:hover text { fill:var(--ink); }
+
+/* Une puce entiere se clique pour se retirer — plus besoin de viser la croix. */
+.puce.otable { cursor:pointer; }
+.puce.otable:hover { border-color:var(--danger); color:var(--danger); background:rgba(138,47,47,.05); }
+.puce.otable:hover .x { color:var(--danger); }
+
+/* Reinitialiser : un rond discret, comme en production. */
+.reset-btn { width:32px; height:32px; border-radius:50%; border:1.5px solid var(--border-strong);
+  background:var(--surface); color:var(--ink-soft); font-size:15px; cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center; padding:0; flex-shrink:0; }
+.reset-btn:hover { color:var(--ink); border-color:var(--ink); }
+
+/* Le duo d'actions se distingue des trois destinations : un filet au-dessus. */
+.duo-btn { border-top:1px solid var(--border); padding-top:var(--s4); }
+.duo-btn .btn { font-size:var(--t-body); padding:.7rem 1rem; }
+
+/* Chat : un seul corps de texte, un peu plus petit, la saisie s'y aligne. */
+.msg, .saisie textarea { font-size:var(--t-sm); line-height:1.55; }
+.saisie { align-items:flex-start; }
+.saisie .btn { margin-top:0; }
+
+/* Depot : ce qu'on tape a la meme taille que l'exemple. */
+.depot textarea { font-size:var(--t-body) !important; }
+
+/* Une valeur qu'on doit pouvoir lire et recopier. */
+.val-box { font-family:var(--mono); font-size:var(--t-sm); color:var(--ink-soft);
+  background:var(--surface); border:1.5px solid var(--border); border-radius:8px;
+  padding:.45rem .7rem; display:inline-block; }
+
+/* Bandeau de confirmation qui laisse les champs libres pour recommencer. */
+.confirme { display:flex; align-items:flex-start; gap:var(--s2); padding:var(--s3);
+  background:rgba(77,107,20,.08); border:1.5px solid rgba(77,107,20,.25);
+  border-radius:var(--r-sm); font-size:var(--t-sm); color:var(--ink-soft); }
+.confirme b { color:var(--accent-deep); }
+
+/* ═══ v10 ══════════════════════════════════════════════════════════ */
+
+/* Un schema de structure, en CSS pur : ce qu'on est en train de fabriquer se
+   voit. Reprend le motif de la page de creation en production. */
+.schema { display:flex; flex-direction:column; align-items:center; }
+.schema .tronc { width:1.5px; height:22px; background:var(--border-strong); }
+.schema .barre { height:1.5px; background:var(--border-strong); }
+.schema-bas { display:grid; gap:var(--s3); width:100%; }
+.schema-bas > * { position:relative; }
+.schema-bas > *::before { content:''; position:absolute; top:-22px; left:50%;
+  width:1.5px; height:22px; background:var(--border-strong); }
+.branches { position:relative; width:100%; height:22px; }
+.branches::before { content:''; position:absolute; top:0; left:50%; width:1.5px; height:11px;
+  background:var(--border-strong); }
+.branches .bar { position:absolute; top:11px; height:1.5px; background:var(--border-strong); }
+.deux-col { display:grid; grid-template-columns:1fr 1fr; gap:var(--s3); }
+@media(max-width:700px){ .deux-col{grid-template-columns:1fr} }
+.encadre { background:var(--surface2); border:1.5px solid var(--border); border-radius:var(--r);
+  padding:var(--s4); display:flex; flex-direction:column; gap:var(--s3); }
+
+/* Fusion : les deux sources convergent vers le resultat. */
+.converge { position:relative; width:100%; height:26px; }
+.converge .bar { position:absolute; top:13px; height:1.5px; background:var(--border-strong); }
+.converge .haut { position:absolute; top:0; width:1.5px; height:13px; background:var(--border-strong); }
+.converge .bas { position:absolute; top:13px; left:50%; width:1.5px; height:13px; background:var(--border-strong); }
+
+/* Le sujet vise, sur une seule ligne : le depot ne perd plus de hauteur. */
+.rangee-cible { display:flex; align-items:center; gap:var(--s2); flex-wrap:wrap; }
+.rangee-cible select { min-width:230px; max-width:280px; }
+
+/* Un champ que l'on lit sans pouvoir le changer garde exactement son apparence. */
+input[readonly] { cursor:default; }
+input[readonly]:focus { border-color:var(--border); background:var(--surface); }
+
+/* ═══ v11 ══════════════════════════════════════════════════════════ */
+
+/* Le compteur de caracteres : une seule forme, quel que soit le module. */
+.hint { font-size:var(--t-meta); font-family:var(--text); font-weight:400;
+  color:var(--muted); letter-spacing:0; text-transform:none; }
+
+/* « ranger dans » est un libelle de champ, pas une etiquette technique. */
+.rangee-cible label { font-family:var(--text); font-size:var(--t-sm);
+  font-weight:500; color:var(--muted); letter-spacing:0; text-transform:none; }
+.rangee-cible select, .cible select {
+  background:var(--surface2); border:1.5px solid var(--border); border-radius:8px;
+  padding:.5rem .8rem; font-family:var(--text); font-size:var(--t-sm); color:var(--ink);
+  outline:none; appearance:none; padding-right:2.4rem;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink-soft) 50%),
+    linear-gradient(135deg,var(--ink-soft) 50%,transparent 50%);
+  background-position:calc(100% - 18px) 52%, calc(100% - 13px) 52%;
+  background-size:5px 5px, 5px 5px; background-repeat:no-repeat; }
+.rangee-cible select:focus, .cible select:focus { border-color:var(--ink); background-color:var(--surface); }
+
+/* Un bloc de structure : le cadre delimite l'entite, sans aplat gris. */
+.encadre { background:var(--surface); }
+
+/* La fourchette : des traits plus francs. */
+.branches { height:30px; }
+.branches .bar { top:15px; }
+.converge { height:34px; }
+.converge .bar { top:17px; }
+.converge .haut { height:17px; }
+.converge .bas { top:17px; height:17px; }
+
+/* Reorganiser reprend la forme d'A clarifier : un bloc par element, un liseré
+   qui dit la nature du geste, une action franche. */
+.prop-h { display:flex; align-items:center; justify-content:space-between; gap:var(--s2);
+  margin-bottom:var(--s1); }
+.prop-geste { display:inline-flex; align-items:center; gap:.35rem; font-family:var(--mono);
+  font-size:var(--t-meta); padding:2px 8px; border-radius:6px;
+  background:rgba(77,107,20,.09); color:var(--accent-deep); }
+.prop-geste .pt { width:6px; height:6px; border-radius:50%; background:var(--accent-deep); }
+.prop-l { font-family:var(--display); font-size:var(--t-sm); font-weight:700; color:var(--ink);
+  margin-top:var(--s3); }
+.prop-t { font-size:var(--t-body); line-height:var(--lh); margin-top:.2rem; }
+.prop-r { font-size:var(--t-sm); color:var(--muted); margin-top:.2rem; }
+.prop-a { display:flex; gap:var(--s2); margin-top:var(--s3); flex-wrap:wrap; }
+
+/* Les boutons d'une meme rangee de reglages ont la meme largeur. */
+.grp .btn { min-width:132px; justify-content:center; }
+
+/* ═══ v12 ══════════════════════════════════════════════════════════ */
+
+/* Une zone de texte s'agrandit, elle ne se reduit jamais sous sa hauteur utile.
+   min-height borne le redimensionnement vers le bas ; resize:vertical interdit
+   l'etirement lateral. */
+textarea { resize:vertical; min-height:96px; }
+.rep-zone textarea { min-height:96px; }
+.mini textarea { min-height:120px; }
+.depot textarea { min-height:200px; }
+.saisie textarea { min-height:64px; }
+.encadre textarea, .champ textarea { min-height:96px; }
+
+/* Le bloc des actions se distingue a peine : le meme fond que la zone des
+   questions. Aucun vocabulaire visuel nouveau, et le bloc entier dit « on agit ». */
+.aside-b.actions { background:var(--surface2); }
+
+/* Reorganiser : une couleur par geste, du plus leger au plus lourd. */
+.prop-geste.g1 { background:rgba(77,107,20,.10); color:var(--accent-deep); }
+.prop-geste.g1 .pt { background:var(--accent-deep); }
+.prop-geste.g2 { background:rgba(120,110,40,.12); color:#6d6420; }
+.prop-geste.g2 .pt { background:#6d6420; }
+.prop-geste.g3 { background:rgba(150,110,40,.13); color:#8a6420; }
+.prop-geste.g3 .pt { background:#8a6420; }
+.prop-geste.g4 { background:rgba(138,47,47,.09); color:var(--danger); }
+.prop-geste.g4 .pt { background:var(--danger); }
+.bloc.g1 { border-left:3px solid var(--accent-deep); }
+.bloc.g2 { border-left:3px solid #6d6420; }
+.bloc.g3 { border-left:3px solid #8a6420; }
+.bloc.g4 { border-left:3px solid var(--danger); }
+
+/* Une proposition et son etiquette forment un ensemble : de l'air entre deux. */
+.item + .item { margin-top:var(--s5); }
+
+/* Les lignes d'une note, chacune avec son marqueur. */
+.lignes { display:flex; flex-direction:column; gap:var(--s2); }
+.lignes > div { display:flex; gap:var(--s2); align-items:flex-start; }
+.lignes .m { color:var(--accent-deep); flex-shrink:0; }
+.lignes u { text-decoration-color:var(--border-strong); text-underline-offset:3px; }
+
+/* Un champ fige a la hauteur d'un champ de saisie : les blocs s'alignent. */
+.fige { min-height:42px; display:flex; align-items:center; }
+
+/* Etat d'un connecteur. */
+.etat-ok { font-family:var(--mono); font-size:var(--t-meta); color:var(--accent-deep); white-space:nowrap; }
+.etat-non { font-family:var(--mono); font-size:var(--t-meta); color:var(--danger); white-space:nowrap; }
+
+/* Les boutons d'un meme groupe de reglages ont la meme hauteur. */
+.grp .btn, .grp a.btn { min-height:38px; align-items:center; }
+
+/* ═══ v13 ══════════════════════════════════════════════════════════ */
+
+/* [hidden] doit gagner sur toute classe qui pose un display. C'est la cause
+   du bloc « nom de l'ensemble » resté visible en mode sujets freres, et c'etait
+   deja celle de la fenetre de parametres qui ne se fermait pas. Une regle,
+   toute la classe de defauts. */
+[hidden] { display:none !important; }
+
+/* Une colonne de grille ne doit pas s'elargir a cause de son contenu : sans
+   min-width, la carte poussait la colonne et faisait deborder tout le layout. */
+.duo > * { min-width:0; }
+
+/* Un champ fige a exactement la hauteur d'un champ de saisie. */
+.fige { min-height:0; padding:.6rem .8rem; line-height:var(--lh);
+  font-size:var(--t-body); display:block; }
+
+/* La fourchette : le tronc et la barre au meme niveau, des deux cotes. */
+.branches::before { height:15px; }
+
+/* ═══ v14 — etats reseau, communs a toutes les pages ══════════════ */
+
+/* Une erreur reseau ou un refus du back-end : le meme bandeau partout. */
+.alerte-err { display:flex; gap:var(--s2); padding:var(--s3); background:var(--danger-bg);
+  border:1.5px solid var(--danger-br); border-left:3px solid var(--danger);
+  border-radius:var(--r-sm); font-size:var(--t-sm); color:var(--danger); }
+
+/* L'attente d'une reponse : une ligne sobre, jamais un ecran fige. */
+.chargement { font-size:var(--t-sm); color:var(--muted); padding:var(--s3) 0; }

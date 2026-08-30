@@ -26,6 +26,7 @@ const KCP_WEBHOOKS = {
   restructurer: 'https://hook.eu2.make.com/0mwtqehwa8c85n4don6hqt1cxkluiggp', // Make: KCP - Restructurer
   propositions: 'https://hook.eu2.make.com/w7a7cjlruolk1l6lecayiy5k8c8rqt6t', // Make: KCP - WebApp - Propositions
   reponse_proposition: 'https://hook.eu2.make.com/lp4hd6igjskrirfp29ma2fsuv58c43fo', // Make: KCP - WebApp - Reponse Proposition
+  parametres: 'https://hook.eu2.make.com/vch7qngui955s1ux6kfu5h6u26h39hx3', // Make: KCP - WebApp - Parametres
 };
 
 // Guide d'utilisation, Google Doc partage en lecture. L'identifiant d'un
@@ -210,4 +211,29 @@ function kcpReadPointsCache() {
 }
 function kcpCachePoints(data) {
   try { localStorage.setItem(_kcpPointsKey(), JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {}
+}
+
+// ── Cache des propositions de réorganisation (même logique que les points) ──
+function _kcpPropsKey() { return 'kcp_props_' + (KCP_CONFIG.client_id || 'anon'); }
+function kcpReadPropsCache() {
+  try { const c = JSON.parse(localStorage.getItem(_kcpPropsKey()) || 'null'); return c && c.data ? c.data : null; }
+  catch (e) { return null; }
+}
+function kcpCacheProps(data) {
+  try { localStorage.setItem(_kcpPropsKey(), JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {}
+}
+
+// ── Badges de la barre latérale : « À clarifier » et « Réorganiser » ──
+// Chaque page les affiche depuis le cache ; seules les pages concernées
+// (accueil, à clarifier, réorganiser) revalident en réseau et rappellent
+// cette fonction. Aucun compte en cache → pas de badge, jamais un zéro.
+function kcpNavBadges() {
+  function pose(id, data, cle) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var n = (data && data[cle] || []).length;
+    if (n > 0) { el.textContent = n; el.hidden = false; } else { el.hidden = true; }
+  }
+  pose('nav-n-points', kcpReadPointsCache(), 'points');
+  pose('nav-n-props', kcpReadPropsCache(), 'propositions');
 }
