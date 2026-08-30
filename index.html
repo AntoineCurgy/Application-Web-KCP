@@ -1,271 +1,190 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#f6f4ee">
-<title>KCP</title>
-<link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
-<link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
-<script src="./config.js"></script>
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KCP — Accueil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./kcp.css">
-<style>
-  body {
-    background:var(--bg); color:var(--ink); font-family:var(--font);
-    max-width:1120px; margin:0 auto; min-height:100vh;
-    padding:3rem 3rem 3.5rem;
-    display:flex; flex-direction:column; gap:1.5rem;
-  }
-
-  /* HEADER */
-  .hdr { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:1.4rem; }
-
-  .greeting { font-size:28px; font-weight:700; letter-spacing:-0.02em; }
-
-  .greeting .name { color:var(--accent-deep); }
-
-  .dot { width:5px; height:5px; border-radius:50%; background:var(--accent-deep); animation:pulse 2.4s ease-in-out infinite; flex-shrink:0; margin-top:8px; }
-
-  /* HERO CHAT */
-  .hero {
-    padding:1.4rem 1.5rem 1.3rem; background:var(--dark); border:1.5px solid var(--dark-border);
-    border-radius:var(--r); position:relative; overflow:hidden;
-  }
-
-  .hero::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--accent); }
-
-  .hero { cursor:pointer; text-decoration:none; display:flex; align-items:center; justify-content:space-between; }
-
-  .hero-arrow { width:34px; height:34px; background:var(--accent); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--dark); font-size:16px; font-weight:700; flex-shrink:0; transition:transform 0.15s; }
-
-  .hero:hover { background:var(--dark-soft); }
-
-  .hero:hover .hero-arrow { transform:translate(2px,-2px); }
-
-  .hero-title { font-size:18px; font-weight:500; font-family:var(--mono); color:var(--dark-text); display:block; }
-
-  .hero-title span { color:var(--accent); }
-
-  /* GROUPES */
-  .groups-3, .groups-2 { display:grid; grid-template-columns:1fr; gap:1.5rem; }
-
-  .group { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r); overflow:hidden; display:flex; flex-direction:column; }
-
-  .group-hdr { font-size:12px; font-family:var(--mono); color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; padding:0.8rem 1.3rem; background:var(--surface2); }
-
-  .group-row { flex:1; display:flex; align-items:center; justify-content:space-between; gap:0.85rem; padding:1.15rem 1.3rem; text-decoration:none; color:var(--ink); border-top:1px solid var(--border); transition:background 0.12s; }
-
-  .group-row:hover { background:var(--surface3); }
-
-  .row-main { display:flex; flex-direction:column; gap:0.3rem; min-width:0; }
-
-  .row-title { font-size:16px; font-weight:700; letter-spacing:-0.01em; }
-
-  .row-sub { font-size:12px; font-family:var(--mono); color:var(--muted); line-height:1.45; }
-
-  .row-arr { font-size:12px; color:var(--muted); flex-shrink:0; }
-
-  .pastille { flex-shrink:0; min-width:22px; height:20px; padding:0 7px; background:var(--accent-deep); color:#ffffff; border-radius:100px; font-size:11px; font-family:var(--mono); font-weight:500; display:flex; align-items:center; justify-content:center; }
-
-  .pastille[hidden] { display:none; }
-
-  @media(min-width:900px){
-    .groups-3 { grid-template-columns:repeat(3, minmax(0,1fr)); }
-    .groups-2 { grid-template-columns:1fr 1fr; }
-  }
-
-  /* LIGNES NOTION / AIDE */
-  .notion-row { flex:1; display:flex; align-items:center; justify-content:space-between; padding:1.05rem 1.3rem; text-decoration:none; color:var(--ink-soft); border-top:1px solid var(--border); transition:background 0.12s; }
-
-  .notion-row:hover { background:var(--surface3); color:var(--ink); }
-
-  .notion-left { display:flex; align-items:center; gap:0.65rem; }
-
-  .notion-label { font-size:15px; font-weight:600; }
-
-  .notion-arr { font-size:12px; color:var(--muted); }
-
-  /* FOOTER */
-  .footer { display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-top:auto; padding-top:1rem; }
-
-  .logout { margin-left:auto; font-size:11px; font-family:var(--mono); color:var(--muted); background:none; border:none; cursor:pointer; text-decoration:none; padding:0; transition:color 0.15s; }
-
-  .logout:hover { color:var(--ink); }
-
-  /* ANIM */
-  body > * { opacity:0; transform:translateY(8px); animation:up 0.3s ease forwards; }
-
-  body > :nth-child(1){animation-delay:.04s}
-
-  body > :nth-child(2){animation-delay:.09s}
-
-  body > :nth-child(3){animation-delay:.14s}
-
-  body > :nth-child(4){animation-delay:.19s}
-
-  body > :nth-child(5){animation-delay:.23s}
-
-  @media(max-width:680px){ body{padding:2rem 1.25rem} }
-
-  @media(max-width:899px){ body{max-width:600px} }
-</style>
-</head>
-<body>
-
-  <div class="hdr">
-    <div>
-      <span class="kcp-tag">KCP — Knowledge Context Protocol</span>
-      <h1 class="greeting">Bonjour <span class="name" id="c-name">…</span></h1>
-    </div>
-    <div class="dot"></div>
-  </div>
-
-  <a href="./kcp-chat.html" class="hero">
-    <span class="hero-title">Chat <span>mémoire</span></span>
-    <div class="hero-arrow">→</div>
-  </a>
-
-  <div class="groups-3">
-    <div class="group">
-      <div class="group-hdr">Travailler</div>
-      <a href="./tiroir.html" class="group-row">
-        <span class="row-main">
-          <span class="row-title">Initialiser une IA</span>
-          <span class="row-sub">charger un sujet dans Claude ou ChatGPT</span>
-        </span>
-        <span class="row-arr">→</span>
-      </a>
-      <a href="./enregistrer-reunion.html" class="group-row">
-        <span class="row-main">
-          <span class="row-title">Enregistrer une réunion</span>
-          <span class="row-sub">envoyer un robot dans une réunion Meet ou Teams</span>
-        </span>
-        <span class="row-arr">→</span>
+<link rel="stylesheet" href="base.css">
+<script src="config.js"></script>
+</head><body>
+<div class="shell">
+  <aside class="side">
+    <div class="side-brand"><div class="mark">K</div><span class="side-name">KCP</span><span class="tag-beta">bêta</span></div>
+    <nav>
+      <a class="nav-i ancre" aria-current="page" href="index.html"><span class="ico">◈</span>Accueil</a>
+      <a class="nav-i" href="deposer.html"><span class="ico">↓</span>Déposer</a>
+      <a class="nav-i" href="interroger.html"><span class="ico">?</span>Interroger</a>
+      <a class="nav-i" href="a-clarifier.html"><span class="ico">⊙</span>À clarifier<span class="n" id="nav-n-points" hidden></span></a>
+      <div class="side-grp">Travailler</div>
+      <a class="nav-i" href="initialiser-ia.html"><span class="ico">↯</span>Initialiser une IA</a>
+      <a class="nav-i" href="enregistrer-reunion.html"><span class="ico">▶</span>Enregistrer une réunion</a>
+      <a class="nav-i" href="informations-capturees.html"><span class="ico">≡</span>Informations capturées</a>
+      <div class="side-grp">Organiser</div>
+      <a class="nav-i" href="nouveau-sujet.html"><span class="ico">+</span>Nouveau sujet</a>
+      <a class="nav-i" href="modifier-sujet.html"><span class="ico">✎</span>Modifier un sujet</a>
+      <a class="nav-i" href="reorganiser.html"><span class="ico">⇄</span>Réorganiser<span class="n" id="nav-n-props" hidden></span></a>
+      <div class="side-grp" id="grp-notion" hidden>Notion</div>
+      <a class="nav-i" href="#" id="nav-reunions" hidden target="_blank" rel="noopener"><span class="ico">↗</span>Mes réunions</a>
+    </nav>
+    <div class="side-foot">
+      <a class="who" href="parametres.html">
+        <div class="avatar" id="nav-avatar">·</div>
+        <div><div class="who-n" id="nav-who">…</div><div class="who-s">Paramètres</div></div>
       </a>
     </div>
-    <div class="group">
-      <div class="group-hdr">Mon Univers</div>
-      <a href="./informations-capturees.html" class="group-row">
-        <span class="row-main">
-          <span class="row-title">Informations capturées</span>
-          <span class="row-sub">ce qui a été enregistré, tous sujets confondus</span>
-        </span>
-        <span class="row-arr">→</span>
-      </a>
-      <a href="./points-a-clarifier.html" class="group-row">
-        <span class="row-main">
-          <span class="row-title">Points à clarifier</span>
-          <span class="row-sub">questions du système en attente de ta réponse</span>
-        </span>
-        <span class="pastille" id="points-pastille" hidden></span>
-        <span class="row-arr">→</span>
-      </a>
-      <a href="./propositions.html" class="group-row">
-        <span class="row-main">
-          <span class="row-title">Propositions</span>
-          <span class="row-sub">ce que le système propose de changer dans tes sujets</span>
-        </span>
-        <span class="pastille" id="propositions-pastille" hidden></span>
-        <span class="row-arr">→</span>
-      </a>
-      <a href="./carte-sujets.html" class="group-row">
-        <span class="row-main">
-          <span class="row-title">Carte</span>
-          <span class="row-sub">la hiérarchie de tes sujets et leurs relations</span>
-        </span>
-        <span class="row-arr">→</span>
-      </a>
+  </aside>
+  <main class="main">
+    <div class="stack">
+      <div>
+        <span class="eyebrow" id="compte"></span>
+        <h1 style="margin-top:.4rem" id="bonjour">Bonjour</h1>
+      </div>
+
+      <div class="note" id="bandeau" hidden><span>›</span><span id="bandeau-txt"></span></div>
+
+      <div>
+        <div class="ligne-titre"><div class="sect-title">Votre mémoire</div></div>
+        <div class="carte-cadre" id="cadre">
+          <div class="chargement" id="carte-attente">Chargement de votre carte…</div>
+          <svg class="arbre" id="svg" role="img" aria-label="Carte de vos sujets" hidden></svg>
+        </div>
+      </div>
     </div>
-    <div class="group">
-      <div class="group-hdr">Organiser</div>
-      <a href="./creer-tiroir.html" class="group-row">
-        <span class="row-main">
-          <span class="row-title">Nouveau sujet</span>
-          <span class="row-sub">créer un nouveau sujet</span>
-        </span>
-        <span class="row-arr">→</span>
-      </a>
-      <a href="./modifier-perimetre.html" class="group-row">
-        <span class="row-main">
-          <span class="row-title">Modifier un sujet</span>
-          <span class="row-sub">corriger le périmètre, le nom, ou rattacher ailleurs</span>
-        </span>
-        <span class="row-arr">→</span>
-      </a>
-      <a href="./restructurer.html" class="group-row">
-        <span class="row-main">
-          <span class="row-title">Restructurer un sujet</span>
-          <span class="row-sub">scinder, fusionner ou archiver</span>
-        </span>
-        <span class="row-arr">→</span>
-      </a>
-    </div>
-  </div>
-
-  <div class="groups-2">
-  <div class="group">
-    <div class="group-hdr">Notion</div>
-    <a id="n-reunions" href="#" class="notion-row" target="_blank" rel="noopener">
-      <div class="notion-left"><span>📋</span><span class="notion-label">Réunions</span></div>
-      <span class="notion-arr">→</span>
-    </a>
-  </div>
-
-  <div class="group">
-    <div class="group-hdr">Aide</div>
-    <a id="n-guide" href="#" class="notion-row" target="_blank" rel="noopener">
-      <div class="notion-left"><span>📖</span><span class="notion-label">Instructions, FAQ et contact</span></div>
-      <span class="notion-arr">→</span>
-    </a>
-  </div>
-  </div>
-
-  <div class="footer">
-    <div class="dot"></div>
-    <span class="footer-text">système actif · KCP V2</span>
-    <button class="logout" onclick="kcpLogout()">déconnexion</button>
-  </div>
-
+  </main>
+</div>
+<script src="arbre.js"></script>
 <script>
-  document.getElementById('c-name').textContent = KCP_CONFIG.client_name;
-  if (KCP_CONFIG.notion.reunions) document.getElementById('n-reunions').href = kcpNotionHref(KCP_CONFIG.notion.reunions);
-  if (KCP_CONFIG.guide)           document.getElementById('n-guide').href    = KCP_CONFIG.guide;
-  document.title = 'KCP — ' + KCP_CONFIG.client_name;
+  var C = KCP_CONFIG;
 
-  // Pastille "Points à clarifier" : nombre de questions en attente.
-  // Cache affiché tout de suite, puis revalidation réseau systématique
-  // (la liste est renouvelée chaque nuit, le cache ne fait pas foi).
-  (function pointsPastille(){
-    var el = document.getElementById('points-pastille');
-    function setCount(data){
-      var list = (data && data.points) || [];
-      if (list.length > 0) { el.textContent = list.length; el.hidden = false; }
-      else { el.hidden = true; }
+  // ── Barre latérale : nom, réunions, badges ──
+  (function nav() {
+    var n = (C.client_name || '').trim();
+    document.getElementById('nav-who').textContent = n || '—';
+    document.getElementById('nav-avatar').textContent = (n.charAt(0) || 'K').toUpperCase();
+    var r = (C.notion && C.notion.reunions) || '';
+    if (r) {
+      document.getElementById('nav-reunions').href = kcpNotionHref(r);
+      document.getElementById('nav-reunions').hidden = false;
+      document.getElementById('grp-notion').hidden = false;
     }
-    var cached = (typeof kcpReadPointsCache === 'function') ? kcpReadPointsCache() : null;
-    if (cached) setCount(cached);
-    kcpFetch(KCP_WEBHOOKS.points_a_clarifier, {
+    kcpNavBadges();
+  })();
+  document.getElementById('bonjour').textContent = 'Bonjour ' + ((C.client_name || '').trim() || '');
+
+  // ── La carte : cache affiché tout de suite, réseau revalide en fond ──
+  var ouverts = {}, svg = document.getElementById('svg'), donneesArbre = null;
+
+  function estEns(id) { return String(id).indexOf('GCP') === 0; }
+
+  // La réponse du webhook `carte` (une ligne par document, parent par identifiant)
+  // devient l'arbre du premier niveau : les enfants directs du Head, ensembles
+  // puis sujets, chacun en ordre alphabétique — la carte reste stable.
+  function construireArbre(sujets) {
+    var enfants = {};
+    sujets.forEach(function (s) { (enfants[s.parent] = enfants[s.parent] || []).push(s); });
+    function cle(s) { return String(s.doc_label || '').replace(/^#/, ''); }
+    function tri(a, b) { return cle(a).localeCompare(cle(b), 'fr', { sensitivity: 'base' }); }
+    var n1 = (enfants['GCP001'] || []).slice();
+    var ens = n1.filter(function (s) { return estEns(s.doc_int_id); }).sort(tri);
+    var suj = n1.filter(function (s) { return !estEns(s.doc_int_id); }).sort(tri);
+    return ens.concat(suj).map(function (s) {
+      var e = (enfants[s.doc_int_id] || []).slice().sort(tri)
+        .map(function (c) { return { id: c.doc_int_id, label: c.doc_label }; });
+      return { id: s.doc_int_id, label: s.doc_label, n: e.length || undefined, enfants: e.length ? e : undefined };
+    });
+  }
+
+  function rendre() {
+    if (!donneesArbre) return;
+    document.getElementById('carte-attente').hidden = true;
+    svg.hidden = false;
+    KCP_ARBRE.dessine(svg, {
+      racine: (C.client_name || '').trim() || 'Head',
+      donnees: donneesArbre, ouverts: ouverts,
+      onOuvrir: function (n) { ouverts[n.id] = !ouverts[n.id]; rendre(); },
+      onSel: function (n, type) {
+        location.href = (type === 'ens' ? 'ensemble.html' : 'sujet.html') + '?doc=' + encodeURIComponent(n.id);
+      }
+    });
+  }
+
+  function poserCarte(data) {
+    var sujets = (data && data.sujets) || [];
+    if (!sujets.length) return false;
+    donneesArbre = construireArbre(sujets);
+    var n1 = sujets.filter(function (s) { return s.parent === 'GCP001'; }).length;
+    document.getElementById('compte').textContent = n1 + ' entrée' + (n1 > 1 ? 's' : '') +
+      ' · ' + sujets.length + ' document' + (sujets.length > 1 ? 's' : '');
+    rendre();
+    return true;
+  }
+
+  (function chargerCarte() {
+    var cached = kcpReadCarteCache();
+    if (cached) poserCarte(cached);
+    kcpFetch(KCP_CONFIG.webhooks.carte, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ client_id: KCP_CONFIG.client_id })
-    })
-      .then(function(r){ return r.json(); })
-      .then(function(data){ if (typeof kcpCachePoints === 'function') kcpCachePoints(data); setCount(data); })
-      .catch(function(){ /* réseau indisponible : la pastille en cache reste */ });
+      body: JSON.stringify({ client_id: C.client_id })
+    }).then(function (r) { return r.text(); }).then(function (raw) {
+      var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      var data = {}; try { data = JSON.parse(cleaned); } catch (e) { data = {}; }
+      if (data && data.sujets && data.sujets.length) { kcpCacheCarte(data); poserCarte(data); }
+    }).catch(function () {
+      if (!donneesArbre) {
+        var a = document.getElementById('carte-attente');
+        a.className = 'alerte-err'; a.textContent = 'La carte n’a pas pu être chargée. Rechargez la page.';
+      }
+    });
   })();
 
-  // Pastille « Propositions » : nombre de propositions en attente d'une décision.
-  (function propositionsPastille(){
-    var el = document.getElementById('propositions-pastille');
-    if (!KCP_WEBHOOKS.propositions) return;
-    kcpFetch(KCP_WEBHOOKS.propositions, {
+  // ── Le bandeau : ce qui attend une réponse, questions et réorganisations ──
+  var nPoints = null, nProps = null;
+
+  function majBandeau() {
+    var el = document.getElementById('bandeau'), txt = document.getElementById('bandeau-txt');
+    var q = nPoints || 0, p = nProps || 0, total = q + p;
+    if (!total) { el.hidden = true; kcpNavBadges(); return; }
+    txt.textContent = '';
+    var b = document.createElement('b');
+    b.textContent = total + ' élément' + (total > 1 ? 's' : '') + (total > 1 ? ' attendent' : ' attend') + ' votre réponse';
+    txt.appendChild(b);
+    var detail = q && p
+      ? q + ' question' + (q > 1 ? 's' : '') + ' et ' + p + ' réorganisation' + (p > 1 ? 's' : '') + ' proposées par le cycle de cette nuit.'
+      : q ? q + ' question' + (q > 1 ? 's' : '') + ' posée' + (q > 1 ? 's' : '') + ' par le cycle de cette nuit.'
+          : p + ' réorganisation' + (p > 1 ? 's' : '') + ' proposée' + (p > 1 ? 's' : '') + ' par le cycle de cette nuit.';
+    txt.appendChild(document.createTextNode(' — ' + detail + ' '));
+    var a = document.createElement('a');
+    a.href = q ? 'a-clarifier.html' : 'reorganiser.html';
+    a.style.color = 'var(--accent-deep)';
+    a.textContent = 'Les traiter →';
+    txt.appendChild(a);
+    el.hidden = false;
+    kcpNavBadges();
+  }
+
+  (function compteurs() {
+    var cp = kcpReadPointsCache(), cr = kcpReadPropsCache();
+    if (cp) nPoints = (cp.points || []).length;
+    if (cr) nProps = (cr.propositions || []).length;
+    if (cp || cr) majBandeau();
+
+    kcpFetch(KCP_CONFIG.webhooks.points_a_clarifier, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ client_id: KCP_CONFIG.client_id })
-    })
-      .then(function(r){ return r.json(); })
-      .then(function(data){ var n = (data && data.propositions || []).length; if (n > 0) { el.textContent = n; el.hidden = false; } })
-      .catch(function(){ /* réseau indisponible : pas de pastille */ });
+      body: JSON.stringify({ client_id: C.client_id })
+    }).then(function (r) { return r.text(); }).then(function (raw) {
+      var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      var d = {}; try { d = JSON.parse(cleaned); } catch (e) { d = {}; }
+      if (d && d.points) { kcpCachePoints(d); nPoints = d.points.length; majBandeau(); }
+    }).catch(function () { /* le cache affiché reste */ });
+
+    kcpFetch(KCP_CONFIG.webhooks.propositions, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: C.client_id })
+    }).then(function (r) { return r.text(); }).then(function (raw) {
+      var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      var d = {}; try { d = JSON.parse(cleaned); } catch (e) { d = {}; }
+      if (d && d.propositions) { kcpCacheProps(d); nProps = d.propositions.length; majBandeau(); }
+    }).catch(function () { /* le cache affiché reste */ });
   })();
 </script>
-</body>
-</html>
+</body></html>
