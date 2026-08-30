@@ -130,7 +130,7 @@
 
     btn.classList.add('loading'); btn.disabled = true;
     try {
-      const r = await fetch(C.webhooks.auth, {
+      const r = await kcpFetch(C.webhooks.auth, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify({ username, password })
       });

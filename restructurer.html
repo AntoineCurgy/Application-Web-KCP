@@ -393,7 +393,7 @@
 
     let res, data = {};
     try {
-      res = await fetch(C.webhooks.restructurer, {
+      res = await kcpFetch(C.webhooks.restructurer, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify(payload)
       });

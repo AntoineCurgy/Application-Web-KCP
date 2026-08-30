@@ -159,7 +159,7 @@
 
     let res, data = {};
     try {
-      res = await fetch(C.webhooks.creer_bot, {
+      res = await kcpFetch(C.webhooks.creer_bot, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_client, meeting_url, titre_reunion, langue: langueEl.value })
       });

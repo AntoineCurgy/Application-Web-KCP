@@ -245,7 +245,7 @@
     }
     var cached = (typeof kcpReadPointsCache === 'function') ? kcpReadPointsCache() : null;
     if (cached) setCount(cached);
-    fetch(KCP_WEBHOOKS.points_a_clarifier, {
+    kcpFetch(KCP_WEBHOOKS.points_a_clarifier, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ client_id: KCP_CONFIG.client_id })
     })
@@ -258,7 +258,7 @@
   (function propositionsPastille(){
     var el = document.getElementById('propositions-pastille');
     if (!KCP_WEBHOOKS.propositions) return;
-    fetch(KCP_WEBHOOKS.propositions, {
+    kcpFetch(KCP_WEBHOOKS.propositions, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ client_id: KCP_CONFIG.client_id })
     })

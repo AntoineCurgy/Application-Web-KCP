@@ -108,6 +108,24 @@ const KCP_PUBLIC_PAGES = ['login.html', 'reset-password.html'];
 })();
 
 // ─────────────────────────────────────────────────────────────
+// Délai d'attente sur tout appel réseau.
+// Sans lui, un webhook qui ne répond jamais fige la page sans un mot :
+// le spinner tourne, aucun message n'arrive, l'utilisateur ne sait pas
+// si ça travaille ou si c'est mort. Le plafond transforme ce gel en
+// l'erreur que chaque page sait déjà afficher.
+// 60 s est calibré sur les durées réelles relevées côté Make : le plus
+// lent des dix-neuf scénarios du site (le chat) plafonne à 20 s.
+// ─────────────────────────────────────────────────────────────
+const KCP_TIMEOUT_MS = 60000;
+
+function kcpFetch(url, options) {
+  const ctl = new AbortController();
+  const t = setTimeout(function () { ctl.abort(); }, KCP_TIMEOUT_MS);
+  return fetch(url, Object.assign({}, options, { signal: ctl.signal }))
+    .finally(function () { clearTimeout(t); });
+}
+
+// ─────────────────────────────────────────────────────────────
 // Cache local de la liste des tiroirs (stale-while-revalidate).
 // La liste change rarement (création / modif de périmètre) : on la
 // sert instantanément depuis localStorage et on rafraîchit en fond.
@@ -127,7 +145,7 @@ function kcpInvalidateTiroirs() {
 }
 
 async function _kcpFetchTiroirs() {
-  const r = await fetch(KCP_WEBHOOKS.tiroirs, {
+  const r = await kcpFetch(KCP_WEBHOOKS.tiroirs, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ client_id: KCP_CONFIG.client_id })
   });

@@ -194,7 +194,7 @@
     }
     item.classList.add('busy');
     try {
-      const r = await fetch(C.webhooks.reponse_clarification, {
+      const r = await kcpFetch(C.webhooks.reponse_clarification, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ client_id: id_client, feedback_id: p.feedback_id, action: action, reponse: reponse })
       });
@@ -217,7 +217,7 @@
   function showErr(m) { const e = document.getElementById('s-error'); e.textContent = m; e.classList.add('on'); }
 
   async function fetchPoints() {
-    const r = await fetch(C.webhooks.points_a_clarifier, {
+    const r = await kcpFetch(C.webhooks.points_a_clarifier, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ client_id: id_client })
     });

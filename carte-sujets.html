@@ -550,7 +550,7 @@
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeFiche(); });
 
   async function fetchCarte() {
-    const r = await fetch(C.webhooks.carte, {
+    const r = await kcpFetch(C.webhooks.carte, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ client_id: id_client })
     });
