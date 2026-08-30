@@ -1,0 +1,411 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KCP — Paramètres</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<script src="config.js"></script>
+<style>
+  .voile { position:fixed; inset:0; background:rgba(22,21,15,.42); display:grid; place-items:center; padding:var(--s4); z-index:10; }
+  .modal { width:min(940px,100%); height:min(660px,90vh); background:var(--surface); border-radius:var(--r);
+    box-shadow:0 24px 70px rgba(22,21,15,.3); display:grid; grid-template-columns:236px 1fr; overflow:hidden; }
+  .m-nav { background:var(--surface2); border-right:1.5px solid var(--border); padding:var(--s4) var(--s3);
+    display:flex; flex-direction:column; gap:2px; overflow:auto; }
+  .m-nav .side-grp { padding-top:var(--s3); }
+  .m-body { padding:var(--s5); overflow:auto; }
+  .m-body h2 { margin-bottom:var(--s4); }
+  .panel { display:none; } .panel.on { display:block; }
+  .grp { background:var(--surface2); border-radius:var(--r-sm); margin-bottom:var(--s4); }
+  .li { display:flex; align-items:center; gap:var(--s3); padding:var(--s3) var(--s4);
+    border-top:1px solid var(--border); }
+  .li:first-child { border-top:none; }
+  .li-l { flex:1; min-width:0; }
+  .li-t { font-size:var(--t-body); font-weight:500; }
+  .li-d { font-size:var(--t-sm); color:var(--muted); margin-top:2px; }
+  .li-v { font-family:var(--mono); font-size:var(--t-sm); color:var(--ink-soft); text-align:right; }
+  input[type=text], select { background:var(--surface); border:1.5px solid var(--border);
+    border-radius:8px; padding:.5rem .7rem; font-family:var(--text); font-size:var(--t-sm); color:var(--ink);
+    min-width:210px; }
+  .m-body select { appearance:none; padding-right:2.6rem;
+    background-image:linear-gradient(45deg,transparent 50%,var(--ink-soft) 50%),
+      linear-gradient(135deg,var(--ink-soft) 50%,transparent 50%);
+    background-position:calc(100% - 22px) 52%, calc(100% - 17px) 52%;
+    background-size:5px 5px, 5px 5px; background-repeat:no-repeat; }
+  /* ── Facturation. Modèle : Wispr Flow, panneau « Plans and Billing ». ── */
+  .plan { background:var(--surface2); border-radius:var(--r-sm); padding:var(--s4); margin-bottom:var(--s3); }
+  .plan-n { font-family:var(--display); font-size:var(--t-lg); font-weight:700; }
+  .prix { display:flex; align-items:baseline; gap:var(--s2); margin-top:var(--s1); flex-wrap:wrap; }
+  .prix s { color:var(--muted); font-size:var(--t-body); text-decoration-thickness:1.5px; }
+  /* MDN : <s> n'est pas annoncé par les lecteurs d'écran. On l'annonce. */
+  .prix s::before { content:" ancien tarif : "; }
+  .prix s::after  { content:", "; }
+  .prix s::before, .prix s::after { position:absolute; width:1px; height:1px; overflow:hidden;
+    clip-path:inset(100%); white-space:nowrap; }
+  .prix .now { font-family:var(--display); font-size:var(--t-xl); font-weight:700; color:var(--accent-deep); }
+  .prix .per { font-size:var(--t-sm); color:var(--muted); }
+  .incl { display:grid; grid-template-columns:1fr 1fr; gap:var(--s3); }
+  @media(max-width:640px){ .incl{grid-template-columns:1fr} }
+  .incl-b { background:var(--surface2); border-radius:var(--r-sm); padding:var(--s3); }
+  .incl-t { font-family:var(--display); font-size:var(--t-sm); font-weight:700; color:var(--ink); }
+  .incl-b p { font-size:var(--t-sm); color:var(--ink-soft); margin-top:.3rem; line-height:1.5; }
+  .btn-s { font-size:var(--t-meta); padding:.35rem .7rem; min-height:0; }
+  .badge { font-family:var(--mono); font-size:var(--t-meta); background:var(--accent); color:var(--accent-deep);
+    padding:3px 9px; border-radius:6px; letter-spacing:.05em; text-transform:uppercase; }
+  .plan-a { display:flex; gap:var(--s2); margin-top:var(--s3); flex-wrap:wrap; }
+  /* ── Zone de danger. Modèle : GitHub, « Danger Zone ». ── */
+  .danger { border:1.5px solid var(--danger-br); border-radius:var(--r-sm); }
+  .danger .dh { padding:var(--s2) var(--s4); background:var(--danger-bg); color:var(--danger);
+    border-bottom:1.5px solid var(--danger-br); border-radius:var(--r-sm) var(--r-sm) 0 0;
+    font-family:var(--mono); font-size:var(--t-meta); letter-spacing:.1em; text-transform:uppercase; }
+  .danger .li { border-top-color:var(--danger-br); }
+  .conn { display:flex; align-items:center; gap:var(--s3); padding:var(--s3) var(--s4); border-top:1px solid var(--border); }
+  .conn:first-child { border-top:none; }
+</style></head><body>
+<div class="shell" aria-hidden="true">
+  <aside class="side">
+    <div class="side-brand"><div class="mark">K</div><span class="side-name">KCP</span><span class="tag-beta">bêta</span></div>
+    <nav>
+      <a class="nav-i ancre" href="index.html" tabindex="-1"><span class="ico">◈</span>Accueil</a>
+      <a class="nav-i" href="deposer.html" tabindex="-1"><span class="ico">↓</span>Déposer</a>
+      <a class="nav-i" href="interroger.html" tabindex="-1"><span class="ico">?</span>Interroger</a>
+      <a class="nav-i" href="a-clarifier.html" tabindex="-1"><span class="ico">⊙</span>À clarifier</a>
+      <div class="side-grp">Travailler</div>
+      <a class="nav-i" href="initialiser-ia.html" tabindex="-1"><span class="ico">↯</span>Initialiser une IA</a>
+      <a class="nav-i" href="enregistrer-reunion.html" tabindex="-1"><span class="ico">▶</span>Enregistrer une réunion</a>
+      <a class="nav-i" href="informations-capturees.html" tabindex="-1"><span class="ico">≡</span>Informations capturées</a>
+      <div class="side-grp">Organiser</div>
+      <a class="nav-i" href="nouveau-sujet.html" tabindex="-1"><span class="ico">+</span>Nouveau sujet</a>
+      <a class="nav-i" href="modifier-sujet.html" tabindex="-1"><span class="ico">✎</span>Modifier un sujet</a>
+      <a class="nav-i" href="reorganiser.html" tabindex="-1"><span class="ico">⇄</span>Réorganiser</a>
+    </nav>
+    <div class="side-foot">
+      <a class="who" href="parametres.html" tabindex="-1">
+        <div class="avatar" id="fond-avatar">·</div>
+        <div><div class="who-n" id="fond-who">…</div><div class="who-s">Paramètres</div></div>
+      </a>
+    </div>
+  </aside>
+  <main class="main"><span class="eyebrow"></span><h1 style="margin-top:.4rem" id="fond-bonjour">Bonjour</h1></main>
+</div>
+
+<div class="voile" id="voile">
+ <div class="modal" role="dialog" aria-modal="true" aria-labelledby="t-panel">
+  <div class="m-nav">
+    <div class="side-grp" style="padding-top:0">Réglages</div>
+    <button class="nav-i" data-p="general"><span class="ico">☰</span>Général</button>
+    <button class="nav-i" data-p="conn"><span class="ico">⇄</span>Connecteurs</button>
+    <div class="side-grp">Compte</div>
+    <button aria-current="page" data-p="compte" class="nav-i"><span class="ico">◉</span>Compte</button>
+    <button data-p="factu" class="nav-i"><span class="ico">▤</span>Abonnement</button>
+    <button data-p="rgpd" class="nav-i"><span class="ico">⛉</span>Confidentialité</button>
+    <div class="side-grp">Aller plus loin</div>
+    <button data-p="guide" class="nav-i"><span class="ico">↗</span>Manuel</button>
+  </div>
+
+  <div class="m-body">
+    <!-- ── COMPTE ── -->
+    <section class="panel on" id="p-compte">
+      <h2 id="t-panel">Compte</h2>
+      <div class="grp">
+        <div class="li"><div class="li-l"><div class="li-t">Prénom</div></div><input type="text" id="c-prenom" value="" readonly></div>
+        <div class="li"><div class="li-l"><div class="li-t">Nom</div></div><input type="text" id="c-nom" value="" readonly></div>
+        <div class="li"><div class="li-l"><div class="li-t">Email</div>
+          <div class="li-d">Sert aussi d'identifiant de connexion.</div></div>
+          <div><span class="val-box" id="c-email">—</span></div></div>
+        <div class="li"><div class="li-l"><div class="li-t">Identifiant client</div></div>
+          <div class="li-v" id="c-id">—</div></div>
+        <div class="li"><div class="li-l"><div class="li-t">Statut</div></div>
+          <div class="li-v"><span class="badge" id="c-statut">bêta</span></div></div>
+      </div>
+      <div class="confirme" id="mdp-ok" hidden style="margin-bottom:var(--s3)"><span>✓</span><span id="mdp-ok-txt"></span></div>
+      <div class="alerte-err" id="mdp-err" hidden style="margin-bottom:var(--s3)"><span>›</span><span>L'envoi du lien a échoué. Réessayez.</span></div>
+      <div style="display:flex;gap:var(--s2);margin-bottom:var(--s5)">
+        <button class="btn" id="btn-logout">Se déconnecter</button>
+        <button class="btn" id="btn-mdp">Changer de mot de passe</button>
+      </div>
+      <div class="danger">
+        <div class="dh">Zone de danger</div>
+        <div class="li"><div class="li-l"><div class="li-t">Supprimer le compte</div>
+          <div class="li-d">Efface vos sujets, vos dépôts et vos réunions. Irréversible.</div></div>
+          <a class="btn btn-danger" id="btn-suppr" href="#">Supprimer…</a></div>
+      </div>
+    </section>
+
+    <!-- ── GENERAL ── -->
+    <section class="panel" id="p-general">
+      <h2>Général</h2>
+      <div class="grp">
+        <div class="li"><div class="li-l"><div class="li-t">Langue de l'application</div>
+          <div class="li-d">Langue des écrans et des courriels.</div></div>
+          <select id="g-langue"><option value="fr">Français</option><option value="en">English</option></select></div>
+        <div class="li"><div class="li-l"><div class="li-t">Heure du cycle</div>
+          <div class="li-d">Moment où votre mémoire absorbe ce qui est arrivé.</div></div>
+          <div class="li-v">chaque nuit · 01:00</div></div>
+        <div class="li"><div class="li-l"><div class="li-t">Dernier cycle</div></div>
+          <div class="li-v" id="g-cycle">—</div></div>
+      </div>
+      <div class="note"><span>›</span><span>L'heure du cycle n'est pas réglable pour l'instant. Elle s'affiche pour que vous sachiez quand vos sujets se mettent à jour.</span></div>
+    </section>
+
+    <!-- ── CONNECTEURS ── -->
+    <section class="panel" id="p-conn">
+      <h2>Connecteurs</h2>
+      <p class="sub" style="margin-bottom:var(--s3)">Les trois branchements possibles, et comment les faire.</p>
+      <div class="grp">
+        <div class="conn"><span style="font-size:20px" aria-hidden="true">◍</span>
+          <div class="li-l"><div class="li-t">ChatGPT ↔ Notion</div></div>
+          <a class="btn btn-s" href="https://docs.google.com/document/d/1iDpCeGGRI2g-ekKcszG5GeayUDRstWP1FPtsU9ziqnA/view?tab=t.q4hy8jd0tgt#chatgpt" target="_blank" rel="noopener">Tutoriel…</a></div>
+        <div class="conn"><span style="font-size:20px" aria-hidden="true">✳</span>
+          <div class="li-l"><div class="li-t">Claude ↔ Notion</div></div>
+          <a class="btn btn-s" href="https://docs.google.com/document/d/1iDpCeGGRI2g-ekKcszG5GeayUDRstWP1FPtsU9ziqnA/view?tab=t.q4hy8jd0tgt#claude" target="_blank" rel="noopener">Tutoriel…</a></div>
+        <div class="conn"><span style="font-size:20px" aria-hidden="true">⌁</span>
+          <div class="li-l"><div class="li-t">Connecteur KCP ↔ Claude</div></div>
+          <a class="btn btn-s" href="https://docs.google.com/document/d/1iDpCeGGRI2g-ekKcszG5GeayUDRstWP1FPtsU9ziqnA/view?tab=t.q4hy8jd0tgt#mcp" target="_blank" rel="noopener">Tutoriel…</a></div>
+      </div>
+
+      <div class="sect-title">Vos réunions</div>
+      <div class="grp">
+        <div class="li" style="align-items:center"><div class="li-l"><div class="li-t">Adresse Notion à utiliser</div>
+          <div class="li-d">Connectez-vous à Notion avec cette adresse pour voir vos comptes rendus.</div></div>
+          <div><span class="val-box" id="conn-email">non renseignée</span></div></div>
+      </div>
+    </section>
+
+    <!-- ── ABONNEMENT ── -->
+    <section class="panel" id="p-factu">
+      <h2>Abonnement</h2>
+      <div class="plan">
+        <div style="display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap">
+          <span class="plan-n">KCP</span><span class="badge">accès bêta</span>
+        </div>
+        <div class="prix">
+          <s>49,99 €</s>
+          <span class="now">Gratuit</span>
+          <span class="per">pendant la bêta</span>
+        </div>
+        <p class="sub" style="margin-top:var(--s2)">Votre accès est complet et sans limite. Aucun moyen de paiement ne vous est demandé, et vous serez prévenu bien avant tout changement.</p>
+        <div class="plan-a">
+          <button class="btn btn-1" id="voir-inclus">Voir ce qui est inclus</button>
+          <a class="btn" href="mailto:kcp@88systems.io">Nous écrire</a>
+        </div>
+      </div>
+      <div class="grp">
+        <div class="li"><div class="li-l"><div class="li-t">Moyen de paiement</div></div>
+          <div class="li-v">aucun</div></div>
+        <div class="li"><div class="li-l"><div class="li-t">Prochaine échéance</div></div>
+          <div class="li-v">aucune</div></div>
+      </div>
+    </section>
+
+    <!-- ── ALLER PLUS LOIN ── -->
+    <section class="panel" id="p-guide">
+      <h2>Aller plus loin</h2>
+      <div class="grp">
+        <div class="li"><div class="li-l"><div class="li-t">Manuel</div>
+          <div class="li-d">Instructions, FAQ, contact et mentions RGPD.</div></div>
+          <a class="btn" href="https://docs.google.com/document/d/1iDpCeGGRI2g-ekKcszG5GeayUDRstWP1FPtsU9ziqnA/view" target="_blank" rel="noopener">Ouvrir le manuel ↗</a></div>
+      </div>
+    </section>
+
+    <!-- ── RGPD ── -->
+    <section class="panel" id="p-rgpd">
+      <h2>Données et confidentialité</h2>
+      <div class="grp">
+        <div class="li"><div class="li-l"><div class="li-t">Où vivent vos données</div>
+          <div class="li-d">Dans votre propre espace Notion, dont vous êtes propriétaire.</div></div></div>
+        <div class="li"><div class="li-l"><div class="li-t">Réunions enregistrées</div>
+          <div class="li-d">Transcrites puis résumées ; le transcript reste dans un espace non partagé.</div></div></div>
+        <div class="li"><div class="li-l"><div class="li-t">Exporter mes données</div>
+          <div class="li-d">Une copie de tout ce que le système détient sur vous.</div></div>
+          <a class="btn" id="btn-export" href="#">Demander</a></div>
+        <div class="li"><div class="li-l"><div class="li-t">Mentions RGPD</div>
+          <div class="li-d">Où vivent vos données, et ce que vous pouvez exiger.</div></div>
+          <a class="btn" href="https://docs.google.com/document/d/1iDpCeGGRI2g-ekKcszG5GeayUDRstWP1FPtsU9ziqnA/view?tab=t.xs6ehowq582d" target="_blank" rel="noopener">Ouvrir ↗</a></div>
+      </div>
+    </section>
+  </div>
+ </div>
+</div>
+
+<div class="mini-voile" id="iv"></div>
+<div class="mini" id="im" role="dialog" aria-modal="true" aria-labelledby="im-t" style="width:min(660px,calc(100vw - 2.5rem));max-height:86vh;overflow:auto">
+  <div>
+    <span class="eyebrow">Accès bêta</span>
+    <div id="im-t" style="font-family:var(--display);font-size:var(--t-xl);font-weight:700;margin-top:.3rem">Tout est inclus</div>
+    <p class="sub" style="margin-top:.5rem">Aucun palier, aucune limite, aucun quota. Votre accès est complet.</p>
+  </div>
+
+  <div class="incl">
+    <div class="incl-b">
+      <div class="incl-t">Une mémoire qui se tient à jour seule</div>
+      <p>Vous déposez quand vous voulez, comme cela vient. Chaque nuit, votre mémoire absorbe ce qui est arrivé, met chaque sujet à jour et réécrit son état courant. Vous n'avez rien à ranger.</p>
+    </div>
+    <div class="incl-b">
+      <div class="incl-t">Un système qui vous dit ce qu'il ne sait pas</div>
+      <p>Quand deux informations se contredisent, ou qu'une réponse manque là où elle compte, le système pose la question au lieu d'inventer. Vous répondez en une phrase, il corrige.</p>
+    </div>
+    <div class="incl-b">
+      <div class="incl-t">Vos réunions, transcrites et rangées</div>
+      <p>Un robot rejoint vos réunions Meet et Teams, les transcrit, en tire un compte rendu, et diffuse ce qui compte dans les sujets concernés. Le transcript brut reste disponible sur demande.</p>
+    </div>
+    <div class="incl-b">
+      <div class="incl-t">Votre contexte, dans vos IA</div>
+      <p>Chargez un sujet dans Claude ou ChatGPT en un clic, avec tout son état. Ou branchez le connecteur KCP et interrogez votre mémoire directement depuis une conversation.</p>
+    </div>
+    <div class="incl-b">
+      <div class="incl-t">Une organisation qui suit le réel</div>
+      <p>Créez, renommez, déplacez, scindez ou fusionnez vos sujets à tout moment. Le système repère lui-même les frontières mal placées et vous propose de les corriger.</p>
+    </div>
+    <div class="incl-b">
+      <div class="incl-t">Vos données, chez vous</div>
+      <p>Tout vit dans votre propre espace Notion, dont vous êtes propriétaire. Vous pouvez le lire, l'exporter et le quitter quand vous voulez.</p>
+    </div>
+  </div>
+
+  <div class="note"><span>›</span><span>Un manuel complet, une FAQ et un contact direct viennent avec. Vous serez prévenu bien avant tout changement de tarif.</span></div>
+
+  <button class="btn btn-1" id="im-fermer" style="align-self:flex-end">Fermer</button>
+</div>
+<script>
+  var C = KCP_CONFIG;
+  var compte = null;   // la réponse du webhook, quand elle est arrivée
+
+  // ── Le fond, figé : le prénom de la session ──
+  (function fond() {
+    var n = (C.client_name || '').trim();
+    document.getElementById('fond-who').textContent = n || '—';
+    document.getElementById('fond-avatar').textContent = (n.charAt(0) || 'K').toUpperCase();
+    document.getElementById('fond-bonjour').textContent = 'Bonjour ' + n;
+  })();
+
+  function parseDate(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{1,2}))?/.exec(String(s || ''));
+    if (!m) return null;
+    return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0));
+  }
+
+  // ── Le profil : un appel, six champs, des replis explicites ──
+  (function chargerProfil() {
+    document.getElementById('c-prenom').value = (C.client_name || '').trim();
+    document.getElementById('c-id').textContent = C.client_id || '—';
+    kcpFetch(C.webhooks.parametres, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: C.client_id })
+    }).then(function (r) { return r.text(); }).then(function (raw) {
+      var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      var d = {}; try { d = JSON.parse(cleaned); } catch (e) { d = {}; }
+      if (!d.ok) return;   // client inconnu : les valeurs de session restent
+      compte = d;
+      document.getElementById('c-prenom').value = d.client_name || '';
+      document.getElementById('c-nom').value = d.client_lastname || '';
+      document.getElementById('c-email').textContent = d.client_email || '—';
+      document.getElementById('c-id').textContent = d.client_id || C.client_id || '—';
+      // Pendant la bêta, un compte actif est un compte bêta.
+      document.getElementById('c-statut').textContent =
+        (d.client_status === 'active' || !d.client_status) ? 'bêta' : d.client_status;
+      // Langue : vide veut dire « pas encore choisie », le français est le défaut.
+      document.getElementById('g-langue').value =
+        String(d.client_language || '').toLowerCase().indexOf('en') === 0 ? 'en' : 'fr';
+      // L'adresse Notion des réunions : vide veut dire « pas encore renseignée ».
+      document.getElementById('conn-email').textContent =
+        (d.email_notion_reunions || '').trim() || 'non renseignée';
+      majMails();
+    }).catch(function () { /* les valeurs de session restent affichées */ });
+  })();
+
+  // ── Le dernier cycle : la date la plus récente de la carte en cache ──
+  (function dernierCycle() {
+    var cached = kcpReadCarteCache();
+    if (!cached || !cached.sujets) return;
+    var max = null;
+    cached.sujets.forEach(function (s) {
+      var d = parseDate(s.last_update_date);
+      if (d && (!max || d.getTime() > max.getTime())) max = d;
+    });
+    if (max) {
+      document.getElementById('g-cycle').textContent =
+        ('0' + max.getDate()).slice(-2) + '/' + ('0' + (max.getMonth() + 1)).slice(-2) +
+        ' à ' + ('0' + max.getHours()).slice(-2) + ':' + ('0' + max.getMinutes()).slice(-2);
+    }
+  })();
+
+  // ── Les mailto, remplis avec le compte réel ──
+  function majMails() {
+    var id = (compte && compte.client_id) || C.client_id || '';
+    var email = (compte && compte.client_email) || '';
+    var qui = ((compte && compte.client_name) || C.client_name || '') + ' ' + ((compte && compte.client_lastname) || '');
+    document.getElementById('btn-export').href =
+      'mailto:kcp@88systems.io?subject=' + encodeURIComponent('Export de mes données KCP — ' + id) +
+      '&body=' + encodeURIComponent('Bonjour,\n\nJe souhaite recevoir une copie de l’ensemble des données que KCP détient me concernant.\n\nIdentifiant client : ' + id + '\nAdresse du compte : ' + email + '\n\nMerci d’avance.\n' + qui.trim());
+    document.getElementById('btn-suppr').href =
+      'mailto:kcp@88systems.io?subject=' + encodeURIComponent('Suppression de mon compte KCP — ' + id) +
+      '&body=' + encodeURIComponent('Bonjour,\n\nJe souhaite supprimer mon compte KCP et l’ensemble des données associées.\n\nIdentifiant client : ' + id + '\nAdresse du compte : ' + email + '\n\n' + qui.trim());
+  }
+  majMails();
+
+  // ── Compte : déconnexion, changement de mot de passe ──
+  document.getElementById('btn-logout').addEventListener('click', function () { kcpLogout(); });
+  document.getElementById('btn-mdp').addEventListener('click', async function () {
+    var email = (compte && compte.client_email) || '';
+    if (!email) { location.href = './reset-password.html'; return; }
+    var b = this; b.disabled = true; b.textContent = 'Envoi…';
+    document.getElementById('mdp-ok').hidden = true;
+    document.getElementById('mdp-err').hidden = true;
+    try {
+      var r = await kcpFetch(C.webhooks.reset_password, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'demande', email: email })
+      });
+      var raw = await r.text();
+      var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      var d = {}; try { d = JSON.parse(cleaned); } catch (e) { d = {}; }
+      if (!r.ok || !d.success) throw {};
+      document.getElementById('mdp-ok-txt').textContent =
+        'Un lien vient de partir vers ' + email + '. Ouvrez-le pour choisir votre nouveau mot de passe.';
+      document.getElementById('mdp-ok').hidden = false;
+    } catch (e) {
+      document.getElementById('mdp-err').hidden = false;
+    }
+    b.disabled = false; b.textContent = 'Changer de mot de passe';
+  });
+
+  // ── La navigation entre panneaux ──
+  document.querySelectorAll('.m-nav [data-p]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.m-nav [data-p]').forEach(function (x) { x.removeAttribute('aria-current'); });
+      b.setAttribute('aria-current', 'page');
+      document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('on'); });
+      document.getElementById('p-' + b.dataset.p).classList.add('on');
+    });
+  });
+
+  // ── La fenêtre « ce qui est inclus » ──
+  var iv = document.getElementById('iv'), im = document.getElementById('im');
+  var decl = document.getElementById('voir-inclus');
+  function fermerInclus() { iv.classList.remove('on'); im.classList.remove('on'); if (decl) decl.focus(); }
+  decl.addEventListener('click', function () { iv.classList.add('on'); im.classList.add('on'); });
+  iv.addEventListener('click', fermerInclus);
+  document.getElementById('im-fermer').addEventListener('click', fermerInclus);
+
+  // ── Fermeture : aucune croix. On clique en dehors, ou on presse Échap.
+  // Le focus ne peut pas sortir de la fenêtre tant qu'elle est ouverte. ──
+  var voile = document.getElementById('voile');
+  var modal = voile.querySelector('.modal');
+  function fermer() {
+    if (history.length > 1) history.back();
+    else location.href = './index.html';
+  }
+  voile.addEventListener('mousedown', function (e) { if (e.target === voile) fermer(); });
+  document.addEventListener('keydown', function (e) {
+    if (im.classList.contains('on')) { if (e.key === 'Escape') fermerInclus(); return; }
+    if (e.key === 'Escape') { fermer(); return; }
+    if (e.key !== 'Tab') return;
+    var f = modal.querySelectorAll('button, [href], input, select, textarea');
+    if (!f.length) return;
+    var premier = f[0], dernier = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === premier) { e.preventDefault(); dernier.focus(); }
+    else if (!e.shiftKey && document.activeElement === dernier) { e.preventDefault(); premier.focus(); }
+  });
+</script>
+</body></html>
