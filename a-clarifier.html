@@ -1,0 +1,242 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KCP — À clarifier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<script src="config.js"></script>
+<style>
+  .z { max-width:920px; }
+  .item { margin-bottom:var(--s4); }
+  .note > span:first-child { display:none; }
+  .actions-B { display:flex; gap:var(--s2); flex-wrap:wrap; align-items:center; margin-top:var(--s3); }
+  .actions-B .repousse { margin-left:auto; display:flex; gap:var(--s2); }
+  .rep-txt { width:100%; margin-top:var(--s3); background:var(--surface2); border:1.5px solid var(--border);
+    border-radius:var(--r-sm); padding:var(--s2) var(--s3); font-family:var(--text); font-size:var(--t-body);
+    line-height:var(--lh); color:var(--ink); outline:none; }
+  .rep-txt:focus { border-color:var(--ink); background:var(--surface); }
+</style>
+</head><body>
+<div class="shell">
+  <aside class="side">
+    <div class="side-brand"><div class="mark">K</div><span class="side-name">KCP</span><span class="tag-beta">bêta</span></div>
+    <nav>
+      <a class="nav-i ancre" href="index.html"><span class="ico">◈</span>Accueil</a>
+      <a class="nav-i" href="deposer.html"><span class="ico">↓</span>Déposer</a>
+      <a class="nav-i" href="interroger.html"><span class="ico">?</span>Interroger</a>
+      <a class="nav-i" aria-current="page" href="a-clarifier.html"><span class="ico">⊙</span>À clarifier<span class="n" id="nav-n-points" hidden></span></a>
+      <div class="side-grp">Travailler</div>
+      <a class="nav-i" href="initialiser-ia.html"><span class="ico">↯</span>Initialiser une IA</a>
+      <a class="nav-i" href="enregistrer-reunion.html"><span class="ico">▶</span>Enregistrer une réunion</a>
+      <a class="nav-i" href="informations-capturees.html"><span class="ico">≡</span>Informations capturées</a>
+      <div class="side-grp">Organiser</div>
+      <a class="nav-i" href="nouveau-sujet.html"><span class="ico">+</span>Nouveau sujet</a>
+      <a class="nav-i" href="modifier-sujet.html"><span class="ico">✎</span>Modifier un sujet</a>
+      <a class="nav-i" href="reorganiser.html"><span class="ico">⇄</span>Réorganiser<span class="n" id="nav-n-props" hidden></span></a>
+      <div class="side-grp" id="grp-notion" hidden>Notion</div>
+      <a class="nav-i" href="#" id="nav-reunions" hidden target="_blank" rel="noopener"><span class="ico">↗</span>Mes réunions</a>
+    </nav>
+    <div class="side-foot">
+      <a class="who" href="parametres.html">
+        <div class="avatar" id="nav-avatar">·</div>
+        <div><div class="who-n" id="nav-who">…</div><div class="who-s">Paramètres</div></div>
+      </a>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="z stack">
+      <div>
+        <h1>À clarifier</h1>
+        <p class="sub" style="margin-top:.4rem">Veuillez clarifier ces zones d'ombre que le système a détectées.</p>
+      </div>
+      <div class="alerte-err" id="err" hidden><span>›</span><span id="err-txt"></span></div>
+      <div id="file"><div class="chargement">Chargement…</div></div>
+      <p class="meta" id="reste" hidden><span id="reste-n"></span> · <a href="#" id="tout" style="color:var(--accent-deep)">tout afficher</a></p>
+      <div class="note"><div class="lignes">
+        <div><span class="m">›</span><span><u>Répondre</u> met le sujet à jour au cycle suivant.</span></div>
+        <div><span class="m">›</span><span>Une question <u>écartée</u> ne revient jamais.</span></div>
+        <div><span class="m">›</span><span>Une question <u>reportée</u> revient dans quinze jours.</span></div>
+      </div></div>
+    </div>
+  </main>
+</div>
+<script>
+  var C = KCP_CONFIG;
+  var VISIBLES = 4;
+
+  (function nav() {
+    var n = (C.client_name || '').trim();
+    document.getElementById('nav-who').textContent = n || '—';
+    document.getElementById('nav-avatar').textContent = (n.charAt(0) || 'K').toUpperCase();
+    var r = (C.notion && C.notion.reunions) || '';
+    if (r) {
+      document.getElementById('nav-reunions').href = kcpNotionHref(r);
+      document.getElementById('nav-reunions').hidden = false;
+      document.getElementById('grp-notion').hidden = false;
+    }
+    kcpNavBadges();
+  })();
+
+  var fileEl = document.getElementById('file');
+  var points = [];
+  var labels = {};
+  var deplie = false;
+
+  function critDe(p) {
+    var v = String(p.important || '').trim().toLowerCase();
+    if (!v) return null;
+    if (v.indexOf('haut') === 0 || v.indexOf('elev') === 0 || v.indexOf('élev') === 0 || v === 'critique') return { cls: 'haute', lbl: 'Élevée' };
+    if (v.indexOf('moyen') === 0) return { cls: 'moyenne', lbl: 'Moyenne' };
+    if (v.indexOf('bas') === 0 || v.indexOf('faibl') === 0) return { cls: 'basse', lbl: 'Faible' };
+    return null;
+  }
+
+  function montrerErr(m) {
+    document.getElementById('err-txt').textContent = m;
+    document.getElementById('err').hidden = false;
+    setTimeout(function () { document.getElementById('err').hidden = true; }, 5000);
+  }
+
+  function majCompteurs() {
+    kcpCachePoints({ points: points });
+    kcpNavBadges();
+    var caches = Math.max(points.length - VISIBLES, 0);
+    var reste = document.getElementById('reste');
+    if (deplie || caches <= 0) { reste.hidden = true; }
+    else {
+      document.getElementById('reste-n').textContent =
+        caches + ' autre' + (caches > 1 ? 's' : '') + ' question' + (caches > 1 ? 's' : '');
+      reste.hidden = false;
+    }
+  }
+
+  function rendre() {
+    fileEl.textContent = '';
+    if (!points.length) {
+      var v = document.createElement('div'); v.className = 'vide-etat';
+      v.textContent = 'Plus aucune zone d’ombre. Les prochaines questions arriveront au cycle de cette nuit.';
+      fileEl.appendChild(v);
+      majCompteurs();
+      return;
+    }
+    points.forEach(function (p, i) {
+      var item = document.createElement('div');
+      item.className = 'item';
+      if (!deplie && i >= VISIBLES) item.hidden = true;
+
+      var crit = critDe(p);
+      if (crit) {
+        var tete = document.createElement('div'); tete.className = 'q-tete';
+        var c = document.createElement('span'); c.className = 'crit ' + crit.cls;
+        var pt = document.createElement('span'); pt.className = 'pt';
+        c.appendChild(pt); c.appendChild(document.createTextNode(crit.lbl));
+        tete.appendChild(c);
+        item.appendChild(tete);
+      }
+
+      var bloc = document.createElement('div');
+      bloc.className = 'bloc' + (crit ? ' ' + crit.cls : '');
+
+      var h = document.createElement('div'); h.className = 'bloc-h';
+      var chip = document.createElement('span'); chip.className = 'chip-s';
+      chip.textContent = labels[p.doc_id] || p.doc_id || '—';
+      h.appendChild(chip); bloc.appendChild(h);
+
+      var q = document.createElement('div'); q.className = 'bloc-q';
+      q.textContent = (p.question || '').trim() || (p.doute || '').trim() || '—';
+      bloc.appendChild(q);
+
+      var lab = document.createElement('label');
+      lab.setAttribute('for', 'r-' + i);
+      lab.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(100%)';
+      lab.textContent = 'Votre réponse';
+      bloc.appendChild(lab);
+      var ta = document.createElement('textarea');
+      ta.id = 'r-' + i; ta.className = 'rep-txt'; ta.placeholder = 'Votre réponse…';
+      bloc.appendChild(ta);
+
+      var act = document.createElement('div'); act.className = 'actions-B';
+      var rep = document.createElement('button'); rep.className = 'btn btn-1'; rep.textContent = 'Répondre';
+      rep.addEventListener('click', function () {
+        var v = ta.value.trim();
+        if (!v) { ta.focus(); return; }
+        traiter(item, p, 'repondu', v, rep);
+      });
+      act.appendChild(rep);
+      var grp = document.createElement('span'); grp.className = 'repousse';
+      var plus = document.createElement('button'); plus.className = 'btn'; plus.textContent = 'Plus tard';
+      plus.addEventListener('click', function () { traiter(item, p, 'pas_maintenant', '', plus); });
+      var obso = document.createElement('button'); obso.className = 'btn'; obso.textContent = 'N’a plus d’importance';
+      obso.addEventListener('click', function () { traiter(item, p, 'obsolete', '', obso); });
+      grp.appendChild(plus); grp.appendChild(obso);
+      act.appendChild(grp);
+      bloc.appendChild(act);
+
+      item.appendChild(bloc);
+      fileEl.appendChild(item);
+    });
+    majCompteurs();
+  }
+
+  async function traiter(item, p, action, reponse, btn) {
+    btn.disabled = true;
+    try {
+      var r = await kcpFetch(C.webhooks.reponse_clarification, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: C.client_id, feedback_id: p.feedback_id, action: action, reponse: reponse })
+      });
+      var raw = await r.text();
+      var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      var d = {}; try { d = JSON.parse(cleaned); } catch (e) { d = {}; }
+      if (!r.ok || d.success === false) {
+        throw { message: d.message || null };
+      }
+      points = points.filter(function (x) { return x.feedback_id !== p.feedback_id; });
+      item.style.transition = 'opacity .18s, transform .18s';
+      item.style.opacity = '0'; item.style.transform = 'translateY(-6px)';
+      setTimeout(function () { item.remove(); rendre(); }, 190);
+    } catch (e) {
+      btn.disabled = false;
+      montrerErr(e && e.message ? e.message : 'La réponse n’a pas pu être envoyée. Réessayez dans un instant.');
+    }
+  }
+
+  document.getElementById('tout').addEventListener('click', function (e) {
+    e.preventDefault();
+    deplie = true;
+    rendre();
+  });
+
+  // ── Chargement : libellés, puis cache, puis revalidation systématique ──
+  async function charger() {
+    try {
+      var data = await kcpLoadTiroirs();
+      var l = (data.pcp_anx || []).concat(data.gcp || []);
+      l.forEach(function (t) { if (t.doc_int_id) labels[t.doc_int_id] = kcpDocLabel(t); });
+    } catch (e) { /* sans libellé, l'identifiant s'affiche */ }
+
+    var cached = kcpReadPointsCache();
+    if (cached) { points = (cached.points || []).slice(); rendre(); }
+
+    try {
+      var r = await kcpFetch(C.webhooks.points_a_clarifier, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: C.client_id })
+      });
+      var raw = await r.text();
+      var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      var d = JSON.parse(cleaned);
+      if (d && d.points) { points = d.points.slice(); rendre(); }
+    } catch (e) {
+      if (!cached) {
+        fileEl.textContent = '';
+        var v = document.createElement('div'); v.className = 'alerte-err';
+        v.textContent = 'Les questions n’ont pas pu être chargées. Rechargez la page.';
+        fileEl.appendChild(v);
+      }
+    }
+  }
+  charger();
+</script>
+</body></html>
