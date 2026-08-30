@@ -88,6 +88,7 @@
   })();
 
   var fil = document.getElementById('fil');
+  var enCours = false;   // un échange live est parti : l'historique ne re-rend plus
   var inp = document.getElementById('t');
   var btn = document.getElementById('go');
   var sel = document.getElementById('sv');
@@ -122,6 +123,7 @@
   // Un historique vide revient parfois comme UN élément aux champs vides :
   // on filtre sur le contenu réel, jamais sur la seule longueur.
   function rendreHistorique(data) {
+    if (enCours) return;
     var rows = ((data && data.h) || []).filter(function (r) {
       return (r.q || '').trim() || (r.r || '').trim();
     }).filter(function (r) { return (r.m || 'demande') === 'demande'; });
@@ -170,6 +172,7 @@
       return;
     }
     btn.disabled = true;
+    enCours = true;
     inp.value = '';
     bulle('moi', texte);
     var attente = bulle('lui', '…');

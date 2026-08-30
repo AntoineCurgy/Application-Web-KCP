@@ -227,7 +227,14 @@
       var raw = await r.text();
       var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
       var d = JSON.parse(cleaned);
-      if (d && d.points) { points = d.points.slice(); rendre(); }
+      if (d && d.points) {
+        // Ne pas re-rendre si rien n'a changé : une réponse en cours de
+        // frappe survivrait mal à une reconstruction de la file.
+        var avant = points.map(function (x) { return x.feedback_id; }).join(',');
+        var apres = d.points.map(function (x) { return x.feedback_id; }).join(',');
+        points = d.points.slice();
+        if (avant !== apres) rendre(); else majCompteurs();
+      }
     } catch (e) {
       if (!cached) {
         fileEl.textContent = '';
