@@ -193,7 +193,7 @@
   function hide(id) { document.getElementById(id).classList.remove('on'); }
 
   async function fetchCaptures() {
-    const r = await fetch(C.webhooks.captures, {
+    const r = await kcpFetch(C.webhooks.captures, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ client_id: id_client })
     });

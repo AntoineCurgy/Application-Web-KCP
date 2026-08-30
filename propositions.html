@@ -163,7 +163,7 @@
   async function answer(item, p, action, cible) {
     item.classList.add('busy');
     try {
-      const r = await fetch(C.webhooks.reponse_proposition, {
+      const r = await kcpFetch(C.webhooks.reponse_proposition, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ client_id: id_client, proposition_id: p.proposition_id, action: action, reponse: '' })
       });
@@ -187,7 +187,7 @@
   async function load() {
     await loadLabels();
     try {
-      const r = await fetch(C.webhooks.propositions, {
+      const r = await kcpFetch(C.webhooks.propositions, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ client_id: id_client })
       });

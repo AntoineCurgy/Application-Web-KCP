@@ -363,7 +363,7 @@
     // UUID Notion (avec tirets, format canonique de l'API) prets a inserer :
     // les prompts standards demandent desormais des UUID, pas des URLs.
     const liens_additionnels = ajouts.map(a => a.id).filter(Boolean).join('\n');
-    const r = await fetch(C.webhooks.prompt, {
+    const r = await kcpFetch(C.webhooks.prompt, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ client_id:C.client_id, doc_int_id:docIds[sel.value], ajouts, liens_additionnels, llm })
     });
