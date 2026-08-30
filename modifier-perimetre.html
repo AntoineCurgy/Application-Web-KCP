@@ -125,10 +125,10 @@
     <!-- ── MODE PÉRIMÈTRE ── -->
     <div id="f-perim">
       <div class="field">
-        <label class="label" for="perim">
-          <span>Périmètre<button type="button" class="qmark" onclick="popBtn(event)" aria-label="À quoi sert le périmètre ?">?</button></span>
+        <div class="label">
+          <span><label for="perim">Périmètre</label><button type="button" class="qmark" onclick="popBtn(event)" aria-label="À quoi sert le périmètre ?">?</button></span>
           <span class="hint" id="perim-hint">min. 40 caractères</span>
-        </label>
+        </div>
         <textarea id="perim" placeholder="Sélectionne d'abord un sujet…" maxlength="2000" oninput="check()" disabled></textarea>
         <div class="note">
           <span class="ico">›</span>
@@ -414,7 +414,7 @@
 
     let res, data = {};
     try {
-      res = await fetch(C.webhooks.deplacer, {
+      res = await kcpFetch(C.webhooks.deplacer, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify({ id_client, doc_int_id, nouveau_parent_id })
       });
@@ -456,7 +456,7 @@
 
     let res, data = {};
     try {
-      res = await fetch(C.webhooks.update_perimetre, {
+      res = await kcpFetch(C.webhooks.update_perimetre, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify({ id_client, doc_int_id, perimetre_declare })
       });
@@ -500,7 +500,7 @@
 
     let res, data = {};
     try {
-      res = await fetch(C.webhooks.renommer, {
+      res = await kcpFetch(C.webhooks.renommer, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify({ client_id: id_client, doc_int_id, nouveau_nom })
       });

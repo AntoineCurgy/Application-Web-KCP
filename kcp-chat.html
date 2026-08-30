@@ -143,6 +143,10 @@
 
   .cmd-ico.demande  { background:rgba(22,21,15,0.07); color:var(--ink-soft); border:1.5px solid rgba(22,21,15,0.18); }
 
+  /* Contenu d'un bouton : que du phrasing. Ces span rendent comme les
+     div qu'ils remplacent. */
+  .cmd-txt, .cmd-name, .cmd-desc { display:block; }
+
   .cmd-name { font-size:14px; font-family:var(--mono); font-weight:500; color:var(--ink); }
 
   .cmd-desc { font-size:12px; font-family:var(--mono); color:var(--muted); margin-top:1px; }
@@ -249,12 +253,12 @@
 
 <div class="cmd" id="cmd">
   <button class="cmd-opt" onclick="setMode('capture')">
-    <div class="cmd-ico capture">cap</div>
-    <div><div class="cmd-name">/capture</div><div class="cmd-desc">Enregistrer une info dans ta mémoire</div></div>
+    <span class="cmd-ico capture">cap</span>
+    <span class="cmd-txt"><span class="cmd-name">/capture</span><span class="cmd-desc">Enregistrer une info dans ta mémoire</span></span>
   </button>
   <button class="cmd-opt" onclick="setMode('demande')">
-    <div class="cmd-ico demande">dem</div>
-    <div><div class="cmd-name">/demande</div><div class="cmd-desc">Poser une question à ta mémoire</div></div>
+    <span class="cmd-ico demande">dem</span>
+    <span class="cmd-txt"><span class="cmd-name">/demande</span><span class="cmd-desc">Poser une question à ta mémoire</span></span>
   </button>
 </div>
 
@@ -342,7 +346,7 @@
     if (cached) renderHistory(cached);
     // 2) Revalidation réseau en parallèle, puis mise à jour + cache.
     try {
-      const r = await fetch(C.webhooks.history, {
+      const r = await kcpFetch(C.webhooks.history, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify({id_client: C.client_id})
       });
@@ -413,7 +417,7 @@
     inp.value = ''; inp.style.height = 'auto';
     addMsg('user', text.replace(/\n/g,'<br>')); scrollDown(); showTyping();
     try {
-      const r = await fetch(C.webhooks.chat, {
+      const r = await kcpFetch(C.webhooks.chat, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify({id_client:C.client_id, nom_tiroir:tiroir, mode:m, message:text})
       });

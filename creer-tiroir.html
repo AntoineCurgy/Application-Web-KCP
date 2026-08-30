@@ -152,10 +152,10 @@
       </div>
 
       <div class="field">
-        <label class="label" for="perim">
-          <span>Périmètre<button type="button" class="qmark" onclick="popBtn(event, 'sujet')" aria-label="À quoi sert le périmètre ?">?</button></span>
+        <div class="label">
+          <span><label for="perim">Périmètre</label><button type="button" class="qmark" onclick="popBtn(event, 'sujet')" aria-label="À quoi sert le périmètre ?">?</button></span>
           <span class="hint" id="perim-hint">min. 40 caractères</span>
-        </label>
+        </div>
         <textarea id="perim" maxlength="2000" oninput="check()"></textarea>
         <div class="note">
           <span class="ico">›</span>
@@ -176,10 +176,10 @@
           <div class="apercu" id="e-nom-apercu" style="display:none"></div>
         </div>
         <div class="field">
-          <label class="label" for="e-perim">
-            <span>Périmètre de l'ensemble<button type="button" class="qmark" onclick="popBtn(event, 'ensemble')" aria-label="À quoi sert le périmètre d'un ensemble ?">?</button></span>
+          <div class="label">
+            <span><label for="e-perim">Périmètre de l'ensemble</label><button type="button" class="qmark" onclick="popBtn(event, 'ensemble')" aria-label="À quoi sert le périmètre d'un ensemble ?">?</button></span>
             <span class="hint" id="e-perim-hint">min. 40 caractères</span>
-          </label>
+          </div>
           <textarea id="e-perim" maxlength="2000" oninput="check()"></textarea>
           <div class="note">
             <span class="ico">›</span>
@@ -204,10 +204,10 @@
             <div class="apercu" id="s1-nom-apercu" style="display:none"></div>
           </div>
           <div class="field">
-            <label class="label" for="s1-perim">
-              <span>Sujet 1 — périmètre<button type="button" class="qmark" onclick="popBtn(event, 'sujet')" aria-label="À quoi sert le périmètre ?">?</button></span>
+            <div class="label">
+              <span><label for="s1-perim">Sujet 1 — périmètre</label><button type="button" class="qmark" onclick="popBtn(event, 'sujet')" aria-label="À quoi sert le périmètre ?">?</button></span>
               <span class="hint" id="s1-perim-hint">min. 40 caractères</span>
-            </label>
+            </div>
             <textarea id="s1-perim" maxlength="2000" oninput="check()"></textarea>
           </div>
         </div>
@@ -225,10 +225,10 @@
             <div class="apercu" id="s2-nom-apercu" style="display:none"></div>
           </div>
           <div class="field">
-            <label class="label" for="s2-perim">
-              <span>Sujet 2 — périmètre<button type="button" class="qmark" onclick="popBtn(event, 'sujet')" aria-label="À quoi sert le périmètre ?">?</button></span>
+            <div class="label">
+              <span><label for="s2-perim">Sujet 2 — périmètre</label><button type="button" class="qmark" onclick="popBtn(event, 'sujet')" aria-label="À quoi sert le périmètre ?">?</button></span>
               <span class="hint" id="s2-perim-hint">min. 40 caractères</span>
-            </label>
+            </div>
             <textarea id="s2-perim" maxlength="2000" oninput="check()"></textarea>
           </div>
         </div>
@@ -460,7 +460,7 @@
 
     let res, data = {};
     try {
-      res = await fetch(url, {
+      res = await kcpFetch(url, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
