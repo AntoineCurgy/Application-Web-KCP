@@ -1,6 +1,8 @@
 <!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KCP — Accueil</title>
+<link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
+<link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
@@ -71,6 +73,11 @@
   })();
   document.getElementById('bonjour').textContent = 'Bonjour ' + ((C.client_name || '').trim() || '');
 
+  // ── État partagé entre la carte, la fiche et le bandeau ──
+  // `points` est chargé une fois et sert trois usages : le bandeau, les
+  // pastilles de la carte, et le bloc de questions de la fiche.
+  var points = [], sujetsCarte = [], comptes = { propres: {}, descendance: {} };
+
   // ── La carte : cache affiché tout de suite, réseau revalide en fond ──
   var ouverts = {}, svg = document.getElementById('svg'), donneesArbre = null;
 
@@ -103,16 +110,26 @@
     KCP_ARBRE.dessine(svg, {
       racine: (C.client_name || '').trim() || 'Head',
       donnees: donneesArbre, ouverts: ouverts,
+      // Les questions du document, et le total de sa descendance pour un
+      // nœud — à la place de l'ancien compte d'enfants.
+      questions: comptes.propres, sousQuestions: comptes.descendance, noeudCreux: true,
       onOuvrir: function (n) { ouverts[n.id] = !ouverts[n.id]; rendre(); },
-      onSel: function (n, type) {
-        location.href = (type === 'ens' ? 'ensemble.html' : 'sujet.html') + '?doc=' + encodeURIComponent(n.id);
-      }
+      // Un clic ouvre la fiche sur place ; « Ouvrir la page » y mène ensuite.
+      onSel: function (n) { ouvrirFiche(n.id); }
     });
+  }
+
+  function ouvrirFiche(id) {
+    var doc = null;
+    sujetsCarte.forEach(function (x) { if (x.doc_int_id === id) doc = x; });
+    KCP_FICHE.ouvrir(doc, points, (C.client_name || '').trim() || 'Head', svg);
   }
 
   function poserCarte(data) {
     var sujets = (data && data.sujets) || [];
     if (!sujets.length) return false;
+    sujetsCarte = sujets;
+    comptes = kcpComptesQuestions(points, sujets);
     donneesArbre = construireArbre(sujets);
     var n1 = sujets.filter(function (s) { return s.parent === 'GCP001'; }).length;
     document.getElementById('compte').textContent = n1 + ' entrée' + (n1 > 1 ? 's' : '') +
@@ -120,6 +137,13 @@
     rendre();
     return true;
   }
+
+  // Les questions déjà en cache, posées avant la carte : les pastilles
+  // s'affichent dès le premier rendu, sans attendre le réseau.
+  (function questionsEnCache() {
+    var cp = kcpReadPointsCache();
+    if (cp && cp.points) points = cp.points;
+  })();
 
   (function chargerCarte() {
     var cached = kcpReadCarteCache();
@@ -166,7 +190,7 @@
 
   (function compteurs() {
     var cp = kcpReadPointsCache(), cr = kcpReadPropsCache();
-    if (cp) nPoints = (cp.points || []).length;
+    if (cp) nPoints = (cp.points || []).length;   // `points` est déjà posé plus haut
     if (cr) nProps = (cr.propositions || []).length;
     if (cp || cr) majBandeau();
 
@@ -176,7 +200,11 @@
     }).then(function (r) { return r.text(); }).then(function (raw) {
       var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
       var d = {}; try { d = JSON.parse(cleaned); } catch (e) { d = {}; }
-      if (d && d.points) { kcpCachePoints(d); nPoints = d.points.length; majBandeau(); }
+      if (d && d.points) {
+        kcpCachePoints(d); points = d.points; nPoints = points.length; majBandeau();
+        // La carte reflète les questions dès qu'elles arrivent du réseau.
+        if (sujetsCarte.length) { comptes = kcpComptesQuestions(points, sujetsCarte); rendre(); }
+      }
     }).catch(function () { /* le cache affiché reste */ });
 
     kcpFetch(KCP_CONFIG.webhooks.propositions, {

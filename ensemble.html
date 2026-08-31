@@ -1,6 +1,8 @@
 <!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KCP — Ensemble</title>
+<link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
+<link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
@@ -146,6 +148,7 @@
   }
 
   var docCourant = null, enfantsDirects = [], toutLabels = {}, points = [];
+  var sujetsCarte = [], comptes = { propres: {}, descendance: {} };
   var ouverts = {}, svg = document.getElementById('svg');
 
   function labelAffiche() {
@@ -294,10 +297,15 @@
     document.getElementById('svg-boite').hidden = false;
     KCP_ARBRE.dessine(svg, {
       racine: labelAffiche(), donnees: donnees, ouverts: ouverts,
+      // Les questions du document, et le total de sa descendance pour un nœud.
+      questions: comptes.propres, sousQuestions: comptes.descendance, noeudCreux: true,
       onOuvrir: function (n) { ouverts[n.id] = !ouverts[n.id]; rendreCarte(); },
-      onSel: function (n, type) {
+      // Un clic ouvre la fiche sur place ; « Ouvrir la page » y mène ensuite.
+      onSel: function (n) {
         if (n.id === DOC) return;
-        location.href = (type === 'ens' ? 'ensemble.html' : 'sujet.html') + '?doc=' + encodeURIComponent(n.id);
+        var d = null;
+        sujetsCarte.forEach(function (x) { if (x.doc_int_id === n.id) d = x; });
+        KCP_FICHE.ouvrir(d, points, (C.client_name || '').trim() || 'Head', svg);
       }
     });
   }
@@ -318,6 +326,8 @@
     var doc = null;
     sujets.forEach(function (x) { toutLabels[x.doc_int_id] = x.doc_label; if (x.doc_int_id === DOC) doc = x; });
     if (!doc) return false;
+    sujetsCarte = sujets;
+    comptes = kcpComptesQuestions(points, sujets);
     docCourant = doc;
     var enfantsPar = {};
     sujets.forEach(function (x) { (enfantsPar[x.parent] = enfantsPar[x.parent] || []).push(x); });
@@ -365,7 +375,7 @@
   document.getElementById('mini-envoyer').addEventListener('click', async function () {
     var rep = document.getElementById('mini-r').value.trim();
     if (!rep) { document.getElementById('mini-r').focus(); return; }
-    var b = this; b.disabled = true;
+    var b = this; kcpOccupe(b, true);
     try {
       var r = await kcpFetch(C.webhooks.reponse_clarification, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -385,7 +395,7 @@
         e && e.message ? e.message : 'La réponse n’a pas pu être envoyée. Réessayez dans un instant.';
       document.getElementById('mini-err').hidden = false;
     }
-    b.disabled = false;
+    kcpOccupe(b, false);
   });
 
   // ── Chargement : carte (cache + réseau), points, captures ──
@@ -424,7 +434,11 @@
     }).then(function (r) { return r.text(); }).then(function (raw) {
       var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
       var d = {}; try { d = JSON.parse(cleaned); } catch (e) { d = {}; }
-      if (d && d.points) { kcpCachePoints(d); points = d.points.slice(); if (docCourant) rendreFiche(); kcpNavBadges(); }
+      if (d && d.points) {
+        kcpCachePoints(d); points = d.points.slice();
+        if (docCourant) { rendreFiche(); comptes = kcpComptesQuestions(points, sujetsCarte); rendreCarte(); }
+        kcpNavBadges();
+      }
     }).catch(function () { /* les questions du cache restent */ });
 
     kcpFetch(C.webhooks.captures, {
