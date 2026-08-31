@@ -1,6 +1,8 @@
 <!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KCP — À clarifier</title>
+<link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
+<link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
@@ -180,7 +182,7 @@
   }
 
   async function traiter(item, p, action, reponse, btn) {
-    btn.disabled = true;
+    kcpOccupe(btn, true);
     try {
       var r = await kcpFetch(C.webhooks.reponse_clarification, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -197,7 +199,7 @@
       item.style.opacity = '0'; item.style.transform = 'translateY(-6px)';
       setTimeout(function () { item.remove(); rendre(); }, 190);
     } catch (e) {
-      btn.disabled = false;
+      kcpOccupe(btn, false);
       montrerErr(e && e.message ? e.message : 'La réponse n’a pas pu être envoyée. Réessayez dans un instant.');
     }
   }
