@@ -237,3 +237,233 @@ function kcpNavBadges() {
   pose('nav-n-points', kcpReadPointsCache(), 'points');
   pose('nav-n-props', kcpReadPropsCache(), 'propositions');
 }
+
+// ─────────────────────────────────────────────────────────────
+// Un bouton qui attend le dit, et refuse d'être recliqué.
+// Le libellé n'est jamais touché : rien à restaurer, rien qui saute.
+// Règle : on ne l'appelle QUE sur un bouton qui déclenche un appel
+// réseau. Un geste qui se joue dans la page reste sec.
+// ─────────────────────────────────────────────────────────────
+function kcpOccupe(btn, oui) {
+  if (!btn) return;
+  btn.setAttribute('aria-busy', oui ? 'true' : 'false');
+  btn.disabled = !!oui;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Les comptes de questions, dérivés de ce que les pages ont déjà
+// en cache : aucun appel réseau supplémentaire.
+//   propres      — les questions du document lui-même
+//   descendance  — leur total pour tout ce qui vit sous un nœud
+// ─────────────────────────────────────────────────────────────
+function kcpComptesQuestions(points, sujets) {
+  var propres = {}, descendance = {}, parent = {};
+  (points || []).forEach(function (p) {
+    if (p && p.doc_id) propres[p.doc_id] = (propres[p.doc_id] || 0) + 1;
+  });
+  (sujets || []).forEach(function (s) { parent[s.doc_int_id] = s.parent; });
+  Object.keys(propres).forEach(function (id) {
+    var p = parent[id], garde = 0;
+    // La garde borne une éventuelle boucle dans le référentiel : un cycle
+    // parent-enfant ferait tourner cette remontée indéfiniment.
+    while (p && p !== 'N/A' && garde++ < 32) {
+      descendance[p] = (descendance[p] || 0) + propres[id];
+      p = parent[p];
+    }
+  });
+  return { propres: propres, descendance: descendance };
+}
+
+// ─────────────────────────────────────────────────────────────
+// La fiche en fenêtre, ouverte depuis la carte. Partagée par l'accueil
+// et la page d'un ensemble : le balisage est fabriqué une fois, à la
+// première ouverture, puis réutilisé.
+// ─────────────────────────────────────────────────────────────
+var KCP_FICHE = (function () {
+  var voile, fen, ouvreurPrecedent = null;
+
+  function lignes(s) {
+    return String(s || '').split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+  }
+  function parseDate(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})/.exec(String(s || ''));
+    return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) : null;
+  }
+  function fmt(d) {
+    return d ? ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) +
+      ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) : '—';
+  }
+  function titre(txt) { var d = document.createElement('div'); d.className = 'sect-title'; d.textContent = txt; return d; }
+  function rien(txt) { var p = document.createElement('p'); p.className = 'rien'; p.textContent = txt; return p; }
+  function liste(items) {
+    var ul = document.createElement('ul'); ul.className = 'fiche-ul';
+    items.forEach(function (x) { var li = document.createElement('li'); li.textContent = x; ul.appendChild(li); });
+    return ul;
+  }
+  function echeances(items) {
+    var g = document.createElement('div'); g.className = 'ech';
+    items.forEach(function (l) {
+      var i = l.indexOf(';');
+      var dd = document.createElement('span'); dd.className = 'd';
+      var pd = parseDate((i > 0 ? l.slice(0, i).trim() : '') + ' 0:00');
+      dd.textContent = pd ? ('0' + pd.getDate()).slice(-2) + '/' + ('0' + (pd.getMonth() + 1)).slice(-2) : (i > 0 ? l.slice(0, i) : '');
+      var oo = document.createElement('span'); oo.className = 'o';
+      oo.textContent = i > 0 ? l.slice(i + 1).trim() : l;
+      g.appendChild(dd); g.appendChild(oo);
+    });
+    return g;
+  }
+
+  function batir() {
+    if (fen) return;
+    voile = document.createElement('div'); voile.className = 'f-voile';
+    fen = document.createElement('div');
+    fen.className = 'fiche-w'; fen.id = 'kcp-fiche';
+    fen.setAttribute('role', 'dialog'); fen.setAttribute('aria-modal', 'true');
+    fen.setAttribute('aria-labelledby', 'kcp-f-titre');
+    fen.innerHTML =
+      '<div class="f-tete">' +
+        '<span class="eyebrow" id="kcp-f-nature"></span>' +
+        '<div class="f-ligne" style="margin-top:.35rem">' +
+          '<div id="kcp-f-titre"></div>' +
+          '<button class="f-notif" id="kcp-f-notif" hidden>' +
+            '<span class="ico" aria-hidden="true">⊙</span><span class="n" id="kcp-f-notif-n"></span>' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="f-corps" id="kcp-f-corps"></div>' +
+      '<div class="f-pied">' +
+        '<span class="meta" id="kcp-f-maj"></span>' +
+        '<div style="display:flex;gap:var(--s2)">' +
+          '<button class="btn" id="kcp-f-fermer">Fermer</button>' +
+          '<a class="btn btn-1" id="kcp-f-ouvrir" href="#">Ouvrir la page →</a>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(voile);
+    document.body.appendChild(fen);
+
+    voile.addEventListener('click', fermer);
+    document.getElementById('kcp-f-fermer').addEventListener('click', fermer);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && fen.classList.contains('on')) fermer();
+    });
+    document.getElementById('kcp-f-notif').addEventListener('click', function () {
+      var b = document.getElementById('kcp-bloc-q');
+      if (!b) return;
+      b.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      b.classList.remove('vise');
+      void b.offsetWidth;
+      b.classList.add('vise');
+    });
+  }
+
+  function blocQuestions(id, points) {
+    var qs = (points || []).filter(function (p) { return p.doc_id === id; });
+    if (!qs.length) return null;
+    var b = document.createElement('div'); b.className = 'f-questions'; b.id = 'kcp-bloc-q';
+    var t = document.createElement('div'); t.className = 'f-q-tete';
+    var n = document.createElement('span'); n.className = 'f-q-n'; n.textContent = qs.length;
+    var lab = document.createElement('span'); lab.className = 'f-q-t';
+    lab.textContent = qs.length > 1 ? 'questions ouvertes' : 'question ouverte';
+    var sub = document.createElement('span'); sub.className = 'sub';
+    sub.textContent = '— y répondre met ce document à jour au cycle suivant.';
+    t.appendChild(n); t.appendChild(lab); t.appendChild(sub);
+    b.appendChild(t);
+    var ul = document.createElement('ul'); ul.className = 'f-q-liste';
+    qs.slice(0, 2).forEach(function (p) {
+      var li = document.createElement('li');
+      li.textContent = (p.question || p.doute || '').trim();
+      ul.appendChild(li);
+    });
+    if (qs.length > 2) {
+      var li = document.createElement('li'); li.className = 'sub';
+      li.textContent = 'et ' + (qs.length - 2) + ' autre' + (qs.length - 2 > 1 ? 's' : '') + '…';
+      ul.appendChild(li);
+    }
+    b.appendChild(ul);
+    var a = document.createElement('div'); a.className = 'f-q-a';
+    var lien = document.createElement('a'); lien.className = 'btn btn-1 btn-s';
+    lien.href = './a-clarifier.html';
+    lien.textContent = 'Répondre ' + (qs.length > 1 ? 'aux ' + qs.length + ' questions' : 'à la question') + ' →';
+    a.appendChild(lien);
+    b.appendChild(a);
+    return b;
+  }
+
+  // doc     : la ligne du document dans la réponse `carte`
+  // points  : les questions ouvertes du client
+  // racine  : le libellé à afficher pour GCP001 (le prénom)
+  function ouvrir(doc, points, racine, ouvreur) {
+    if (!doc) return;
+    batir();
+    ouvreurPrecedent = ouvreur || null;
+    var id = doc.doc_int_id;
+    var ens = String(id).indexOf('GCP') === 0;
+    var nom = (id === 'GCP001' && racine) ? racine : doc.doc_label;
+
+    document.getElementById('kcp-f-nature').textContent = ens ? 'Ensemble' : 'Sujet';
+    var t = document.getElementById('kcp-f-titre');
+    t.textContent = '';
+    if (ens) {
+      var h = document.createElement('h2'); h.textContent = nom; t.appendChild(h);
+    } else {
+      var bs = document.createElement('span'); bs.className = 'badge-sujet';
+      var d = document.createElement('span'); d.className = 'h'; d.textContent = '#';
+      bs.appendChild(d); bs.appendChild(document.createTextNode(String(nom).replace(/^#/, '')));
+      t.appendChild(bs);
+    }
+
+    // La pastille n'apparaît que s'il y a des questions. Jamais un zéro.
+    var qs = (points || []).filter(function (p) { return p.doc_id === id; });
+    var notif = document.getElementById('kcp-f-notif');
+    if (qs.length) {
+      document.getElementById('kcp-f-notif-n').textContent = qs.length;
+      var lbl = qs.length + (qs.length > 1 ? ' questions ouvertes' : ' question ouverte') +
+        ' — aller au bloc de réponse';
+      notif.setAttribute('aria-label', lbl); notif.title = lbl;
+      notif.hidden = false;
+    } else { notif.hidden = true; }
+
+    document.getElementById('kcp-f-maj').textContent =
+      'Dernière mise à jour · ' + fmt(parseDate(doc.last_update_date));
+    document.getElementById('kcp-f-ouvrir').href =
+      (ens ? './ensemble.html' : './sujet.html') + '?doc=' + encodeURIComponent(id);
+
+    var c = document.getElementById('kcp-f-corps');
+    c.textContent = '';
+    var t0 = titre(ens ? 'Où en est cet ensemble' : 'Où en est ce sujet');
+    t0.style.marginTop = 'var(--s2)';
+    c.appendChild(t0);
+    var resume = lignes(doc.fiche_resume);
+    if (resume.length) resume.forEach(function (l) {
+      var p = document.createElement('p'); p.textContent = l; p.style.marginBottom = '.5rem'; c.appendChild(p);
+    }); else c.appendChild(rien('Pas encore de synthèse — elle s’écrira au prochain cycle.'));
+
+    var ech = lignes(doc.fiche_echeances);
+    c.appendChild(titre('Échéances'));
+    c.appendChild(ech.length ? echeances(ech) : rien('Aucune échéance.'));
+
+    var pri = lignes(doc.fiche_priorites);
+    c.appendChild(titre('Priorités'));
+    c.appendChild(pri.length ? liste(pri) : rien('Aucune priorité.'));
+
+    var ris = lignes(doc.fiche_risques);
+    c.appendChild(titre('Risques'));
+    c.appendChild(ris.length ? liste(ris) : rien('Aucun risque identifié.'));
+
+    var q = blocQuestions(id, points);
+    if (q) c.appendChild(q);
+
+    voile.classList.add('on'); fen.classList.add('on');
+    c.scrollTop = 0;
+    document.getElementById('kcp-f-fermer').focus();
+  }
+
+  function fermer() {
+    if (!fen) return;
+    voile.classList.remove('on'); fen.classList.remove('on');
+    if (ouvreurPrecedent && ouvreurPrecedent.focus) ouvreurPrecedent.focus();
+  }
+
+  return { ouvrir: ouvrir, fermer: fermer };
+})();
