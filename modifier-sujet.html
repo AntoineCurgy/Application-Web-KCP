@@ -1,6 +1,8 @@
 <!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KCP — Modifier un sujet</title>
+<link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
+<link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
@@ -196,6 +198,9 @@
   var ongletCourant = 'perim';
 
   function docChoisi() { return items[sel.value] || null; }
+  function optionVide() {
+    var o = document.createElement('option'); o.value = ''; o.textContent = '— choisir —'; return o;
+  }
   function estNoeud(it) { return String((it && it.type) || '').toUpperCase() === 'GCP'; }
 
   // ── Mêmes règles de nom qu'à la création. ──
@@ -308,7 +313,8 @@
     document.getElementById('depl-actuel').textContent =
       parent ? kcpDocLabel(parent) + ((parent.parent || '') === 'N/A' ? ' (racine)' : '') : '—';
     var dd = document.getElementById('dd');
-    dd.innerHTML = '<option value="">— choisir —</option>';
+    dd.textContent = '';
+    dd.appendChild(optionVide());
     var bloque = !it || estNoeud(it);
     dd.disabled = bloque;
     document.getElementById('depl-aide').hidden = !(it && estNoeud(it));
@@ -324,7 +330,8 @@
     // Fusionner
     document.getElementById('fu-src1').textContent = it ? kcpDocLabel(it) : '—';
     var fu = document.getElementById('fu');
-    fu.innerHTML = '<option value="">— choisir —</option>';
+    fu.textContent = '';
+    fu.appendChild(optionVide());
     fu.disabled = !it || estNoeud(it);
     if (it && !estNoeud(it)) {
       Object.keys(items).forEach(function (id) {
@@ -519,7 +526,7 @@
   // ── Les quatre envois ──
   document.getElementById('go-perim').addEventListener('click', async function () {
     var it = docChoisi(); if (!it) return;
-    var b = this; b.disabled = true; b.textContent = 'Mise à jour…';
+    var b = this; kcpOccupe(b, true);
     cacherBandeaux();
     try {
       var r = await kcpFetch(C.webhooks.update_perimetre, {
@@ -532,14 +539,14 @@
       kcpInvalidateTiroirs();
       bandeauOk('Périmètre mis à jour.');
     } catch (e) { bandeauErr('Mise à jour impossible. Réessayez.'); }
-    b.textContent = 'Mettre à jour →'; check();
+    kcpOccupe(b, false); check();
   });
 
   document.getElementById('go-nom').addEventListener('click', async function () {
     var it = docChoisi(); if (!it) return;
     var nouveau_nom = estNoeud(it) ? noeudFinal(document.getElementById('nn').value) : slugFinal(document.getElementById('nn').value);
     if (nouveau_nom.length < 2 || nouveau_nom === it.nom_tiroir) return;
-    var b = this; b.disabled = true; b.textContent = 'Renommage…';
+    var b = this; kcpOccupe(b, true);
     cacherBandeaux();
     try {
       var r = await kcpFetch(C.webhooks.renommer, {
@@ -560,14 +567,14 @@
         bandeauOk('Nom mis à jour.');
       }
     } catch (e) { bandeauErr('Renommage impossible. Réessayez.'); }
-    b.textContent = 'Renommer →'; check();
+    kcpOccupe(b, false); check();
   });
 
   document.getElementById('go-depl').addEventListener('click', async function () {
     var it = docChoisi(); if (!it || estNoeud(it)) return;
     var nouveau_parent_id = document.getElementById('dd').value;
     if (!nouveau_parent_id) return;
-    var b = this; b.disabled = true; b.textContent = 'Déplacement…';
+    var b = this; kcpOccupe(b, true);
     cacherBandeaux();
     try {
       var r = await kcpFetch(C.webhooks.deplacer, {
@@ -586,12 +593,12 @@
         bandeauErr(d.message || 'Ce document ne peut pas être déplacé.');
       } else { throw {}; }
     } catch (e) { bandeauErr('Déplacement impossible. Réessayez.'); }
-    b.textContent = 'Déplacer →'; check();
+    kcpOccupe(b, false); check();
   });
 
   async function restructurer(operation, payloadExtra, okMsg, btn, libelle) {
     var it = docChoisi(); if (!it || estNoeud(it)) return;
-    btn.disabled = true; btn.textContent = 'En cours…';
+    kcpOccupe(btn, true);
     cacherBandeaux();
     var payload = {
       id_client: C.client_id, operation: operation,
@@ -611,7 +618,7 @@
         bandeauErr(d.message || 'Restructuration impossible. Réessayez.');
       }
     } catch (e) { bandeauErr('Restructuration impossible. Réessayez.'); }
-    btn.textContent = libelle; check();
+    kcpOccupe(btn, false); check();
   }
 
   document.getElementById('go-scinder').addEventListener('click', function () {

@@ -1,6 +1,8 @@
 <!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KCP — Interroger</title>
+<link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
+<link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
@@ -171,7 +173,7 @@
       bulle('lui', 'Choisissez d’abord le sujet visé, à droite : la réponse ne porte que sur lui.');
       return;
     }
-    btn.disabled = true;
+    kcpOccupe(btn, true);
     enCours = true;
     inp.value = '';
     bulle('moi', texte);
@@ -189,7 +191,7 @@
       attente.textContent = 'La question n’a pas pu partir. Réessayez.';
     }
     fil.scrollTop = fil.scrollHeight;
-    btn.disabled = false;
+    kcpOccupe(btn, false);
     inp.focus();
   }
   btn.addEventListener('click', envoyer);

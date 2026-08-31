@@ -1,6 +1,8 @@
 <!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KCP — Nouvel ensemble</title>
+<link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
+<link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
@@ -202,7 +204,7 @@
     if (nom_noeud.length < 2 || nom_sujet_1.length < 2 || nom_sujet_2.length < 2 || nom_sujet_1 === nom_sujet_2) return;
     document.getElementById('ok').hidden = true;
     document.getElementById('err').hidden = true;
-    btn.disabled = true; btn.textContent = 'Création…';
+    kcpOccupe(btn, true);
 
     var res, data = {};
     try {
@@ -219,13 +221,13 @@
       var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
       try { data = JSON.parse(cleaned); } catch (e) { data = {}; }
     } catch (e) {
-      btn.textContent = "Créer l'ensemble et ses sujets →"; check();
+      kcpOccupe(btn, false); check();
       document.getElementById('err-txt').textContent = 'Création impossible. Réessayez.';
       document.getElementById('err').hidden = false;
       return;
     }
 
-    btn.textContent = "Créer l'ensemble et ses sujets →";
+    kcpOccupe(btn, false);
     if (res.ok && data.success) {
       kcpInvalidateTiroirs();
       existants[nom_noeud.toLowerCase()] = true;

@@ -1,6 +1,8 @@
 <!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KCP — Connexion</title>
+<link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
+<link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
@@ -64,7 +66,7 @@
     clearErr();
     if (!username || !password) { showErr('Email et mot de passe requis.'); return; }
 
-    btn.disabled = true; btn.textContent = 'Connexion…';
+    kcpOccupe(btn, true);
     try {
       var r = await kcpFetch(KCP_CONFIG.webhooks.auth, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -92,7 +94,7 @@
     } catch (e) {
       showErr('Connexion impossible. Réessayez.');
     }
-    btn.disabled = false; btn.textContent = 'Se connecter →';
+    kcpOccupe(btn, false);
   }
 
   document.getElementById('f').addEventListener('submit', function (ev) { ev.preventDefault(); doLogin(); });

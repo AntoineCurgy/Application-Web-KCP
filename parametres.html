@@ -1,6 +1,8 @@
 <!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KCP — Paramètres</title>
+<link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
+<link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
@@ -349,7 +351,7 @@
   document.getElementById('btn-mdp').addEventListener('click', async function () {
     var email = (compte && compte.client_email) || '';
     if (!email) { location.href = './reset-password.html'; return; }
-    var b = this; b.disabled = true; b.textContent = 'Envoi…';
+    var b = this; kcpOccupe(b, true);
     document.getElementById('mdp-ok').hidden = true;
     document.getElementById('mdp-err').hidden = true;
     try {
@@ -367,7 +369,7 @@
     } catch (e) {
       document.getElementById('mdp-err').hidden = false;
     }
-    b.disabled = false; b.textContent = 'Changer de mot de passe';
+    kcpOccupe(b, false);
   });
 
   // ── La navigation entre panneaux ──

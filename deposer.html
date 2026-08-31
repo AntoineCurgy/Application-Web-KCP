@@ -1,6 +1,8 @@
 <!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KCP — Déposer</title>
+<link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
+<link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
@@ -192,7 +194,7 @@
     var cible = document.getElementById('rd').value;   // '' = le système choisit
     document.getElementById('ok').hidden = true;
     document.getElementById('err').hidden = true;
-    btn.disabled = true; btn.textContent = 'Dépôt…';
+    kcpOccupe(btn, true);
     try {
       var r = await kcpFetch(C.webhooks.chat, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -217,7 +219,7 @@
       document.getElementById('err-txt').textContent = 'Le dépôt n’a pas pu partir. Votre texte est conservé — réessayez.';
       document.getElementById('err').hidden = false;
     }
-    btn.disabled = false; btn.textContent = 'Déposer →';
+    kcpOccupe(btn, false);
   });
 </script>
 </body></html>
