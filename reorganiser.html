@@ -1,0 +1,220 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KCP — Réorganiser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<script src="config.js"></script>
+<style>
+  .z { max-width:900px; }
+  .note > span:first-child { display:none; }
+</style>
+</head><body>
+<div class="shell">
+  <aside class="side">
+    <div class="side-brand"><div class="mark">K</div><span class="side-name">KCP</span><span class="tag-beta">bêta</span></div>
+    <nav>
+      <a class="nav-i ancre" href="index.html"><span class="ico">◈</span>Accueil</a>
+      <a class="nav-i" href="deposer.html"><span class="ico">↓</span>Déposer</a>
+      <a class="nav-i" href="interroger.html"><span class="ico">?</span>Interroger</a>
+      <a class="nav-i" href="a-clarifier.html"><span class="ico">⊙</span>À clarifier<span class="n" id="nav-n-points" hidden></span></a>
+      <div class="side-grp">Travailler</div>
+      <a class="nav-i" href="initialiser-ia.html"><span class="ico">↯</span>Initialiser une IA</a>
+      <a class="nav-i" href="enregistrer-reunion.html"><span class="ico">▶</span>Enregistrer une réunion</a>
+      <a class="nav-i" href="informations-capturees.html"><span class="ico">≡</span>Informations capturées</a>
+      <div class="side-grp">Organiser</div>
+      <a class="nav-i" href="nouveau-sujet.html"><span class="ico">+</span>Nouveau sujet</a>
+      <a class="nav-i" href="modifier-sujet.html"><span class="ico">✎</span>Modifier un sujet</a>
+      <a class="nav-i" aria-current="page" href="reorganiser.html"><span class="ico">⇄</span>Réorganiser<span class="n" id="nav-n-props" hidden></span></a>
+      <div class="side-grp" id="grp-notion" hidden>Notion</div>
+      <a class="nav-i" href="#" id="nav-reunions" hidden target="_blank" rel="noopener"><span class="ico">↗</span>Mes réunions</a>
+    </nav>
+    <div class="side-foot">
+      <a class="who" href="parametres.html">
+        <div class="avatar" id="nav-avatar">·</div>
+        <div><div class="who-n" id="nav-who">…</div><div class="who-s">Paramètres</div></div>
+      </a>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="z stack">
+      <div>
+        <h1>Réorganiser</h1>
+        <p class="sub" style="margin-top:.4rem">Ce que le système propose de changer dans la <b>structure</b> de vos sujets — pas dans leur contenu.</p>
+      </div>
+      <div class="alerte-err" id="err" hidden><span>›</span><span id="err-txt"></span></div>
+      <div id="props"><div class="chargement">Chargement…</div></div>
+      <div class="note"><span>›</span><div class="lignes">
+        <div><span class="m">›</span><span><u>Examiner</u> ouvre un formulaire pré-rempli.</span></div>
+        <div><span class="m">›</span><span>Une proposition <u>refusée</u> ne revient jamais.</span></div>
+        <div><span class="m">›</span><span>Une proposition <u>reportée</u> revient dans quinze jours.</span></div>
+      </div></div>
+    </div>
+  </main>
+</div>
+<script>
+  var C = KCP_CONFIG;
+
+  (function nav() {
+    var n = (C.client_name || '').trim();
+    document.getElementById('nav-who').textContent = n || '—';
+    document.getElementById('nav-avatar').textContent = (n.charAt(0) || 'K').toUpperCase();
+    var r = (C.notion && C.notion.reunions) || '';
+    if (r) {
+      document.getElementById('nav-reunions').href = kcpNotionHref(r);
+      document.getElementById('nav-reunions').hidden = false;
+      document.getElementById('grp-notion').hidden = false;
+    }
+    kcpNavBadges();
+  })();
+
+  var propsEl = document.getElementById('props');
+  var props = [];
+  var labels = {};
+
+  // Le type d'une proposition porte son libellé et sa couleur, du geste
+  // le plus léger (g1) au plus lourd (g4).
+  var TYPES = {
+    renommage:   { lbl: 'Renommer', g: 'g1' },
+    deplacement: { lbl: 'Déplacer', g: 'g1' },
+    creation:    { lbl: 'Créer', g: 'g1' },
+    perimetre:   { lbl: 'Redéfinir le périmètre', g: 'g2' },
+    scission:    { lbl: 'Scinder', g: 'g3' },
+    fusion:      { lbl: 'Fusionner', g: 'g3' },
+    archiver:    { lbl: 'Archiver', g: 'g4' }
+  };
+
+  function lbl(id) { return labels[id] || id || ''; }
+
+  // La page d'exécution, pré-remplie avec ce que le système propose.
+  // L'utilisateur y relit et confirme : c'est là que la frontière change.
+  function pageFor(p) {
+    var enc = encodeURIComponent;
+    switch (p.type) {
+      case 'renommage':   return './modifier-sujet.html?mode=nom&doc=' + enc(p.doc_a) + '&valeur=' + enc(p.changement || '');
+      case 'deplacement': return './modifier-sujet.html?mode=depl&doc=' + enc(p.doc_a) + '&valeur=' + enc(p.doc_b || '');
+      case 'perimetre':   return './modifier-sujet.html?mode=perim&doc=' + enc(p.doc_a) + '&valeur=' + enc(p.changement || '');
+      case 'scission':    return './modifier-sujet.html?mode=scinder&doc=' + enc(p.doc_a) + (p.cibles ? '&cibles=' + enc(p.cibles) : '');
+      case 'fusion':      return './modifier-sujet.html?mode=fusionner&doc=' + enc(p.doc_a) + '&src2=' + enc(p.doc_b || '') + (p.cibles ? '&cibles=' + enc(p.cibles) : '');
+      case 'archiver':    return './modifier-sujet.html?mode=archiver&doc=' + enc(p.doc_a);
+      case 'creation':
+        var c = String(p.cibles || '').split(';;')[0] || '';
+        var i = c.indexOf('|');
+        if (i < 1) return './nouveau-sujet.html';
+        return './nouveau-sujet.html?nom=' + enc(c.slice(0, i)) + '&perimetre=' + enc(c.slice(i + 1));
+      default: return null;
+    }
+  }
+
+  function montrerErr(m) {
+    document.getElementById('err-txt').textContent = m;
+    document.getElementById('err').hidden = false;
+    setTimeout(function () { document.getElementById('err').hidden = true; }, 5000);
+  }
+
+  function rendre() {
+    kcpCacheProps({ propositions: props });
+    kcpNavBadges();
+    propsEl.textContent = '';
+    if (!props.length) {
+      var v = document.createElement('div'); v.className = 'vide-etat';
+      v.textContent = 'Aucune réorganisation en attente. Le cycle de cette nuit peut en proposer de nouvelles.';
+      propsEl.appendChild(v);
+      return;
+    }
+    props.forEach(function (p) {
+      var t = TYPES[p.type] || { lbl: p.type || '—', g: 'g1' };
+      var item = document.createElement('div'); item.className = 'item';
+
+      var tete = document.createElement('div'); tete.className = 'prop-h';
+      var geste = document.createElement('span'); geste.className = 'prop-geste ' + t.g;
+      var pt = document.createElement('span'); pt.className = 'pt';
+      geste.appendChild(pt); geste.appendChild(document.createTextNode(t.lbl));
+      tete.appendChild(geste);
+      item.appendChild(tete);
+
+      var bloc = document.createElement('div'); bloc.className = 'bloc ' + t.g;
+      var h = document.createElement('div'); h.className = 'bloc-h';
+      var chip = document.createElement('span'); chip.className = 'chip-s';
+      chip.textContent = p.type === 'creation' ? 'le sas' : lbl(p.doc_a);
+      h.appendChild(chip); bloc.appendChild(h);
+
+      var l1 = document.createElement('div'); l1.className = 'prop-l'; l1.textContent = 'Proposition';
+      var t1 = document.createElement('div'); t1.className = 'prop-t';
+      t1.textContent = (p.question || '').trim() || (p.changement || '').trim() || '—';
+      var l2 = document.createElement('div'); l2.className = 'prop-l'; l2.textContent = 'Raison';
+      var t2 = document.createElement('div'); t2.className = 'prop-r';
+      t2.textContent = (p.constat || '').trim() || '—';
+      bloc.appendChild(l1); bloc.appendChild(t1); bloc.appendChild(l2); bloc.appendChild(t2);
+
+      var act = document.createElement('div'); act.className = 'prop-a';
+      var cible = pageFor(p);
+      if (cible) {
+        var ex = document.createElement('button'); ex.className = 'btn btn-1'; ex.textContent = 'Examiner →';
+        ex.addEventListener('click', function () { traiter(item, p, 'accepte', cible, ex); });
+        act.appendChild(ex);
+      }
+      var plus = document.createElement('button'); plus.className = 'btn'; plus.textContent = 'Plus tard';
+      plus.addEventListener('click', function () { traiter(item, p, 'pas_maintenant', null, plus); });
+      var ref = document.createElement('button'); ref.className = 'btn'; ref.textContent = 'Refuser';
+      ref.addEventListener('click', function () { traiter(item, p, 'refuse', null, ref); });
+      act.appendChild(plus); act.appendChild(ref);
+      bloc.appendChild(act);
+
+      item.appendChild(bloc);
+      propsEl.appendChild(item);
+    });
+  }
+
+  async function traiter(item, p, action, cible, btn) {
+    btn.disabled = true;
+    try {
+      var r = await kcpFetch(C.webhooks.reponse_proposition, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: C.client_id, proposition_id: p.proposition_id, action: action, reponse: '' })
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      props = props.filter(function (x) { return x.proposition_id !== p.proposition_id; });
+      if (cible) { location.href = cible; return; }
+      item.remove();
+      rendre();
+    } catch (e) {
+      btn.disabled = false;
+      montrerErr('La réponse n’a pas pu être envoyée. Réessayez dans un instant.');
+    }
+  }
+
+  // ── Chargement : libellés, puis cache, puis revalidation ──
+  async function charger() {
+    try {
+      var data = await kcpLoadTiroirs();
+      (data.pcp_anx || []).concat(data.gcp || []).forEach(function (t) {
+        if (t.doc_int_id) labels[t.doc_int_id] = kcpDocLabel(t);
+      });
+    } catch (e) { /* sans libellé, l'identifiant s'affiche */ }
+
+    var cached = kcpReadPropsCache();
+    if (cached) { props = (cached.propositions || []).slice(); rendre(); }
+
+    try {
+      var r = await kcpFetch(C.webhooks.propositions, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: C.client_id })
+      });
+      var raw = await r.text();
+      var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      var d = JSON.parse(cleaned);
+      if (d && d.propositions) { props = d.propositions.slice(); rendre(); }
+    } catch (e) {
+      if (!cached) {
+        propsEl.textContent = '';
+        var v = document.createElement('div'); v.className = 'alerte-err';
+        v.textContent = 'Les propositions n’ont pas pu être chargées. Rechargez la page.';
+        propsEl.appendChild(v);
+      }
+    }
+  }
+  charger();
+</script>
+</body></html>

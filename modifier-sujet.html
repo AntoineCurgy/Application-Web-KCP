@@ -1,0 +1,734 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KCP — Modifier un sujet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<script src="config.js"></script>
+<style>
+  .z { max-width:760px; }
+  .carte-f { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r);
+    padding:var(--s4); display:flex; flex-direction:column; gap:var(--s4); }
+  .modes { display:flex; gap:var(--s1); }
+  .modes button { flex:1; font-family:var(--display); font-size:var(--t-sm); font-weight:600; padding:.55rem;
+    border:1.5px solid var(--border-strong); border-radius:var(--r-sm); background:var(--surface);
+    color:var(--ink-soft); cursor:pointer; }
+  .modes button[aria-pressed="true"] { background:var(--dark); border-color:var(--dark); color:var(--accent); }
+  .panneau { display:none; flex-direction:column; gap:var(--s4); }
+  .panneau.on { display:flex; }
+  .ong button[aria-disabled="true"] { opacity:.4; cursor:not-allowed; }
+  .apercu { font-family:var(--mono); font-size:var(--t-meta); color:var(--accent-deep); }
+  .hint.err { color:var(--danger); }
+</style>
+</head><body>
+<div class="shell">
+  <aside class="side">
+    <div class="side-brand"><div class="mark">K</div><span class="side-name">KCP</span><span class="tag-beta">bêta</span></div>
+    <nav>
+      <a class="nav-i ancre" href="index.html"><span class="ico">◈</span>Accueil</a>
+      <a class="nav-i" href="deposer.html"><span class="ico">↓</span>Déposer</a>
+      <a class="nav-i" href="interroger.html"><span class="ico">?</span>Interroger</a>
+      <a class="nav-i" href="a-clarifier.html"><span class="ico">⊙</span>À clarifier<span class="n" id="nav-n-points" hidden></span></a>
+      <div class="side-grp">Travailler</div>
+      <a class="nav-i" href="initialiser-ia.html"><span class="ico">↯</span>Initialiser une IA</a>
+      <a class="nav-i" href="enregistrer-reunion.html"><span class="ico">▶</span>Enregistrer une réunion</a>
+      <a class="nav-i" href="informations-capturees.html"><span class="ico">≡</span>Informations capturées</a>
+      <div class="side-grp">Organiser</div>
+      <a class="nav-i" href="nouveau-sujet.html"><span class="ico">+</span>Nouveau sujet</a>
+      <a class="nav-i" aria-current="page" href="modifier-sujet.html"><span class="ico">✎</span>Modifier un sujet</a>
+      <a class="nav-i" href="reorganiser.html"><span class="ico">⇄</span>Réorganiser<span class="n" id="nav-n-props" hidden></span></a>
+      <div class="side-grp" id="grp-notion" hidden>Notion</div>
+      <a class="nav-i" href="#" id="nav-reunions" hidden target="_blank" rel="noopener"><span class="ico">↗</span>Mes réunions</a>
+    </nav>
+    <div class="side-foot">
+      <a class="who" href="parametres.html">
+        <div class="avatar" id="nav-avatar">·</div>
+        <div><div class="who-n" id="nav-who">…</div><div class="who-s">Paramètres</div></div>
+      </a>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="z stack">
+      <div><h1>Modifier un sujet</h1>
+      <p class="sub" style="margin-top:.4rem">Renommer, redéfinir un périmètre, déplacer — ou restructurer en profondeur.</p></div>
+      <div class="carte-f">
+        <div class="champ"><label for="c">Sujet à modifier</label>
+          <select id="c"><option value="">— choisir —</option></select></div>
+
+        <div class="ong" role="tablist">
+          <button role="tab" id="t-perim" aria-controls="p-perim" aria-selected="true" tabindex="0" data-p="perim">Périmètre</button>
+          <button role="tab" id="t-nom" aria-controls="p-nom" aria-selected="false" tabindex="-1" data-p="nom">Renommer</button>
+          <button role="tab" id="t-depl" aria-controls="p-depl" aria-selected="false" tabindex="-1" data-p="depl">Déplacer</button>
+          <button role="tab" id="t-scinder" aria-controls="p-scinder" aria-selected="false" tabindex="-1" data-p="scinder">Scinder</button>
+          <button role="tab" id="t-fusionner" aria-controls="p-fusionner" aria-selected="false" tabindex="-1" data-p="fusionner">Fusionner</button>
+          <button role="tab" id="t-archiver" aria-controls="p-archiver" aria-selected="false" tabindex="-1" data-p="archiver">Archiver</button>
+        </div>
+
+        <div class="confirme" id="ok" hidden><span>✓</span><span id="ok-txt"></span></div>
+        <div class="alerte-err" id="err" hidden><span>›</span><span id="err-txt"></span></div>
+
+        <!-- ── Périmètre ── -->
+        <div class="panneau on" id="p-perim" role="tabpanel" aria-labelledby="t-perim">
+          <div class="champ"><div class="lbl-q"><span><label for="pp">Périmètre</label><button type="button" class="qmark" data-pop="auto" aria-label="À quoi sert le périmètre ?">?</button></span><span class="hint" id="pp-hint">min. 40 caractères</span></div>
+            <textarea id="pp" rows="5" placeholder="Ce sujet couvre …" disabled></textarea></div>
+          <button class="btn btn-1" id="go-perim" disabled>Mettre à jour →</button>
+        </div>
+
+        <!-- ── Renommer ── -->
+        <div class="panneau" id="p-nom" role="tabpanel" aria-labelledby="t-nom" hidden>
+          <div class="champ"><div class="lbl-q"><span><label for="nn">Nouveau nom</label></span>
+            <span class="hint err" id="nn-dup" hidden>nom déjà utilisé</span></div>
+            <input type="text" id="nn" autocomplete="off" spellcheck="false" maxlength="60" disabled>
+            <span class="apercu" id="nn-ap" hidden></span></div>
+          <div class="note"><span>›</span><span>Renommer ne change que le nom affiché. Le sujet garde son identité et tout son historique.</span></div>
+          <button class="btn btn-1" id="go-nom" disabled>Renommer →</button>
+        </div>
+
+        <!-- ── Déplacer ── -->
+        <div class="panneau" id="p-depl" role="tabpanel" aria-labelledby="t-depl" hidden>
+          <div class="champ"><span style="font-size:var(--t-sm);font-weight:600">Actuellement en dessous de</span>
+            <div class="fige" id="depl-actuel">—</div></div>
+          <div class="champ"><div class="lbl-q"><span><label for="dd">Le déplacer pour qu'il soit en dessous de</label><button type="button" class="qmark" data-pop="deplacer" aria-label="Que change un déplacement ?">?</button></span></div>
+            <select id="dd" disabled><option value="">— choisir —</option></select>
+            <span class="aide" id="depl-aide" hidden>Un ensemble ne se déplace pas : la profondeur de toute sa descendance devrait être recalculée.</span></div>
+          <button class="btn btn-1" id="go-depl" disabled>Déplacer →</button>
+        </div>
+
+        <!-- ── Scinder ── -->
+        <div class="panneau" id="p-scinder" role="tabpanel" aria-labelledby="t-scinder" hidden>
+          <div class="champ"><span style="font-size:var(--t-sm);font-weight:600">Forme du découpage :</span>
+            <div class="modes">
+              <button type="button" aria-pressed="true" data-forme="plat">En plusieurs sujets</button>
+              <button type="button" aria-pressed="false" data-forme="noeud">En un nouvel ensemble</button>
+            </div>
+            <span class="aide" id="aide-forme">Les nouveaux sujets restent au même endroit que celui qu'ils remplacent.</span></div>
+
+          <div class="encadre" id="bloc-ens" hidden>
+            <div class="champ"><div class="lbl-q"><span><label for="ens-n">Nom de l'ensemble</label></span>
+              <span class="hint err" id="ens-n-dup" hidden>nom déjà utilisé</span></div>
+              <input type="text" id="ens-n" placeholder="Direction commerciale" autocomplete="off" spellcheck="false" maxlength="60">
+              <span class="apercu" id="ens-n-ap" hidden></span></div>
+            <div class="champ"><div class="lbl-q"><span><label for="ens-p">Périmètre de l'ensemble</label>
+              <button type="button" class="qmark" data-pop="ensemble" aria-label="À quoi sert le périmètre d'un ensemble ?">?</button></span><span class="hint" id="ens-p-hint">min. 40 caractères</span></div>
+              <textarea id="ens-p" rows="3" placeholder="Cet ensemble couvre …"></textarea></div>
+          </div>
+
+          <div class="branches" id="br" hidden></div>
+          <div id="cibles" class="deux-col"></div>
+          <button type="button" class="btn" id="add" style="align-self:flex-start">+ ajouter un sujet</button>
+
+          <div class="note"><span>›</span><span>Une scission archive le sujet d'origine et crée les nouveaux, qui reçoivent chacun une copie de son contenu. <b>Rien n'est perdu</b> — mais l'opération ne se défait pas.</span></div>
+          <button class="btn btn-1" id="go-scinder" disabled>Scinder →</button>
+        </div>
+
+        <!-- ── Fusionner ── -->
+        <div class="panneau" id="p-fusionner" role="tabpanel" aria-labelledby="t-fusionner" hidden>
+          <div class="deux-col">
+            <div class="encadre">
+              <span style="font-size:var(--t-sm);font-weight:600">Premier sujet</span>
+              <div class="fige" id="fu-src1">—</div>
+              <span class="aide">Celui choisi en haut de page.</span>
+            </div>
+            <div class="encadre">
+              <div class="champ"><label for="fu">Second sujet</label>
+                <select id="fu" disabled><option value="">— choisir —</option></select></div>
+              <span class="aide">Deux sujets à la fois, jamais plus.</span>
+            </div>
+          </div>
+
+          <div class="converge">
+            <span class="haut" style="left:25%"></span><span class="haut" style="right:25%"></span>
+            <span class="bar" style="left:25%;right:25%"></span><span class="bas"></span>
+          </div>
+
+          <div class="encadre">
+            <div class="champ"><div class="lbl-q"><span><label for="fn">Nom du sujet fusionné</label></span>
+              <span class="hint err" id="fn-dup" hidden>nom déjà utilisé</span></div>
+              <input type="text" id="fn" placeholder="organisation-interne" autocomplete="off" spellcheck="false" maxlength="60">
+              <span class="apercu" id="fn-ap" hidden></span></div>
+            <div class="champ"><div class="lbl-q"><span><label for="fp">Périmètre du sujet fusionné</label>
+              <button type="button" class="qmark" data-pop="sujet" aria-label="À quoi sert le périmètre ?">?</button></span><span class="hint" id="fp-hint">min. 40 caractères</span></div>
+              <textarea id="fp" rows="3" placeholder="Ce sujet couvre …"></textarea></div>
+          </div>
+
+          <div class="note"><span>›</span><span>Les deux sujets sont archivés et un troisième reçoit leurs contenus mis bout à bout. <b>Deux affirmations qui se contredisent partent en questions ouvertes</b> plutôt que d'être tranchées à votre place.</span></div>
+          <button class="btn btn-1" id="go-fusionner" disabled>Fusionner →</button>
+        </div>
+
+        <!-- ── Archiver ── -->
+        <div class="panneau" id="p-archiver" role="tabpanel" aria-labelledby="t-archiver" hidden>
+          <div class="champ"><span style="font-size:var(--t-sm);font-weight:600">Sujet à archiver</span>
+            <div class="fige" id="arc-src">—</div></div>
+          <div class="note"><span>›</span><span>Un sujet archivé quitte votre carte et cesse d'être mis à jour. <b>Il n'est jamais supprimé</b> et son identité n'est jamais réattribuée.</span></div>
+          <button class="btn btn-1" id="go-archiver" disabled>Archiver →</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<div class="pop-voile" id="voile"></div>
+<div class="pop" id="pop" role="dialog" aria-modal="true" aria-labelledby="pop-t">
+  <div id="pop-t" style="font-family:var(--display);font-size:var(--t-lg);font-weight:700"></div>
+  <div id="pop-c" style="display:flex;flex-direction:column;gap:var(--s2);font-size:var(--t-sm);line-height:1.55;color:var(--ink-soft)"></div>
+  <button class="btn btn-1" id="pop-ok">Compris</button>
+</div>
+<script>
+  var C = KCP_CONFIG;
+
+  (function nav() {
+    var n = (C.client_name || '').trim();
+    document.getElementById('nav-who').textContent = n || '—';
+    document.getElementById('nav-avatar').textContent = (n.charAt(0) || 'K').toUpperCase();
+    var r = (C.notion && C.notion.reunions) || '';
+    if (r) {
+      document.getElementById('nav-reunions').href = kcpNotionHref(r);
+      document.getElementById('nav-reunions').hidden = false;
+      document.getElementById('grp-notion').hidden = false;
+    }
+    kcpNavBadges();
+  })();
+
+  var sel = document.getElementById('c');
+  var items = {};            // doc_int_id → entrée de la liste
+  var existants = {};        // labels affichés, minuscules
+  var noeudsTous = [];       // ensembles, racine comprise : cibles de rattachement
+  var ongletCourant = 'perim';
+
+  function docChoisi() { return items[sel.value] || null; }
+  function estNoeud(it) { return String((it && it.type) || '').toUpperCase() === 'GCP'; }
+
+  // ── Mêmes règles de nom qu'à la création. ──
+  function slugFinal(v) {
+    return (v || '')
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, '-')
+      .replace(/-{2,}/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+  function noeudFinal(v) { var f = slugFinal(v); return f ? f.charAt(0).toUpperCase() + f.slice(1) : ''; }
+  function sanitize(s) { return (s || '').replace(/[\\"]/g, "'").replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim(); }
+
+  function bandeauOk(txt) {
+    document.getElementById('ok-txt').textContent = txt;
+    document.getElementById('ok').hidden = false;
+    document.getElementById('err').hidden = true;
+  }
+  function bandeauErr(txt) {
+    document.getElementById('err-txt').textContent = txt;
+    document.getElementById('err').hidden = false;
+    document.getElementById('ok').hidden = true;
+  }
+  function cacherBandeaux() {
+    document.getElementById('ok').hidden = true;
+    document.getElementById('err').hidden = true;
+  }
+
+  function lireMake(raw) {
+    var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+    var d = {}; try { d = JSON.parse(cleaned); } catch (e) { d = {}; }
+    return d;
+  }
+
+  // ── Onglets : flèches, sélection, gestes fermés aux ensembles ──
+  var tabs = [].slice.call(document.querySelectorAll('.ong [role="tab"]'));
+  function tabAutorise(b) {
+    var it = docChoisi();
+    if (!it || !estNoeud(it)) return true;
+    // Un ensemble ne se déplace pas, ne se scinde pas, ne se fusionne pas,
+    // ne s'archive pas : redistribuer des enfants, le système ne sait pas encore.
+    return b.dataset.p === 'perim' || b.dataset.p === 'nom';
+  }
+  function majTabs() {
+    tabs.forEach(function (b) {
+      var autor = tabAutorise(b);
+      b.setAttribute('aria-disabled', autor ? 'false' : 'true');
+      b.title = autor ? '' : 'Ce geste ne s’applique qu’à un sujet, pas à un ensemble.';
+    });
+    var courant = document.getElementById('t-' + ongletCourant);
+    if (courant && courant.getAttribute('aria-disabled') === 'true') activer(document.getElementById('t-perim'));
+  }
+  function activer(b) {
+    if (b.getAttribute('aria-disabled') === 'true') return;
+    ongletCourant = b.dataset.p;
+    tabs.forEach(function (x) {
+      var a = x === b;
+      x.setAttribute('aria-selected', a ? 'true' : 'false'); x.tabIndex = a ? 0 : -1;
+      var p = document.getElementById('p-' + x.dataset.p);
+      p.hidden = !a; p.classList.toggle('on', a);
+    });
+    cacherBandeaux();
+    b.focus();
+  }
+  tabs.forEach(function (b, i) {
+    b.addEventListener('click', function () { activer(b); });
+    b.addEventListener('keydown', function (e) {
+      var d = e.key === 'ArrowRight' ? 1 : (e.key === 'ArrowLeft' ? -1 : 0);
+      if (!d) return; e.preventDefault();
+      activer(tabs[(i + d + tabs.length) % tabs.length]);
+    });
+  });
+
+  // ── La liste : ensembles (hors racine) puis sujets, prêts pour le cycle ──
+  async function chargerListe() {
+    var data = await kcpLoadTiroirs();
+    var pret = function (t) { return String(t.attente_cycle || '').toLowerCase() !== 'oui'; };
+    noeudsTous = (data.gcp || []).slice();
+    var noeuds = noeudsTous.filter(function (t) { return (t.parent || '') !== 'N/A'; }).filter(pret);
+    var sujets = (data.pcp || []).filter(pret);
+    ((data.pcp_anx || []).concat(noeudsTous)).forEach(function (t) {
+      existants[kcpDocLabel(t).toLowerCase()] = true;
+    });
+    noeuds.concat(sujets).forEach(function (t) {
+      if (!t.doc_int_id) return;
+      items[t.doc_int_id] = t;
+      var o = document.createElement('option');
+      o.value = t.doc_int_id; o.textContent = kcpDocLabel(t);
+      sel.appendChild(o);
+    });
+  }
+
+  // ── À chaque sélection : pré-remplir chaque panneau ──
+  function onSelect() {
+    cacherBandeaux();
+    var it = docChoisi();
+    majTabs();
+    // Périmètre
+    var pp = document.getElementById('pp');
+    pp.disabled = !it;
+    pp.value = it ? (it.perimetre_declare || '') : '';
+    pp.placeholder = it && estNoeud(it) ? 'Cet ensemble couvre …' : 'Ce sujet couvre …';
+    // Renommer
+    var nn = document.getElementById('nn');
+    nn.disabled = !it;
+    nn.value = it ? (it.nom_tiroir || '') : '';
+    // Déplacer
+    var parent = it ? noeudsTous.filter(function (n) { return n.doc_int_id === it.parent; })[0] : null;
+    document.getElementById('depl-actuel').textContent =
+      parent ? kcpDocLabel(parent) + ((parent.parent || '') === 'N/A' ? ' (racine)' : '') : '—';
+    var dd = document.getElementById('dd');
+    dd.innerHTML = '<option value="">— choisir —</option>';
+    var bloque = !it || estNoeud(it);
+    dd.disabled = bloque;
+    document.getElementById('depl-aide').hidden = !(it && estNoeud(it));
+    if (!bloque) {
+      noeudsTous.filter(function (n) { return n.doc_int_id && n.doc_int_id !== (it.parent || ''); })
+        .forEach(function (n) {
+          var o = document.createElement('option');
+          o.value = n.doc_int_id;
+          o.textContent = kcpDocLabel(n) + ((n.parent || '') === 'N/A' ? ' (racine)' : '');
+          dd.appendChild(o);
+        });
+    }
+    // Fusionner
+    document.getElementById('fu-src1').textContent = it ? kcpDocLabel(it) : '—';
+    var fu = document.getElementById('fu');
+    fu.innerHTML = '<option value="">— choisir —</option>';
+    fu.disabled = !it || estNoeud(it);
+    if (it && !estNoeud(it)) {
+      Object.keys(items).forEach(function (id) {
+        var t = items[id];
+        if (estNoeud(t) || id === it.doc_int_id) return;
+        var o = document.createElement('option');
+        o.value = id; o.textContent = kcpDocLabel(t);
+        fu.appendChild(o);
+      });
+    }
+    // Archiver
+    document.getElementById('arc-src').textContent = it ? kcpDocLabel(it) : '—';
+    check();
+  }
+  sel.addEventListener('change', onSelect);
+
+  // ── Scinder : autant de sujets que nécessaire, jamais moins de deux ──
+  var cibles = document.getElementById('cibles'), nC = 0, forme = 'plat';
+  function ajouterCible() {
+    nC += 1;
+    var i = nC;
+    var d = document.createElement('div');
+    d.className = 'champ';
+    var head = document.createElement('div'); head.className = 'lbl-q';
+    var g = document.createElement('span');
+    var l = document.createElement('label'); l.setAttribute('for', 'c-nom-' + i); l.textContent = 'Nouveau sujet ' + i;
+    g.appendChild(l); head.appendChild(g);
+    var hint = document.createElement('span'); hint.className = 'hint err'; hint.id = 'c-dup-' + i;
+    hint.textContent = 'nom déjà utilisé'; hint.hidden = true;
+    head.appendChild(hint);
+    var e = document.createElement('div');
+    e.style.cssText = 'display:flex;gap:var(--s2);align-items:flex-start';
+    var inp = document.createElement('input'); inp.type = 'text'; inp.id = 'c-nom-' + i;
+    inp.placeholder = i === 1 ? 'refonte-site-web' : 'recrutement-commercial';
+    inp.maxLength = 60; inp.autocomplete = 'off'; inp.spellcheck = false;
+    inp.addEventListener('input', check);
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'btn retirer'; x.textContent = '×';
+    x.setAttribute('aria-label', 'Retirer ce sujet');
+    x.addEventListener('click', function () {
+      // Une scission produit au moins deux sujets : en dessous, elle n'a pas de sens.
+      if (cibles.children.length <= 2) return;
+      d.remove(); majRetraits(); majBranches(); check();
+    });
+    e.appendChild(inp); e.appendChild(x);
+    var ta = document.createElement('textarea'); ta.id = 'c-perim-' + i; ta.rows = 3;
+    ta.placeholder = 'Ce sujet couvre …';
+    ta.addEventListener('input', check);
+    var hp = document.createElement('span'); hp.className = 'hint'; hp.id = 'c-hint-' + i;
+    hp.textContent = 'min. 40 caractères';
+    d.appendChild(head); d.appendChild(e); d.appendChild(ta); d.appendChild(hp);
+    cibles.appendChild(d);
+    majRetraits(); majBranches(); check();
+  }
+  function majRetraits() {
+    var seul = cibles.children.length <= 2;
+    cibles.querySelectorAll('.retirer').forEach(function (b) {
+      b.disabled = seul;
+      b.title = seul ? 'Une scission produit au moins deux sujets' : 'Retirer ce sujet';
+    });
+  }
+  function majBranches() {
+    var n = cibles.children.length, br = document.getElementById('br');
+    br.textContent = '';
+    // Sujets frères : rien ne les regroupe, donc pas de fourchette.
+    if (br.hidden || n < 1) return;
+    var tronc = document.createElement('span');
+    tronc.style.cssText = 'position:absolute;top:0;left:50%;width:1.5px;height:11px;background:var(--border-strong)';
+    br.appendChild(tronc);
+    var cols = Math.min(n, 2), pas = 100 / cols;
+    var bar = document.createElement('span');
+    bar.style.cssText = 'position:absolute;top:11px;left:' + (pas / 2) + '%;right:' + (pas / 2) + '%;height:1.5px;background:var(--border-strong)';
+    br.appendChild(bar);
+    for (var i = 0; i < cols; i++) {
+      var dsc = document.createElement('span');
+      dsc.style.cssText = 'position:absolute;top:11px;left:' + (pas / 2 + i * pas) + '%;width:1.5px;height:11px;background:var(--border-strong)';
+      br.appendChild(dsc);
+    }
+  }
+  function lireCibles() {
+    var out = [];
+    for (var i = 1; i <= nC; i++) {
+      var ne = document.getElementById('c-nom-' + i);
+      if (!ne) continue;
+      var slug = slugFinal(ne.value);
+      out.push({ i: i, slug: slug, label: slug ? '#' + slug : '',
+        perimetre: (document.getElementById('c-perim-' + i).value || '').trim() });
+    }
+    return out;
+  }
+  ajouterCible(); ajouterCible();
+  document.getElementById('add').addEventListener('click', ajouterCible);
+
+  document.querySelectorAll('[data-forme]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('[data-forme]').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+      b.setAttribute('aria-pressed', 'true');
+      forme = b.dataset.forme;
+      var noeud = forme === 'noeud';
+      document.getElementById('bloc-ens').hidden = !noeud;
+      document.getElementById('br').hidden = !noeud;
+      majBranches();
+      document.getElementById('aide-forme').textContent = noeud
+        ? 'Un ensemble est créé pour regrouper les nouveaux sujets.'
+        : "Les nouveaux sujets restent au même endroit que celui qu'ils remplacent.";
+      check();
+    });
+  });
+  document.getElementById('ens-n').addEventListener('input', check);
+  document.getElementById('ens-p').addEventListener('input', check);
+  document.getElementById('fn').addEventListener('input', check);
+  document.getElementById('fp').addEventListener('input', check);
+  document.getElementById('fu').addEventListener('change', check);
+  document.getElementById('dd').addEventListener('change', check);
+  document.getElementById('pp').addEventListener('input', check);
+  document.getElementById('nn').addEventListener('input', check);
+
+  function hintPerim(id, len) {
+    var h = document.getElementById(id);
+    if (!h) return len >= 40;
+    if (len > 0 && len < 40) {
+      h.textContent = 'encore ' + (40 - len) + ' caractère' + (40 - len > 1 ? 's' : '');
+      h.classList.add('err');
+    } else { h.textContent = 'min. 40 caractères'; h.classList.remove('err'); }
+    return len >= 40;
+  }
+
+  // ── L'état de chaque panneau, recalculé à chaque frappe ──
+  function check() {
+    var it = docChoisi();
+
+    // Périmètre : au moins 40 caractères, et une vraie modification.
+    var ppv = document.getElementById('pp').value.trim();
+    var ppOk = hintPerim('pp-hint', ppv.length);
+    document.getElementById('go-perim').disabled =
+      !(it && ppOk && ppv !== String(it.perimetre_declare || '').trim());
+
+    // Renommer : forme finale valide, différente, sans doublon.
+    var f = it ? (estNoeud(it) ? noeudFinal(document.getElementById('nn').value) : slugFinal(document.getElementById('nn').value)) : '';
+    var lbl = f ? (it && estNoeud(it) ? f : '#' + f) : '';
+    var ap = document.getElementById('nn-ap');
+    ap.textContent = lbl; ap.hidden = !lbl || !it || f === it.nom_tiroir;
+    var propre = it ? kcpDocLabel(it).toLowerCase() : '';
+    var dup = !!lbl && lbl.toLowerCase() !== propre && !!existants[lbl.toLowerCase()];
+    document.getElementById('nn-dup').hidden = !dup;
+    document.getElementById('go-nom').disabled =
+      !(it && f.length >= 2 && f !== it.nom_tiroir && !dup);
+
+    // Déplacer : un sujet, une destination.
+    document.getElementById('go-depl').disabled =
+      !(it && !estNoeud(it) && document.getElementById('dd').value);
+
+    // Scinder : au moins deux cibles complètes, et l'ensemble s'il est demandé.
+    var cs = lireCibles();
+    var dupC = false, vus = {};
+    cs.forEach(function (x) {
+      hintPerim('c-hint-' + x.i, x.perimetre.length);
+      var bad = !!x.label && (!!existants[x.label.toLowerCase()] || !!vus[x.label.toLowerCase()]);
+      var h = document.getElementById('c-dup-' + x.i);
+      if (h) h.hidden = !bad;
+      if (x.label) vus[x.label.toLowerCase()] = true;
+      if (bad) dupC = true;
+    });
+    var csOk = cs.length >= 2 && cs.every(function (x) { return x.slug.length >= 2 && x.perimetre.length >= 40; });
+    var nOk = true;
+    if (forme === 'noeud') {
+      var nf = noeudFinal(document.getElementById('ens-n').value);
+      var np = (document.getElementById('ens-p').value || '').trim();
+      var apn = document.getElementById('ens-n-ap');
+      apn.textContent = nf; apn.hidden = !nf || nf === document.getElementById('ens-n').value.trim();
+      var nd = !!nf && !!existants[nf.toLowerCase()];
+      document.getElementById('ens-n-dup').hidden = !nd;
+      nOk = nf.length >= 2 && hintPerim('ens-p-hint', np.length) && !nd;
+    }
+    document.getElementById('go-scinder').disabled =
+      !(it && !estNoeud(it) && csOk && nOk && !dupC);
+
+    // Fusionner : deux sujets distincts et le sujet d'arrivée complet.
+    var fnv = slugFinal(document.getElementById('fn').value);
+    var fnl = fnv ? '#' + fnv : '';
+    var apf = document.getElementById('fn-ap');
+    apf.textContent = fnl; apf.hidden = !fnl || fnv === document.getElementById('fn').value.trim();
+    var dupF = !!fnl && !!existants[fnl.toLowerCase()];
+    document.getElementById('fn-dup').hidden = !dupF;
+    var fpOk = hintPerim('fp-hint', document.getElementById('fp').value.trim().length);
+    document.getElementById('go-fusionner').disabled =
+      !(it && !estNoeud(it) && document.getElementById('fu').value && fnv.length >= 2 && fpOk && !dupF);
+
+    // Archiver : le sujet choisi suffit.
+    document.getElementById('go-archiver').disabled = !(it && !estNoeud(it));
+  }
+
+  // ── Les quatre envois ──
+  document.getElementById('go-perim').addEventListener('click', async function () {
+    var it = docChoisi(); if (!it) return;
+    var b = this; b.disabled = true; b.textContent = 'Mise à jour…';
+    cacherBandeaux();
+    try {
+      var r = await kcpFetch(C.webhooks.update_perimetre, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_client: C.client_id, doc_int_id: it.doc_int_id, perimetre_declare: sanitize(document.getElementById('pp').value) })
+      });
+      var d = lireMake(await r.text());
+      if (!r.ok || !d.success) throw {};
+      it.perimetre_declare = document.getElementById('pp').value.trim();
+      kcpInvalidateTiroirs();
+      bandeauOk('Périmètre mis à jour.');
+    } catch (e) { bandeauErr('Mise à jour impossible. Réessayez.'); }
+    b.textContent = 'Mettre à jour →'; check();
+  });
+
+  document.getElementById('go-nom').addEventListener('click', async function () {
+    var it = docChoisi(); if (!it) return;
+    var nouveau_nom = estNoeud(it) ? noeudFinal(document.getElementById('nn').value) : slugFinal(document.getElementById('nn').value);
+    if (nouveau_nom.length < 2 || nouveau_nom === it.nom_tiroir) return;
+    var b = this; b.disabled = true; b.textContent = 'Renommage…';
+    cacherBandeaux();
+    try {
+      var r = await kcpFetch(C.webhooks.renommer, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: C.client_id, doc_int_id: it.doc_int_id, nouveau_nom: nouveau_nom })
+      });
+      var d = lireMake(await r.text());
+      if (r.status === 409 || d.error === 'label_exists') { bandeauErr('Ce nom existe déjà, choisissez-en un autre.'); }
+      else if (!r.ok || !d.success) { throw {}; }
+      else {
+        delete existants[kcpDocLabel(it).toLowerCase()];
+        it.nom_tiroir = nouveau_nom;
+        existants[kcpDocLabel(it).toLowerCase()] = true;
+        var opt = sel.querySelector('option[value="' + it.doc_int_id + '"]');
+        if (opt) opt.textContent = kcpDocLabel(it);
+        document.getElementById('nn').value = nouveau_nom;
+        kcpInvalidateTiroirs();
+        bandeauOk('Nom mis à jour.');
+      }
+    } catch (e) { bandeauErr('Renommage impossible. Réessayez.'); }
+    b.textContent = 'Renommer →'; check();
+  });
+
+  document.getElementById('go-depl').addEventListener('click', async function () {
+    var it = docChoisi(); if (!it || estNoeud(it)) return;
+    var nouveau_parent_id = document.getElementById('dd').value;
+    if (!nouveau_parent_id) return;
+    var b = this; b.disabled = true; b.textContent = 'Déplacement…';
+    cacherBandeaux();
+    try {
+      var r = await kcpFetch(C.webhooks.deplacer, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_client: C.client_id, doc_int_id: it.doc_int_id, nouveau_parent_id: nouveau_parent_id })
+      });
+      var d = lireMake(await r.text());
+      if (r.ok && d.success) {
+        // Le référentiel est le foyer de la topologie : on reflète tout de suite,
+        // les cartes des deux ensembles suivront à leur prochain cycle.
+        it.parent = nouveau_parent_id;
+        kcpInvalidateTiroirs();
+        onSelect();
+        bandeauOk('Sujet rattaché. Les cartes des deux ensembles seront à jour au prochain cycle.');
+      } else if (d.error === 'noeud_non_deplacable' || d.error === 'racine_intouchable') {
+        bandeauErr(d.message || 'Ce document ne peut pas être déplacé.');
+      } else { throw {}; }
+    } catch (e) { bandeauErr('Déplacement impossible. Réessayez.'); }
+    b.textContent = 'Déplacer →'; check();
+  });
+
+  async function restructurer(operation, payloadExtra, okMsg, btn, libelle) {
+    var it = docChoisi(); if (!it || estNoeud(it)) return;
+    btn.disabled = true; btn.textContent = 'En cours…';
+    cacherBandeaux();
+    var payload = {
+      id_client: C.client_id, operation: operation,
+      source_1: it.doc_int_id, source_2: '', cibles: []
+    };
+    Object.keys(payloadExtra || {}).forEach(function (k) { payload[k] = payloadExtra[k]; });
+    try {
+      var r = await kcpFetch(C.webhooks.restructurer, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      var d = lireMake(await r.text());
+      if (r.ok && d.success) {
+        kcpInvalidateTiroirs();
+        bandeauOk(okMsg);
+      } else {
+        bandeauErr(d.message || 'Restructuration impossible. Réessayez.');
+      }
+    } catch (e) { bandeauErr('Restructuration impossible. Réessayez.'); }
+    btn.textContent = libelle; check();
+  }
+
+  document.getElementById('go-scinder').addEventListener('click', function () {
+    var cs = lireCibles().map(function (x) { return { label: x.label, perimetre: sanitize(x.perimetre) }; });
+    var extra = { cibles: cs };
+    if (forme === 'noeud') {
+      extra.noeud = {
+        label: noeudFinal(document.getElementById('ens-n').value),
+        perimetre: sanitize(document.getElementById('ens-p').value)
+      };
+    }
+    restructurer('scinder', extra,
+      'Sujet scindé. Les nouveaux documents sont indisponibles jusqu’au prochain cycle — le temps qu’ils deviennent eux-mêmes.',
+      this, 'Scinder →');
+  });
+
+  document.getElementById('go-fusionner').addEventListener('click', function () {
+    restructurer('fusionner', {
+      source_2: document.getElementById('fu').value,
+      cibles: [{ label: '#' + slugFinal(document.getElementById('fn').value), perimetre: sanitize(document.getElementById('fp').value) }]
+    },
+      'Sujets fusionnés. Le nouveau document est indisponible jusqu’au prochain cycle — le temps qu’il devienne lui-même.',
+      this, 'Fusionner →');
+  });
+
+  document.getElementById('go-archiver').addEventListener('click', function () {
+    restructurer('archiver', {},
+      'Sujet archivé. Il disparaît de la carte de son ensemble au prochain cycle.',
+      this, 'Archiver →');
+  });
+
+  // ── Les fenêtres du « ? » ──
+  var TEXTES = {
+    sujet: { t: "À quoi sert le périmètre ?",
+      p: ["Le périmètre dit ce que ce sujet couvre, et surtout ce qu'il ne couvre pas.",
+        "C'est avec ce texte que le système trie. Chaque fois qu'une information arrive, il s'y réfère pour décider si elle appartient à ce sujet ou à un autre. Il est critique — rien n'est figé pour autant, vous pouvez le modifier à tout moment."],
+      bad: "« Ce sujet couvre le recrutement. »",
+      good: "« Ce sujet couvre le recrutement des postes commerciaux : définition du besoin, entretiens, décision d'embauche. Ne couvre pas l'intégration une fois la personne arrivée. »" },
+    ensemble: { t: "À quoi sert le périmètre d'un ensemble ?",
+      p: ["Un ensemble regroupe plusieurs sujets. Son périmètre dit ce qui les réunit, pas ce que chacun contient dans le détail.",
+        "C'est avec ce texte que le système sait ce qui relève de cet ensemble et ce qui reste en dehors.",
+        "Le détail de chaque sujet se déclare dans son propre périmètre."],
+      bad: "« Cet ensemble couvre les RH. »",
+      good: "« Cet ensemble couvre tout ce qui touche aux personnes de l'entreprise : recrutement, paie, formation. Ne couvre pas les prestataires externes. »" },
+    deplacer: { t: "Que change un déplacement ?",
+      p: ["Le sujet change de place, rien d'autre : il garde son identité, son contenu et son historique.",
+        "Si le déplacement vous oblige à réécrire le périmètre, ce n'était pas un déplacement — c'était un autre sujet."],
+      bad: "Déplacer puis réécrire entièrement le périmètre.",
+      good: "Déplacer un sujet dont le périmètre reste vrai à sa nouvelle place." }
+  };
+  function ouvrirPop(k) {
+    var x = TEXTES[k];
+    document.getElementById('pop-t').textContent = x.t;
+    var c = document.getElementById('pop-c'); c.textContent = '';
+    x.p.forEach(function (txt) { var p = document.createElement('p'); p.textContent = txt; c.appendChild(p); });
+    [['Mauvais exemple', x.bad, 'bad'], ['Bon exemple', x.good, 'good']].forEach(function (e) {
+      var h = document.createElement('div'); h.className = 'ex-t'; h.textContent = e[0]; c.appendChild(h);
+      var d = document.createElement('div'); d.className = 'ex ' + e[2]; d.textContent = e[1]; c.appendChild(d);
+    });
+    document.getElementById('voile').classList.add('on');
+    document.getElementById('pop').classList.add('on');
+  }
+  function fermerPop() {
+    document.getElementById('voile').classList.remove('on');
+    document.getElementById('pop').classList.remove('on');
+  }
+  document.querySelectorAll('[data-pop]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var k = b.dataset.pop;
+      if (k === 'auto') k = estNoeud(docChoisi()) ? 'ensemble' : 'sujet';
+      ouvrirPop(k);
+    });
+  });
+  document.getElementById('voile').addEventListener('click', fermerPop);
+  document.getElementById('pop-ok').addEventListener('click', fermerPop);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fermerPop(); });
+
+  // ── Pré-remplissage depuis une proposition ou une fiche ──
+  chargerListe().then(function () {
+    var q = new URLSearchParams(location.search);
+    var doc = q.get('doc');
+    if (doc && items[doc]) { sel.value = doc; }
+    onSelect();
+    var m = q.get('mode');
+    var modes = { perim: 't-perim', nom: 't-nom', depl: 't-depl', scinder: 't-scinder', fusionner: 't-fusionner', archiver: 't-archiver' };
+    if (m && modes[m]) {
+      var b = document.getElementById(modes[m]);
+      if (b.getAttribute('aria-disabled') !== 'true') activer(b);
+    }
+    var v = q.get('valeur') || '';
+    if (m === 'nom' && v) { document.getElementById('nn').value = v; }
+    if (m === 'perim' && v) { document.getElementById('pp').value = v; }
+    if (m === 'depl' && v) { document.getElementById('dd').value = v; }
+    if (m === 'fusionner') {
+      var s2 = q.get('src2');
+      if (s2 && items[s2]) document.getElementById('fu').value = s2;
+    }
+    var cbl = (q.get('cibles') || '').split(';;').filter(Boolean);
+    if (cbl.length && (m === 'scinder' || m === 'fusionner')) {
+      if (m === 'scinder') {
+        while (cibles.children.length < Math.max(cbl.length, 2)) ajouterCible();
+        cbl.forEach(function (cx, k) {
+          var p = cx.split('|');
+          var ne = document.getElementById('c-nom-' + (k + 1));
+          var pe = document.getElementById('c-perim-' + (k + 1));
+          if (ne) ne.value = p[0] || '';
+          if (pe) pe.value = p.slice(1).join('|') || '';
+        });
+      } else {
+        var p0 = cbl[0].split('|');
+        document.getElementById('fn').value = p0[0] || '';
+        document.getElementById('fp').value = p0.slice(1).join('|') || '';
+      }
+    }
+    check();
+  }).catch(function () {
+    bandeauErr('La liste des sujets n’a pas pu être chargée. Rechargez la page.');
+  });
+</script>
+</body></html>

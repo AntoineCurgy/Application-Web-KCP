@@ -1,0 +1,223 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KCP — Déposer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<script src="config.js"></script>
+<style>
+  .z { max-width:860px; }
+  .depot { background:var(--surface); border:1.5px solid var(--border-strong); border-radius:var(--r);
+    padding:var(--s4); display:flex; flex-direction:column; gap:var(--s3); }
+  .depot textarea { width:100%; min-height:200px; border:none; outline:none; resize:vertical;
+    background:transparent; font-family:var(--text); font-size:var(--t-lg); line-height:1.6; color:var(--ink); }
+  .depot textarea::placeholder { color:var(--muted); font-size:var(--t-body); }
+  .pied-depot { display:flex; align-items:center; justify-content:space-between; gap:var(--s3);
+    border-top:1.5px solid var(--border); padding-top:var(--s3); flex-wrap:wrap; }
+  .recents { display:flex; flex-direction:column; }
+  .rec { display:grid; grid-template-columns:170px 1fr auto; gap:var(--s3); align-items:baseline;
+    padding:var(--s2) 0; border-top:1px solid var(--border); }
+  .rec:first-of-type { border-top:none; }
+  .rec .s { font-family:var(--mono); font-size:var(--t-sm); color:var(--accent-deep); }
+  .rec .t { font-size:var(--t-sm); color:var(--ink-soft); }
+  .rec .d { font-family:var(--mono); font-size:var(--t-meta); color:var(--muted); white-space:nowrap; }
+</style>
+</head><body>
+<div class="shell">
+  <aside class="side">
+    <div class="side-brand"><div class="mark">K</div><span class="side-name">KCP</span><span class="tag-beta">bêta</span></div>
+    <nav>
+      <a class="nav-i ancre" href="index.html"><span class="ico">◈</span>Accueil</a>
+      <a class="nav-i" aria-current="page" href="deposer.html"><span class="ico">↓</span>Déposer</a>
+      <a class="nav-i" href="interroger.html"><span class="ico">?</span>Interroger</a>
+      <a class="nav-i" href="a-clarifier.html"><span class="ico">⊙</span>À clarifier<span class="n" id="nav-n-points" hidden></span></a>
+      <div class="side-grp">Travailler</div>
+      <a class="nav-i" href="initialiser-ia.html"><span class="ico">↯</span>Initialiser une IA</a>
+      <a class="nav-i" href="enregistrer-reunion.html"><span class="ico">▶</span>Enregistrer une réunion</a>
+      <a class="nav-i" href="informations-capturees.html"><span class="ico">≡</span>Informations capturées</a>
+      <div class="side-grp">Organiser</div>
+      <a class="nav-i" href="nouveau-sujet.html"><span class="ico">+</span>Nouveau sujet</a>
+      <a class="nav-i" href="modifier-sujet.html"><span class="ico">✎</span>Modifier un sujet</a>
+      <a class="nav-i" href="reorganiser.html"><span class="ico">⇄</span>Réorganiser<span class="n" id="nav-n-props" hidden></span></a>
+      <div class="side-grp" id="grp-notion" hidden>Notion</div>
+      <a class="nav-i" href="#" id="nav-reunions" hidden target="_blank" rel="noopener"><span class="ico">↗</span>Mes réunions</a>
+    </nav>
+    <div class="side-foot">
+      <a class="who" href="parametres.html">
+        <div class="avatar" id="nav-avatar">·</div>
+        <div><div class="who-n" id="nav-who">…</div><div class="who-s">Paramètres</div></div>
+      </a>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="z stack">
+      <div><h1>Déposer</h1>
+      <p class="sub" style="margin-top:.4rem">Déposez ici une information que vous souhaitez enregistrer.</p></div>
+
+      <div class="depot">
+        <label for="d" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(100%)">Ce que vous savez</label>
+        <textarea id="d" placeholder="En fait je me suis trompé, le budget 2026 est de 15 000 euros, pas 12 000. Julien me l'a confirmé hier."></textarea>
+        <div class="pied-depot">
+          <div class="rangee-cible"><label for="rd">Ranger dans</label>
+            <select id="rd"><option value="">Laisser le système choisir</option></select></div>
+          <button class="btn btn-1" id="go">Déposer →</button>
+        </div>
+      </div>
+
+      <div class="confirme" id="ok" hidden><span>✓</span><span id="ok-txt"></span></div>
+      <div class="alerte-err" id="err" hidden><span>›</span><span id="err-txt"></span></div>
+
+      <div class="note"><span>›</span><span>Un dépôt est absorbé au cycle suivant, <b>chaque nuit</b>. Si vous ne choisissez pas de sujet, le système le route lui-même — et le met de côté s'il hésite.</span></div>
+
+      <div>
+        <div class="ligne-titre"><div class="sect-title">Vos derniers dépôts</div>
+          <a class="meta" href="informations-capturees.html" style="color:var(--accent-deep)">tout voir</a></div>
+        <div class="recents" id="recents"><div class="chargement">Chargement…</div></div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+  var C = KCP_CONFIG;
+
+  (function nav() {
+    var n = (C.client_name || '').trim();
+    document.getElementById('nav-who').textContent = n || '—';
+    document.getElementById('nav-avatar').textContent = (n.charAt(0) || 'K').toUpperCase();
+    var r = (C.notion && C.notion.reunions) || '';
+    if (r) {
+      document.getElementById('nav-reunions').href = kcpNotionHref(r);
+      document.getElementById('nav-reunions').hidden = false;
+      document.getElementById('grp-notion').hidden = false;
+    }
+    kcpNavBadges();
+  })();
+
+  // ── Le sélecteur : sujets puis ensembles, prêts pour le cycle ──
+  // La valeur envoyée est le nom sans croisillon : le scénario le rajoute
+  // lui-même quand le nom commence par une minuscule. Vide = le système choisit.
+  var labels = {};
+  (function chargerCibles() {
+    kcpLoadTiroirs().then(function (data) {
+      var sel = document.getElementById('rd');
+      var pret = function (t) { return String(t.attente_cycle || '').toLowerCase() !== 'oui'; };
+      var pcp = (data.pcp || []).filter(pret);
+      var gcp = (data.gcp || []).filter(pret);
+      pcp.concat(gcp).forEach(function (t) { if (t.doc_int_id) labels[t.doc_int_id] = kcpDocLabel(t); });
+      pcp.forEach(function (t) {
+        var o = document.createElement('option');
+        o.value = t.nom_tiroir; o.textContent = '#' + t.nom_tiroir;
+        sel.appendChild(o);
+      });
+      gcp.forEach(function (t) {
+        var o = document.createElement('option');
+        o.value = t.nom_tiroir; o.textContent = kcpDocLabel(t);
+        sel.appendChild(o);
+      });
+      rendreRecents(kcpReadCapturesCache());
+    }).catch(function () { /* la liste par défaut reste : le système choisit */ });
+  })();
+
+  // ── Derniers dépôts : trois lignes, depuis le journal des captures ──
+  function parseDate(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{1,2}))?/.exec(String(s || ''));
+    if (!m) return null;
+    return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0));
+  }
+  function fmtRelatif(d) {
+    if (!d) return '';
+    var now = new Date();
+    var deb = function (x) { return new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime(); };
+    var hh = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    if (deb(d) === deb(now)) return hh;
+    if (deb(now) - deb(d) === 86400000) return 'hier';
+    return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2);
+  }
+  // Une capture porte plusieurs entrées séparées par trois barres verticales :
+  // chacune devient une ligne, datée de la capture.
+  function eclater(data) {
+    var out = [];
+    ((data && data.captures) || []).forEach(function (c) {
+      String(c.contenu || '').split('|||').forEach(function (l) {
+        l = l.trim();
+        if (l) out.push({ id_doc: c.id_doc, texte: l, date: parseDate(c.date) });
+      });
+    });
+    out.sort(function (a, b) { return (b.date ? b.date.getTime() : 0) - (a.date ? a.date.getTime() : 0); });
+    return out;
+  }
+  function rendreRecents(data) {
+    if (!data) return;
+    var el = document.getElementById('recents');
+    var lignes = eclater(data).slice(0, 3);
+    el.textContent = '';
+    if (!lignes.length) {
+      var v = document.createElement('div'); v.className = 'rien'; v.textContent = 'Aucun dépôt pour l’instant.';
+      el.appendChild(v); return;
+    }
+    lignes.forEach(function (l) {
+      var r = document.createElement('div'); r.className = 'rec';
+      var s = document.createElement('span'); s.className = 's'; s.textContent = labels[l.id_doc] || l.id_doc || '—';
+      var t = document.createElement('span'); t.className = 't'; t.textContent = l.texte;
+      var d = document.createElement('span'); d.className = 'd'; d.textContent = fmtRelatif(l.date);
+      r.appendChild(s); r.appendChild(t); r.appendChild(d);
+      el.appendChild(r);
+    });
+  }
+  function rafraichirRecents() {
+    kcpFetch(C.webhooks.captures, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: C.client_id })
+    }).then(function (r) { return r.text(); }).then(function (raw) {
+      var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      var d = {}; try { d = JSON.parse(cleaned); } catch (e) { d = {}; }
+      if (d && d.captures) { kcpCacheCaptures(d); rendreRecents(d); }
+    }).catch(function () {
+      if (!kcpReadCapturesCache()) {
+        var el = document.getElementById('recents');
+        el.textContent = ''; var v = document.createElement('div'); v.className = 'rien';
+        v.textContent = 'Journal indisponible pour l’instant.'; el.appendChild(v);
+      }
+    });
+  }
+  rendreRecents(kcpReadCapturesCache());
+  rafraichirRecents();
+
+  // ── Le dépôt lui-même ──
+  var btn = document.getElementById('go');
+  btn.addEventListener('click', async function () {
+    var texte = document.getElementById('d').value.trim();
+    if (!texte) { document.getElementById('d').focus(); return; }
+    var cible = document.getElementById('rd').value;   // '' = le système choisit
+    document.getElementById('ok').hidden = true;
+    document.getElementById('err').hidden = true;
+    btn.disabled = true; btn.textContent = 'Dépôt…';
+    try {
+      var r = await kcpFetch(C.webhooks.chat, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_client: C.client_id, nom_tiroir: cible, mode: 'capture', message: texte })
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var okTxt = document.getElementById('ok-txt');
+      okTxt.textContent = '';
+      if (cible) {
+        okTxt.appendChild(document.createTextNode('Noté dans '));
+        var b = document.createElement('b');
+        b.textContent = /^[a-zà-ÿ]/.test(cible) ? '#' + cible : cible;
+        okTxt.appendChild(b);
+        okTxt.appendChild(document.createTextNode('.'));
+      } else {
+        okTxt.textContent = 'Noté. Le système rangera cette information au prochain cycle.';
+      }
+      document.getElementById('ok').hidden = false;
+      document.getElementById('d').value = '';
+      rafraichirRecents();
+    } catch (e) {
+      document.getElementById('err-txt').textContent = 'Le dépôt n’a pas pu partir. Votre texte est conservé — réessayez.';
+      document.getElementById('err').hidden = false;
+    }
+    btn.disabled = false; btn.textContent = 'Déposer →';
+  });
+</script>
+</body></html>

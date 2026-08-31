@@ -1,0 +1,200 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KCP — Interroger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<script src="config.js"></script>
+<style>
+  .main { display:flex; padding-bottom:var(--s4); }
+  .duo { display:grid; grid-template-columns:1fr 280px; gap:var(--s4); width:100%; align-items:start; }
+  @media(max-width:960px){ .duo{grid-template-columns:1fr} }
+  .col-chat { display:flex; flex-direction:column; gap:var(--s3); height:calc(100vh - 2 * var(--s5)); }
+  /* Le rail droit démarre au même niveau que le fil, pas sous le titre. */
+  .duo > aside { padding-top:calc(var(--t-xl) * 1.25 + var(--s3)); }
+  .aside-b { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r); padding:var(--s3); }
+  .aside-b + .aside-b { margin-top:var(--s3); }
+  .msg { white-space:pre-line; }
+</style>
+</head><body>
+<div class="shell">
+  <aside class="side">
+    <div class="side-brand"><div class="mark">K</div><span class="side-name">KCP</span><span class="tag-beta">bêta</span></div>
+    <nav>
+      <a class="nav-i ancre" href="index.html"><span class="ico">◈</span>Accueil</a>
+      <a class="nav-i" href="deposer.html"><span class="ico">↓</span>Déposer</a>
+      <a class="nav-i" aria-current="page" href="interroger.html"><span class="ico">?</span>Interroger</a>
+      <a class="nav-i" href="a-clarifier.html"><span class="ico">⊙</span>À clarifier<span class="n" id="nav-n-points" hidden></span></a>
+      <div class="side-grp">Travailler</div>
+      <a class="nav-i" href="initialiser-ia.html"><span class="ico">↯</span>Initialiser une IA</a>
+      <a class="nav-i" href="enregistrer-reunion.html"><span class="ico">▶</span>Enregistrer une réunion</a>
+      <a class="nav-i" href="informations-capturees.html"><span class="ico">≡</span>Informations capturées</a>
+      <div class="side-grp">Organiser</div>
+      <a class="nav-i" href="nouveau-sujet.html"><span class="ico">+</span>Nouveau sujet</a>
+      <a class="nav-i" href="modifier-sujet.html"><span class="ico">✎</span>Modifier un sujet</a>
+      <a class="nav-i" href="reorganiser.html"><span class="ico">⇄</span>Réorganiser<span class="n" id="nav-n-props" hidden></span></a>
+      <div class="side-grp" id="grp-notion" hidden>Notion</div>
+      <a class="nav-i" href="#" id="nav-reunions" hidden target="_blank" rel="noopener"><span class="ico">↗</span>Mes réunions</a>
+    </nav>
+    <div class="side-foot">
+      <a class="who" href="parametres.html">
+        <div class="avatar" id="nav-avatar">·</div>
+        <div><div class="who-n" id="nav-who">…</div><div class="who-s">Paramètres</div></div>
+      </a>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="duo">
+      <div class="col-chat">
+        <h1>Interroger</h1>
+        <div class="chat-fil" id="fil">
+          <div class="chargement" id="fil-attente">Chargement de l’historique…</div>
+        </div>
+        <div class="saisie">
+          <label for="t" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(100%)">Votre question</label>
+          <textarea id="t" placeholder="Votre question…"></textarea>
+          <button class="btn btn-1" id="go">Envoyer →</button>
+        </div>
+      </div>
+
+      <aside>
+        <div class="aside-b">
+          <div class="sect-h" style="margin-bottom:var(--s2)">Sujet visé</div>
+          <div class="champ"><label for="sv" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(100%)">Sujet visé</label>
+            <select id="sv"><option value="">— choisir un sujet —</option></select></div>
+        </div>
+        <div class="aside-b">
+          <p style="font-size:var(--t-sm);color:var(--ink-soft)">La réponse ne porte que sur ce que ce sujet contient.</p>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+<script>
+  var C = KCP_CONFIG;
+
+  (function nav() {
+    var n = (C.client_name || '').trim();
+    document.getElementById('nav-who').textContent = n || '—';
+    document.getElementById('nav-avatar').textContent = (n.charAt(0) || 'K').toUpperCase();
+    var r = (C.notion && C.notion.reunions) || '';
+    if (r) {
+      document.getElementById('nav-reunions').href = kcpNotionHref(r);
+      document.getElementById('nav-reunions').hidden = false;
+      document.getElementById('grp-notion').hidden = false;
+    }
+    kcpNavBadges();
+  })();
+
+  var fil = document.getElementById('fil');
+  var enCours = false;   // un échange live est parti : l'historique ne re-rend plus
+  var inp = document.getElementById('t');
+  var btn = document.getElementById('go');
+  var sel = document.getElementById('sv');
+
+  function bulle(role, texte) {
+    var d = document.createElement('div');
+    d.className = 'msg ' + (role === 'moi' ? 'moi' : 'lui');
+    d.textContent = texte;
+    fil.appendChild(d);
+    fil.scrollTop = fil.scrollHeight;
+    return d;
+  }
+
+  // ── Sujets et ensembles interrogeables : la valeur part sans croisillon ──
+  (function chargerSujets() {
+    kcpLoadTiroirs().then(function (data) {
+      var pret = function (t) { return String(t.attente_cycle || '').toLowerCase() !== 'oui'; };
+      (data.pcp || []).filter(pret).forEach(function (t) {
+        var o = document.createElement('option');
+        o.value = t.nom_tiroir; o.textContent = '#' + t.nom_tiroir;
+        sel.appendChild(o);
+      });
+      (data.gcp || []).filter(pret).forEach(function (t) {
+        var o = document.createElement('option');
+        o.value = t.nom_tiroir; o.textContent = kcpDocLabel(t);
+        sel.appendChild(o);
+      });
+    }).catch(function () { /* le fil reste utilisable dès qu'un sujet sera là */ });
+  })();
+
+  // ── L'historique des questions : cache d'abord, réseau ensuite ──
+  // Un historique vide revient parfois comme UN élément aux champs vides :
+  // on filtre sur le contenu réel, jamais sur la seule longueur.
+  function rendreHistorique(data) {
+    if (enCours) return;
+    var rows = ((data && data.h) || []).filter(function (r) {
+      return (r.q || '').trim() || (r.r || '').trim();
+    }).filter(function (r) { return (r.m || 'demande') === 'demande'; });
+    document.getElementById('fil-attente') && document.getElementById('fil-attente').remove();
+    fil.textContent = '';
+    if (!rows.length) {
+      bulle('lui', 'Posez votre question sur le sujet de votre choix — choisissez-le à droite.');
+      return;
+    }
+    rows.slice().reverse().forEach(function (row) {
+      var q = '', rep = '';
+      try { q = decodeURIComponent(row.q || ''); } catch (e) { q = row.q || ''; }
+      try { rep = decodeURIComponent(row.r || ''); } catch (e) { rep = row.r || ''; }
+      if (q) bulle('moi', q);
+      if (rep) {
+        var txt = rep;
+        try {
+          var s = rep.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+          txt = JSON.parse(s).text || rep;
+        } catch (e) { /* la réponse brute reste lisible */ }
+        bulle('lui', txt);
+      }
+    });
+  }
+  (function chargerHistorique() {
+    var cached = kcpReadHistoryCache();
+    if (cached) rendreHistorique(cached);
+    kcpFetch(C.webhooks.history, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_client: C.client_id })
+    }).then(function (r) { return r.text(); }).then(function (raw) {
+      var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      var data = {}; try { data = JSON.parse(cleaned); } catch (e) { data = {}; }
+      if (data && data.h) { kcpCacheHistory(data); rendreHistorique(data); }
+    }).catch(function () {
+      if (!cached) rendreHistorique(null);
+    });
+  })();
+
+  // ── La question ──
+  async function envoyer() {
+    var texte = inp.value.trim();
+    if (!texte) { inp.focus(); return; }
+    if (!sel.value) {
+      bulle('lui', 'Choisissez d’abord le sujet visé, à droite : la réponse ne porte que sur lui.');
+      return;
+    }
+    btn.disabled = true;
+    enCours = true;
+    inp.value = '';
+    bulle('moi', texte);
+    var attente = bulle('lui', '…');
+    try {
+      var r = await kcpFetch(C.webhooks.chat, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_client: C.client_id, nom_tiroir: sel.value, mode: 'demande', message: texte })
+      });
+      var raw = await r.text();
+      var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      var p; try { p = JSON.parse(cleaned); } catch (e) { p = { text: cleaned || 'Réponse vide.' }; }
+      attente.textContent = p.text || cleaned || 'Réponse vide.';
+    } catch (e) {
+      attente.textContent = 'La question n’a pas pu partir. Réessayez.';
+    }
+    fil.scrollTop = fil.scrollHeight;
+    btn.disabled = false;
+    inp.focus();
+  }
+  btn.addEventListener('click', envoyer);
+  inp.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); envoyer(); }
+  });
+</script>
+</body></html>

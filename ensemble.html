@@ -1,0 +1,438 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KCP — Ensemble</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<script src="config.js"></script>
+<style>
+  .duo { display:grid; grid-template-columns:1fr 296px; gap:var(--s5); align-items:start; max-width:1080px; }
+  @media(max-width:1000px){ .duo{grid-template-columns:1fr} }
+  .aside-b { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r); padding:var(--s3); }
+  .aside-b + .aside-b { margin-top:var(--s3); }
+  .kv { display:flex; justify-content:space-between; gap:var(--s2); font-size:var(--t-sm); padding:.3rem 0; }
+  .kv span:first-child { color:var(--muted); }
+  .perim { background:var(--surface2); border-left:3px solid var(--border-strong); border-radius:0 var(--r-sm) var(--r-sm) 0;
+    padding:var(--s3); font-size:var(--t-sm); color:var(--ink-soft); white-space:pre-line; }
+  .ech { display:grid; grid-template-columns:auto 1fr; gap:.35rem var(--s3); }
+  .ech .d { font-family:var(--mono); font-size:var(--t-sm); color:var(--accent-deep); white-space:nowrap; }
+  .ech .o { font-size:var(--t-body); color:var(--ink-soft); }
+  /* La carte et son titre s'étendent jusqu'à la bordure droite du rail. */
+  .pleine-largeur { grid-column:1 / -1; }
+</style>
+</head><body>
+<div class="shell">
+  <aside class="side">
+    <div class="side-brand"><div class="mark">K</div><span class="side-name">KCP</span><span class="tag-beta">bêta</span></div>
+    <nav>
+      <a class="nav-i ancre" href="index.html"><span class="ico">◈</span>Accueil</a>
+      <a class="nav-i" href="deposer.html"><span class="ico">↓</span>Déposer</a>
+      <a class="nav-i" href="interroger.html"><span class="ico">?</span>Interroger</a>
+      <a class="nav-i" href="a-clarifier.html"><span class="ico">⊙</span>À clarifier<span class="n" id="nav-n-points" hidden></span></a>
+      <div class="side-grp">Travailler</div>
+      <a class="nav-i" href="initialiser-ia.html"><span class="ico">↯</span>Initialiser une IA</a>
+      <a class="nav-i" href="enregistrer-reunion.html"><span class="ico">▶</span>Enregistrer une réunion</a>
+      <a class="nav-i" href="informations-capturees.html"><span class="ico">≡</span>Informations capturées</a>
+      <div class="side-grp">Organiser</div>
+      <a class="nav-i" href="nouveau-sujet.html"><span class="ico">+</span>Nouveau sujet</a>
+      <a class="nav-i" href="modifier-sujet.html"><span class="ico">✎</span>Modifier un sujet</a>
+      <a class="nav-i" href="reorganiser.html"><span class="ico">⇄</span>Réorganiser<span class="n" id="nav-n-props" hidden></span></a>
+      <div class="side-grp" id="grp-notion" hidden>Notion</div>
+      <a class="nav-i" href="#" id="nav-reunions" hidden target="_blank" rel="noopener"><span class="ico">↗</span>Mes réunions</a>
+    </nav>
+    <div class="side-foot">
+      <a class="who" href="parametres.html">
+        <div class="avatar" id="nav-avatar">·</div>
+        <div><div class="who-n" id="nav-who">…</div><div class="who-s">Paramètres</div></div>
+      </a>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="stack">
+      <nav class="fil" aria-label="Fil d'Ariane" id="fil">
+        <a href="index.html">Accueil</a>
+      </nav>
+
+      <div><span class="eyebrow" id="eyebrow">Ensemble</span>
+      <h1 style="margin-top:.4rem" id="titre">…</h1></div>
+
+      <div class="duo">
+        <div id="fiche"><div class="chargement">Chargement de la fiche…</div></div>
+
+        <aside>
+          <div class="aside-b">
+            <div class="sect-h" style="margin-bottom:var(--s2)">Statut</div>
+            <div class="kv"><span>Sujets</span><span class="data" id="st-sujets">—</span></div>
+            <div class="kv"><span>Dernière maj</span><span class="data" id="st-maj">—</span></div>
+            <div class="kv"><span>Mots absorbés</span><span class="data" id="st-mots">—</span></div>
+            <div class="kv"><span>Dépôts en attente</span><span class="data" id="st-depots">—</span></div>
+          </div>
+          <div class="aside-b">
+            <div class="sect-h" style="margin-bottom:var(--s2)">Périmètre</div>
+            <div class="perim" id="perim">—</div>
+            <a class="row-s" style="display:inline-block;margin-top:var(--s2);color:var(--accent-deep)" href="#" id="lnk-perim" hidden>Modifier le périmètre →</a>
+          </div>
+          <div class="aside-b" id="bloc-liens">
+            <div class="sect-h" style="margin-bottom:var(--s2)">Liens</div>
+            <div id="liens"><p class="rien">Aucun lien.</p></div>
+          </div>
+          <div class="aside-b actions" id="bloc-organiser">
+            <div class="sect-h" style="margin-bottom:var(--s2)">Organiser</div>
+            <div class="actions-2" id="organiser">
+              <a data-m="nom" href="#">Renommer</a><a data-m="scinder" href="#">Scinder</a>
+              <a data-m="depl" href="#">Déplacer</a><a data-m="fusionner" href="#">Fusionner</a>
+              <a data-m="perim" href="#">Périmètre</a><a data-m="archiver" href="#">Archiver</a>
+            </div>
+          </div>
+        </aside>
+
+        <div class="pleine-largeur">
+          <div class="sect-title" style="margin-top:var(--s5)" id="titre-carte">Les sujets de cet ensemble</div>
+          <div class="carte-cadre" style="margin-top:var(--s3)">
+            <div class="chargement" id="carte-attente">Chargement…</div>
+            <svg class="arbre" id="svg" role="img" aria-label="Carte des sujets de cet ensemble" hidden></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<div class="mini-voile" id="mv"></div>
+<div class="mini" id="mini" role="dialog" aria-modal="true" aria-labelledby="mini-t">
+  <div><span class="chip-s" id="mini-s"></span></div>
+  <div id="mini-t" style="font-size:var(--t-body);line-height:var(--lh)"></div>
+  <label for="mini-r" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(100%)">Votre réponse</label>
+  <textarea id="mini-r" placeholder="Votre réponse…"></textarea>
+  <div class="alerte-err" id="mini-err" hidden><span>›</span><span id="mini-err-txt"></span></div>
+  <div style="display:flex;gap:var(--s2);justify-content:flex-end">
+    <button class="btn" id="mini-annuler">Annuler</button>
+    <button class="btn btn-1" id="mini-envoyer">Envoyer</button>
+  </div>
+  <p class="meta">Répondre ici met l'ensemble à jour au cycle suivant.</p>
+</div>
+<script src="arbre.js"></script>
+<script>
+  var C = KCP_CONFIG;
+  var DOC = new URLSearchParams(location.search).get('doc') || '';
+  if (!DOC || DOC.indexOf('GCP') !== 0) { location.replace('./index.html'); }
+  var RACINE = DOC === 'GCP001';
+
+  (function nav() {
+    var n = (C.client_name || '').trim();
+    document.getElementById('nav-who').textContent = n || '—';
+    document.getElementById('nav-avatar').textContent = (n.charAt(0) || 'K').toUpperCase();
+    var r = (C.notion && C.notion.reunions) || '';
+    if (r) {
+      document.getElementById('nav-reunions').href = kcpNotionHref(r);
+      document.getElementById('nav-reunions').hidden = false;
+      document.getElementById('grp-notion').hidden = false;
+    }
+    kcpNavBadges();
+  })();
+
+  function parseDate(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{1,2}))?/.exec(String(s || ''));
+    if (!m) return null;
+    return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0));
+  }
+  function fmtCourt(d) {
+    if (!d) return '—';
+    return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + ' ' +
+      ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  }
+  function lignesDe(s) {
+    return String(s || '').split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+  }
+
+  var docCourant = null, enfantsDirects = [], toutLabels = {}, points = [];
+  var ouverts = {}, svg = document.getElementById('svg');
+
+  function labelAffiche() {
+    return RACINE ? ((C.client_name || '').trim() || 'Head') : (docCourant ? docCourant.doc_label : '');
+  }
+
+  function sectionTitre(titre) {
+    var d = document.createElement('div'); d.className = 'sect-title'; d.textContent = titre; return d;
+  }
+  function rien(txt) {
+    var p = document.createElement('p'); p.className = 'rien'; p.textContent = txt; return p;
+  }
+
+  function rendreFiche() {
+    var s = docCourant;
+    var el = document.getElementById('fiche');
+    el.textContent = '';
+
+    var t0 = sectionTitre('Où en est cet ensemble'); t0.style.marginTop = '0';
+    el.appendChild(t0);
+    var resume = lignesDe(s.fiche_resume);
+    if (resume.length) resume.forEach(function (l) {
+      var p = document.createElement('p'); p.textContent = l; p.style.marginBottom = '.5rem'; el.appendChild(p);
+    });
+    else el.appendChild(rien('Pas encore de synthèse — elle s’écrira au prochain cycle.'));
+
+    var sec1 = document.createElement('div'); sec1.className = 'fiche-sec';
+    sec1.appendChild(sectionTitre('Échéances'));
+    var echs = lignesDe(s.fiche_echeances);
+    if (echs.length) {
+      var g = document.createElement('div'); g.className = 'ech';
+      echs.forEach(function (l) {
+        var i = l.indexOf(';');
+        var date = i > 0 ? l.slice(0, i).trim() : '';
+        var objet = i > 0 ? l.slice(i + 1).trim() : l;
+        var dd = document.createElement('span'); dd.className = 'd';
+        var pd = parseDate(date + ' 0:00');
+        dd.textContent = pd ? ('0' + pd.getDate()).slice(-2) + '/' + ('0' + (pd.getMonth() + 1)).slice(-2) : date;
+        var oo = document.createElement('span'); oo.className = 'o'; oo.textContent = objet;
+        g.appendChild(dd); g.appendChild(oo);
+      });
+      sec1.appendChild(g);
+    } else sec1.appendChild(rien('Aucune échéance.'));
+    el.appendChild(sec1);
+
+    var sec2 = document.createElement('div'); sec2.className = 'fiche-sec';
+    sec2.appendChild(sectionTitre('Priorités'));
+    var prios = lignesDe(s.fiche_priorites);
+    if (prios.length) {
+      var ul = document.createElement('ul'); ul.className = 'fiche-ul';
+      prios.forEach(function (l) { var li = document.createElement('li'); li.textContent = l; ul.appendChild(li); });
+      sec2.appendChild(ul);
+    } else sec2.appendChild(rien('Aucune priorité.'));
+    el.appendChild(sec2);
+
+    var sec3 = document.createElement('div'); sec3.className = 'fiche-sec';
+    sec3.appendChild(sectionTitre('Risques'));
+    var risques = lignesDe(s.fiche_risques);
+    if (risques.length) {
+      var ul3 = document.createElement('ul'); ul3.className = 'fiche-ul';
+      risques.forEach(function (l) { var li = document.createElement('li'); li.textContent = l; ul3.appendChild(li); });
+      sec3.appendChild(ul3);
+    } else sec3.appendChild(rien('Aucun risque identifié.'));
+    el.appendChild(sec3);
+
+    var t4 = sectionTitre('Questions ouvertes'); t4.style.marginTop = 'var(--s5)';
+    el.appendChild(t4);
+    var zone = document.createElement('div'); zone.className = 'zone-q';
+    var qs = points.filter(function (p) { return p.doc_id === DOC; });
+    if (qs.length) {
+      qs.forEach(function (p) {
+        var qf = document.createElement('div'); qf.className = 'qf';
+        var d = document.createElement('div');
+        d.textContent = (p.question || '').trim() || (p.doute || '').trim() || '—';
+        var b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn-s';
+        b.textContent = 'Répondre';
+        b.addEventListener('click', function () { ouvrirRep(p, d.textContent, b); });
+        qf.appendChild(d); qf.appendChild(b);
+        zone.appendChild(qf);
+      });
+    } else {
+      var r0 = rien('Aucune question ouverte.'); r0.style.padding = '.3rem 0';
+      zone.appendChild(r0);
+    }
+    el.appendChild(zone);
+    var meta = document.createElement('p'); meta.className = 'meta'; meta.style.marginTop = 'var(--s2)';
+    meta.textContent = "Répondre ici met l'ensemble à jour au cycle suivant.";
+    el.appendChild(meta);
+  }
+
+  function rendreRail(data, capturesData) {
+    var s = docCourant;
+    document.getElementById('st-sujets').textContent = String(enfantsDirects.length);
+    document.getElementById('st-maj').textContent = fmtCourt(parseDate(s.last_update_date));
+    var mots = String(s.mots_absorbes || '').trim();
+    document.getElementById('st-mots').textContent = mots ? (+mots ? (+mots).toLocaleString('fr-FR') : mots) : '—';
+    var maj = parseDate(s.last_update_date);
+    if (capturesData && maj) {
+      var n = ((capturesData.captures) || []).filter(function (c) {
+        if (c.id_doc !== DOC) return false;
+        var d = parseDate(c.date);
+        return d && d.getTime() > maj.getTime();
+      }).length;
+      document.getElementById('st-depots').textContent = String(n);
+    }
+    document.getElementById('perim').textContent = (s.perimetre || '').trim() || '—';
+    // La racine ne se touche pas : ni modification de périmètre, ni organisation.
+    if (!RACINE) {
+      var lp = document.getElementById('lnk-perim');
+      lp.href = 'modifier-sujet.html?doc=' + encodeURIComponent(DOC) + '&mode=perim';
+      lp.hidden = false;
+      document.querySelectorAll('#organiser a').forEach(function (a) {
+        a.href = 'modifier-sujet.html?doc=' + encodeURIComponent(DOC) + '&mode=' + a.dataset.m;
+      });
+    } else {
+      document.getElementById('bloc-organiser').hidden = true;
+    }
+    // Les liens du nœud : ses sujets qui se parlent, avec l'intensité.
+    var liens = ((data && data.liaisons) || []).filter(function (l) { return l.foyer === DOC; });
+    var lz = document.getElementById('liens');
+    lz.textContent = '';
+    if (!liens.length) { lz.appendChild(rien('Aucun lien.')); }
+    liens.forEach(function (l) {
+      var kv = document.createElement('div'); kv.className = 'kv';
+      var g = document.createElement('span'); g.className = 'data';
+      g.textContent = (toutLabels[l.source_id] || l.source_id) + ' ↔ ' + (toutLabels[l.cible_id] || l.cible_id);
+      var d = document.createElement('span'); d.style.color = 'var(--accent-deep)';
+      d.textContent = l.intensite || '';
+      kv.appendChild(g); kv.appendChild(d);
+      lz.appendChild(kv);
+    });
+  }
+
+  function rendreCarte() {
+    function cle(s) { return String(s.label || '').replace(/^#/, ''); }
+    var donnees = enfantsDirects.map(function (c) {
+      return { id: c.doc_int_id, label: c.doc_label, n: c._n || undefined, enfants: c._enfants || undefined };
+    }).sort(function (a, b) {
+      var ea = a.id.indexOf('GCP') === 0, eb = b.id.indexOf('GCP') === 0;
+      if (ea !== eb) return ea ? -1 : 1;
+      return cle(a).localeCompare(cle(b), 'fr', { sensitivity: 'base' });
+    });
+    document.getElementById('carte-attente').hidden = true;
+    svg.hidden = false;
+    KCP_ARBRE.dessine(svg, {
+      racine: labelAffiche(), donnees: donnees, ouverts: ouverts,
+      onOuvrir: function (n) { ouverts[n.id] = !ouverts[n.id]; rendreCarte(); },
+      onSel: function (n, type) {
+        if (n.id === DOC) return;
+        location.href = (type === 'ens' ? 'ensemble.html' : 'sujet.html') + '?doc=' + encodeURIComponent(n.id);
+      }
+    });
+  }
+
+  function rendreFil(sujets) {
+    var fil = document.getElementById('fil');
+    fil.textContent = '';
+    var a = document.createElement('a'); a.href = 'index.html'; a.textContent = 'Accueil';
+    fil.appendChild(a);
+    var sep = document.createElement('span'); sep.className = 'sep'; sep.textContent = '›';
+    fil.appendChild(sep);
+    var ici = document.createElement('span'); ici.className = 'ici'; ici.textContent = labelAffiche();
+    fil.appendChild(ici);
+  }
+
+  function poserDoc(data) {
+    var sujets = (data && data.sujets) || [];
+    var doc = null;
+    sujets.forEach(function (x) { toutLabels[x.doc_int_id] = x.doc_label; if (x.doc_int_id === DOC) doc = x; });
+    if (!doc) return false;
+    docCourant = doc;
+    var enfantsPar = {};
+    sujets.forEach(function (x) { (enfantsPar[x.parent] = enfantsPar[x.parent] || []).push(x); });
+    enfantsDirects = (enfantsPar[DOC] || []).slice();
+    // Un enfant composite se déplie d'un niveau sur la carte du nœud.
+    enfantsDirects.forEach(function (c) {
+      var pe = (enfantsPar[c.doc_int_id] || []);
+      if (pe.length) {
+        c._n = pe.length;
+        c._enfants = pe.map(function (x) { return { id: x.doc_int_id, label: x.doc_label }; });
+      }
+    });
+    document.getElementById('titre').textContent = labelAffiche();
+    document.title = 'KCP — ' + labelAffiche();
+    document.getElementById('eyebrow').textContent =
+      'Ensemble · ' + enfantsDirects.length + ' sujet' + (enfantsDirects.length > 1 ? 's' : '');
+    document.getElementById('titre-carte').textContent =
+      'Les ' + enfantsDirects.length + ' sujets de cet ensemble';
+    rendreFil(sujets);
+    rendreFiche();
+    rendreRail(data, kcpReadCapturesCache());
+    rendreCarte();
+    return true;
+  }
+
+  // ── La mini fenêtre : répondre sans quitter l'ensemble ──
+  var mv = document.getElementById('mv'), mini = document.getElementById('mini');
+  var pointCourant = null, ouvreur = null;
+  function ouvrirRep(p, question, btn) {
+    pointCourant = p; ouvreur = btn;
+    document.getElementById('mini-s').textContent = labelAffiche();
+    document.getElementById('mini-t').textContent = question;
+    document.getElementById('mini-r').value = '';
+    document.getElementById('mini-err').hidden = true;
+    mv.classList.add('on'); mini.classList.add('on');
+    document.getElementById('mini-r').focus();
+  }
+  function fermerRep() {
+    mv.classList.remove('on'); mini.classList.remove('on');
+    if (ouvreur) ouvreur.focus();
+  }
+  mv.addEventListener('click', fermerRep);
+  document.getElementById('mini-annuler').addEventListener('click', fermerRep);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fermerRep(); });
+  document.getElementById('mini-envoyer').addEventListener('click', async function () {
+    var rep = document.getElementById('mini-r').value.trim();
+    if (!rep) { document.getElementById('mini-r').focus(); return; }
+    var b = this; b.disabled = true;
+    try {
+      var r = await kcpFetch(C.webhooks.reponse_clarification, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: C.client_id, feedback_id: pointCourant.feedback_id, action: 'repondu', reponse: rep })
+      });
+      var raw = await r.text();
+      var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      var d = {}; try { d = JSON.parse(cleaned); } catch (e) { d = {}; }
+      if (!r.ok || d.success === false) throw { message: d.message || null };
+      points = points.filter(function (x) { return x.feedback_id !== pointCourant.feedback_id; });
+      kcpCachePoints({ points: points });
+      kcpNavBadges();
+      fermerRep();
+      rendreFiche();
+    } catch (e) {
+      document.getElementById('mini-err-txt').textContent =
+        e && e.message ? e.message : 'La réponse n’a pas pu être envoyée. Réessayez dans un instant.';
+      document.getElementById('mini-err').hidden = false;
+    }
+    b.disabled = false;
+  });
+
+  // ── Chargement : carte (cache + réseau), points, captures ──
+  (function charger() {
+    var cached = kcpReadCarteCache();
+    if (cached) poserDoc(cached);
+    kcpFetch(C.webhooks.carte, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: C.client_id })
+    }).then(function (r) { return r.text(); }).then(function (raw) {
+      var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      var data = {}; try { data = JSON.parse(cleaned); } catch (e) { data = {}; }
+      if (data && data.sujets && data.sujets.length) {
+        kcpCacheCarte(data);
+        if (!poserDoc(data) && !docCourant) {
+          document.getElementById('fiche').textContent = '';
+          var v = document.createElement('div'); v.className = 'alerte-err';
+          v.textContent = 'Ce document n’existe pas — ou pas encore : un ensemble nouveau apparaît après son premier cycle.';
+          document.getElementById('fiche').appendChild(v);
+        }
+      }
+    }).catch(function () {
+      if (!docCourant) {
+        document.getElementById('fiche').textContent = '';
+        var v = document.createElement('div'); v.className = 'alerte-err';
+        v.textContent = 'La fiche n’a pas pu être chargée. Rechargez la page.';
+        document.getElementById('fiche').appendChild(v);
+      }
+    });
+
+    var cp = kcpReadPointsCache();
+    if (cp) { points = (cp.points || []).slice(); if (docCourant) rendreFiche(); }
+    kcpFetch(C.webhooks.points_a_clarifier, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: C.client_id })
+    }).then(function (r) { return r.text(); }).then(function (raw) {
+      var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      var d = {}; try { d = JSON.parse(cleaned); } catch (e) { d = {}; }
+      if (d && d.points) { kcpCachePoints(d); points = d.points.slice(); if (docCourant) rendreFiche(); kcpNavBadges(); }
+    }).catch(function () { /* les questions du cache restent */ });
+
+    kcpFetch(C.webhooks.captures, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: C.client_id })
+    }).then(function (r) { return r.text(); }).then(function (raw) {
+      var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      var d = {}; try { d = JSON.parse(cleaned); } catch (e) { d = {}; }
+      if (d && d.captures) { kcpCacheCaptures(d); if (docCourant) rendreRail(kcpReadCarteCache(), d); }
+    }).catch(function () { /* le compte des dépôts reste un tiret */ });
+  })();
+</script>
+</body></html>

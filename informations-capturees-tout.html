@@ -1,19 +1,21 @@
 <!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>KCP — Informations capturées</title>
+<title>KCP — Informations capturées, tout</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="base.css">
 <script src="config.js"></script>
 <style>
-  .z { max-width:900px; }
+  .z { max-width:960px; }
   .cap { border-top:1px solid var(--border); padding:var(--s3) 0; display:grid;
     grid-template-columns:190px 1fr auto; gap:var(--s3); align-items:baseline; }
   .cap:first-of-type { border-top:none; }
   .cap .s { font-family:var(--mono); font-size:var(--t-sm); color:var(--accent-deep); }
   .cap .t { font-size:var(--t-sm); color:var(--ink-soft); }
   .cap .d { font-family:var(--mono); font-size:var(--t-meta); color:var(--muted); white-space:nowrap; }
+  .jour { font-family:var(--mono); font-size:var(--t-meta); color:var(--muted); letter-spacing:.1em;
+    text-transform:uppercase; padding-top:var(--s4); }
   @media(max-width:760px){ .cap{grid-template-columns:1fr;gap:2px} }
 </style>
 </head><body>
@@ -46,19 +48,18 @@
   <main class="main">
     <div class="z stack">
       <div><h1>Informations capturées</h1>
-      <p class="sub" style="margin-top:.4rem">Tout ce qui a été enregistré dans votre mémoire, tous sujets confondus. Chaque ligne indique le sujet visé.</p></div>
-      <div class="ligne-titre"><div class="sect-title">Derniers enregistrements</div>
+      <p class="sub" style="margin-top:.4rem">Tout ce qui a été enregistré dans votre mémoire, tous sujets confondus, du plus récent au plus ancien.</p></div>
+      <div class="ligne-titre"><div class="sect-title" id="titre-n">Entrées</div>
         <div class="filtre"><span style="color:var(--muted)" aria-hidden="true">⌕</span>
         <label for="fc" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(100%)">Filtrer</label>
         <input id="fc" placeholder="Filtrer…"></div></div>
       <div id="liste"><div class="chargement">Chargement…</div></div>
-      <p class="meta" id="total" hidden><span id="total-n"></span> · <a href="informations-capturees-tout.html" style="color:var(--accent-deep)">tout afficher</a></p>
+      <button class="btn" id="plus" style="align-self:flex-start" hidden>Charger les entrées plus anciennes</button>
     </div>
   </main>
 </div>
 <script>
   var C = KCP_CONFIG;
-  var VISIBLES = 5;
 
   (function nav() {
     var n = (C.client_name || '').trim();
@@ -74,21 +75,26 @@
   })();
 
   var labels = {};
-  var lignes = [];
+  var MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
   function parseDate(s) {
     var m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{1,2}))?/.exec(String(s || ''));
     if (!m) return null;
     return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0));
   }
-  function fmtCourt(d) {
+  function jourDe(d) {
+    if (!d) return 'Sans date';
+    var now = new Date();
+    var deb = function (x) { return new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime(); };
+    if (deb(d) === deb(now)) return 'Aujourd’hui';
+    if (deb(now) - deb(d) === 86400000) return 'Hier';
+    return d.getDate() + ' ' + MOIS[d.getMonth()] + (d.getFullYear() !== now.getFullYear() ? ' ' + d.getFullYear() : '');
+  }
+  function heureDe(d) {
     if (!d) return '';
-    return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + ' ' +
-      ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
   }
 
-  // Une capture porte plusieurs entrées séparées par trois barres verticales :
-  // chacune devient une ligne, datée de la capture.
   function eclater(data) {
     var out = [];
     ((data && data.captures) || []).forEach(function (c) {
@@ -102,40 +108,52 @@
   }
 
   function rendre(data) {
-    lignes = eclater(data);
+    var lignes = eclater(data);
     var el = document.getElementById('liste');
     el.textContent = '';
+    document.getElementById('titre-n').textContent =
+      lignes.length + ' entrée' + (lignes.length > 1 ? 's' : '');
     if (!lignes.length) {
       var v = document.createElement('div'); v.className = 'vide-etat';
       v.textContent = 'Rien n’a encore été capturé. Le premier dépôt apparaîtra ici.';
       el.appendChild(v);
-      document.getElementById('total').hidden = true;
       return;
     }
-    lignes.slice(0, VISIBLES).forEach(function (l) {
+    var jourCourant = null;
+    lignes.forEach(function (l) {
+      var j = jourDe(l.date);
+      if (j !== jourCourant) {
+        jourCourant = j;
+        var h = document.createElement('div'); h.className = 'jour'; h.textContent = j;
+        el.appendChild(h);
+      }
       var r = document.createElement('div'); r.className = 'cap';
       var s = document.createElement('span'); s.className = 's'; s.textContent = labels[l.id_doc] || l.id_doc || '—';
       var t = document.createElement('span'); t.className = 't'; t.textContent = l.texte;
-      var d = document.createElement('span'); d.className = 'd'; d.textContent = fmtCourt(l.date);
+      var d = document.createElement('span'); d.className = 'd'; d.textContent = heureDe(l.date);
       r.appendChild(s); r.appendChild(t); r.appendChild(d);
       el.appendChild(r);
     });
-    document.getElementById('total-n').textContent =
-      lignes.length + ' entrée' + (lignes.length > 1 ? 's' : '') + ' au total';
-    document.getElementById('total').hidden = false;
     filtrer();
   }
 
-  // ── Filtre local : sujet et texte, sans casse ──
+  // ── Filtre local : les titres de jour suivent leurs lignes ──
   function filtrer() {
     var q = document.getElementById('fc').value.trim().toLowerCase();
     document.querySelectorAll('#liste .cap').forEach(function (r) {
       r.hidden = !!q && r.textContent.toLowerCase().indexOf(q) === -1;
     });
+    document.querySelectorAll('#liste .jour').forEach(function (j) {
+      var n = j.nextElementSibling, vide = true;
+      while (n && !n.classList.contains('jour')) {
+        if (!n.hidden) { vide = false; break; }
+        n = n.nextElementSibling;
+      }
+      j.hidden = vide;
+    });
   }
   document.getElementById('fc').addEventListener('input', filtrer);
 
-  // ── Chargement : libellés, cache, puis revalidation systématique ──
   async function charger() {
     try {
       var data = await kcpLoadTiroirs();

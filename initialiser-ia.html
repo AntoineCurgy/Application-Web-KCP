@@ -1,0 +1,296 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KCP — Initialiser une IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<script src="config.js"></script>
+<style>
+  .z { max-width:760px; }
+  .carte-f { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r);
+    padding:var(--s4); display:flex; flex-direction:column; gap:var(--s4); }
+  .modes { display:flex; gap:var(--s1); }
+  .modes button { flex:1; font-family:var(--display); font-size:var(--t-sm); font-weight:600; padding:.55rem;
+    border:1.5px solid var(--border-strong); border-radius:var(--r-sm); background:var(--surface);
+    color:var(--ink-soft); cursor:pointer; }
+  .modes button[aria-pressed="true"] { background:var(--dark); border-color:var(--dark); color:var(--accent); }
+</style>
+</head><body>
+<div class="shell">
+  <aside class="side">
+    <div class="side-brand"><div class="mark">K</div><span class="side-name">KCP</span><span class="tag-beta">bêta</span></div>
+    <nav>
+      <a class="nav-i ancre" href="index.html"><span class="ico">◈</span>Accueil</a>
+      <a class="nav-i" href="deposer.html"><span class="ico">↓</span>Déposer</a>
+      <a class="nav-i" href="interroger.html"><span class="ico">?</span>Interroger</a>
+      <a class="nav-i" href="a-clarifier.html"><span class="ico">⊙</span>À clarifier<span class="n" id="nav-n-points" hidden></span></a>
+      <div class="side-grp">Travailler</div>
+      <a class="nav-i" aria-current="page" href="initialiser-ia.html"><span class="ico">↯</span>Initialiser une IA</a>
+      <a class="nav-i" href="enregistrer-reunion.html"><span class="ico">▶</span>Enregistrer une réunion</a>
+      <a class="nav-i" href="informations-capturees.html"><span class="ico">≡</span>Informations capturées</a>
+      <div class="side-grp">Organiser</div>
+      <a class="nav-i" href="nouveau-sujet.html"><span class="ico">+</span>Nouveau sujet</a>
+      <a class="nav-i" href="modifier-sujet.html"><span class="ico">✎</span>Modifier un sujet</a>
+      <a class="nav-i" href="reorganiser.html"><span class="ico">⇄</span>Réorganiser<span class="n" id="nav-n-props" hidden></span></a>
+      <div class="side-grp" id="grp-notion" hidden>Notion</div>
+      <a class="nav-i" href="#" id="nav-reunions" hidden target="_blank" rel="noopener"><span class="ico">↗</span>Mes réunions</a>
+    </nav>
+    <div class="side-foot">
+      <a class="who" href="parametres.html">
+        <div class="avatar" id="nav-avatar">·</div>
+        <div><div class="who-n" id="nav-who">…</div><div class="who-s">Paramètres</div></div>
+      </a>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="z stack">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s3)"><div><h1>Initialiser une IA</h1>
+      <p class="sub" style="margin-top:.4rem">Charge un sujet dans une conversation Claude ou ChatGPT, avec tout son contexte déjà en place.</p></div><button type="button" class="reset-btn" id="raz" title="Réinitialiser" aria-label="Réinitialiser">↻</button></div>
+      <div class="carte-f">
+        <div class="champ"><label for="s1">Sujet principal</label>
+          <select id="s1"><option value="">— choisir —</option></select></div>
+
+        <div class="champ">
+          <div class="lbl-q"><span><label for="ms-t">Documents secondaires</label>
+            <span class="meta">— optionnel</span></span><span class="hint" id="cpt">0 / 5</span></div>
+          <div class="ms">
+            <button type="button" class="ms-trigger vide" id="ms-t" aria-expanded="false" disabled>
+              <span id="ms-l">— ajouter un document —</span><span aria-hidden="true">▾</span></button>
+            <div class="ms-panel" id="ms-p"></div>
+          </div>
+          <div class="puces-sel" id="puces"></div>
+        </div>
+
+        <div class="champ"><span style="font-size:var(--t-sm);font-weight:600">Ouvrir dans</span>
+          <div class="modes">
+            <button type="button" aria-pressed="true" data-llm="claude">Claude</button>
+            <button type="button" aria-pressed="false" data-llm="claude-mcp">Claude (MCP)</button>
+            <button type="button" aria-pressed="false" data-llm="chatgpt">ChatGPT</button>
+          </div>
+          <span class="aide">Le connecteur MCP de KCP ne fonctionne qu'avec Claude.</span></div>
+
+        <div class="confirme" id="ok" hidden><span>✓</span><span id="ok-txt"></span></div>
+        <div class="alerte-err" id="err" hidden><span>›</span><span id="err-txt"></span></div>
+
+        <div class="duo-btn">
+          <button class="btn btn-1" id="go" disabled>Ouvrir →</button>
+          <button class="btn" id="cp" disabled>Copier le prompt</button>
+        </div>
+      </div>
+      <div class="note"><span>›</span><span>Le contexte part dans votre presse-papier, puis la conversation s'ouvre. Il ne reste qu'à faire <b>Ctrl+V</b>.</span></div>
+    </div>
+  </main>
+</div>
+<script>
+  var C = KCP_CONFIG;
+  var MAX = 5;
+
+  (function nav() {
+    var n = (C.client_name || '').trim();
+    document.getElementById('nav-who').textContent = n || '—';
+    document.getElementById('nav-avatar').textContent = (n.charAt(0) || 'K').toUpperCase();
+    var r = (C.notion && C.notion.reunions) || '';
+    if (r) {
+      document.getElementById('nav-reunions').href = kcpNotionHref(r);
+      document.getElementById('nav-reunions').hidden = false;
+      document.getElementById('grp-notion').hidden = false;
+    }
+    kcpNavBadges();
+  })();
+
+  var sel = document.getElementById('s1');
+  var t = document.getElementById('ms-t'), p = document.getElementById('ms-p');
+  var puces = document.getElementById('puces'), cpt = document.getElementById('cpt');
+  var btnGo = document.getElementById('go'), btnCp = document.getElementById('cp');
+
+  var docIds = { autre: 'SAS' };   // nom → doc_int_id : l'automatisation cherche par identifiant
+  var secondaires = [];            // PCP + annexes, matière du second menu
+  var choisis = [];                // items sélectionnés
+  var promptTexte = '';
+
+  function estAnx(it) { return String(it.type || '').toUpperCase() === 'ANX'; }
+  function labelDe(it) { return kcpDocLabel(it); }
+  function cleDe(it) { return it.id || it.nom_tiroir; }
+
+  // ── Les listes : le menu principal (sujets + « autre »), le second (PCP + annexes) ──
+  (function chargerTiroirs() {
+    kcpLoadTiroirs().then(function (data) {
+      var pret = function (x) { return String(x.attente_cycle || '').toLowerCase() !== 'oui'; };
+      var pcp = (data.pcp || []).filter(pret);
+      secondaires = (data.pcp_anx || []).filter(pret);
+      // « Autre » : la session sans sujet. Ce qui en sort part dans le sas,
+      // et le système le range ensuite.
+      var oAutre = document.createElement('option');
+      oAutre.value = 'autre'; oAutre.textContent = '#autre — je ne sais pas encore';
+      sel.appendChild(oAutre);
+      var oSep = document.createElement('option'); oSep.disabled = true; oSep.textContent = '— — —';
+      sel.appendChild(oSep);
+      pcp.forEach(function (x) {
+        docIds[x.nom_tiroir] = x.doc_int_id;
+        var o = document.createElement('option');
+        o.value = x.nom_tiroir; o.textContent = '#' + x.nom_tiroir;
+        sel.appendChild(o);
+      });
+    }).catch(function () {
+      montrerErr('La liste des sujets n’a pas pu être chargée. Rechargez la page.');
+    });
+  })();
+
+  function montrerErr(m) {
+    document.getElementById('err-txt').textContent = m;
+    document.getElementById('err').hidden = false;
+  }
+  function cacherEtats() {
+    document.getElementById('err').hidden = true;
+    document.getElementById('ok').hidden = true;
+  }
+
+  // ── Multi-sélection : le menu reste ouvert, un ✓ marque ce qui est pris ──
+  function rendre() {
+    var principal = sel.value;
+    p.textContent = '';
+    var dispo = secondaires.filter(function (it) { return it.nom_tiroir !== principal; });
+    dispo.forEach(function (it) {
+      var pris = choisis.some(function (x) { return cleDe(x) === cleDe(it); });
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = pris ? 'pris' : '';
+      b.disabled = !pris && choisis.length >= MAX;
+      b.setAttribute('aria-pressed', pris ? 'true' : 'false');
+      var s = document.createElement('span'); s.textContent = labelDe(it); b.appendChild(s);
+      var v = document.createElement('span'); v.className = 'v'; v.textContent = '✓'; b.appendChild(v);
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (pris) choisis = choisis.filter(function (x) { return cleDe(x) !== cleDe(it); });
+        else if (choisis.length < MAX) choisis.push(it);
+        rendre();
+      });
+      p.appendChild(b);
+    });
+    puces.textContent = '';
+    choisis.forEach(function (it, i) {
+      var s = document.createElement('button'); s.type = 'button';
+      s.className = 'puce otable'; s.textContent = labelDe(it);
+      s.setAttribute('aria-label', 'Retirer ' + labelDe(it));
+      var x = document.createElement('span'); x.className = 'x'; x.textContent = '×';
+      s.appendChild(x);
+      s.addEventListener('click', function () { choisis.splice(i, 1); rendre(); });
+      puces.appendChild(s);
+    });
+    cpt.textContent = choisis.length + ' / ' + MAX;
+    document.getElementById('ms-l').textContent = choisis.length
+      ? choisis.length + ' document' + (choisis.length > 1 ? 's' : '') + ' ajouté' + (choisis.length > 1 ? 's' : '')
+      : '— ajouter un document —';
+    t.classList.toggle('vide', !choisis.length);
+    var a = !!sel.value;
+    t.disabled = !a; btnGo.disabled = !a; btnCp.disabled = !a;
+  }
+  sel.addEventListener('change', function () {
+    // Le sujet principal ne peut pas être aussi un ajout.
+    choisis = choisis.filter(function (x) { return x.nom_tiroir !== sel.value; });
+    cacherEtats();
+    rendre();
+  });
+  t.addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (t.disabled) return;
+    var o = p.classList.toggle('on'); t.setAttribute('aria-expanded', o ? 'true' : 'false');
+  });
+  document.addEventListener('click', function () {
+    p.classList.remove('on'); t.setAttribute('aria-expanded', 'false');
+  });
+  p.addEventListener('click', function (e) { e.stopPropagation(); });
+
+  // ── L'assistant de destination ──
+  var llm = 'claude';
+  document.querySelectorAll('.modes button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.modes button').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+      b.setAttribute('aria-pressed', 'true');
+      llm = b.dataset.llm;
+    });
+  });
+
+  // ── Le prompt : récupéré, copié, puis l'assistant s'ouvre ──
+  async function chargerPrompt() {
+    var ajouts = choisis.map(function (it) {
+      return { nom_tiroir: it.nom_tiroir, type: estAnx(it) ? 'ANX' : 'PCP', id: it.id || null, url: it.url || null };
+    });
+    // UUID Notion (avec tirets, format canonique de l'API) prêts à insérer :
+    // les prompts standards demandent des UUID, pas des URL.
+    var liens_additionnels = ajouts.map(function (a) { return a.id; }).filter(Boolean).join('\n');
+    var r = await kcpFetch(C.webhooks.prompt, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id: C.client_id, doc_int_id: docIds[sel.value],
+        ajouts: ajouts, liens_additionnels: liens_additionnels, llm: llm
+      })
+    });
+    var brut = await r.text();
+    var cleaned = brut.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+    var d = {}; try { d = JSON.parse(cleaned); } catch (e) { d = {}; }
+    var raw = d.prompt || d.content || d.text || '';
+    promptTexte = raw ? decodeURIComponent(escape(atob(raw))) : '';
+    if (!promptTexte) throw new Error('prompt vide');
+  }
+  async function copier(txt) {
+    try { await navigator.clipboard.writeText(txt); }
+    catch (e) {
+      var a = document.createElement('textarea'); a.value = txt;
+      document.body.appendChild(a); a.select(); document.execCommand('copy'); document.body.removeChild(a);
+    }
+  }
+  function confirmer(n) {
+    var okTxt = document.getElementById('ok-txt');
+    okTxt.textContent = 'Contexte de ';
+    var b = document.createElement('b');
+    b.textContent = sel.value === 'autre' ? '#autre' : '#' + sel.value;
+    okTxt.appendChild(b);
+    okTxt.appendChild(document.createTextNode((n ? ' (+' + n + ')' : '') + ' copié. Collez-le avec Ctrl+V.'));
+    document.getElementById('ok').hidden = false;
+  }
+
+  btnGo.addEventListener('click', async function () {
+    if (!sel.value) return;
+    cacherEtats();
+    btnGo.disabled = true; btnGo.textContent = 'Préparation…';
+    try {
+      await chargerPrompt();
+      await copier(promptTexte);
+      confirmer(choisis.length);
+      window.open(llm === 'chatgpt' ? 'https://chatgpt.com/' : 'https://claude.ai/new', '_blank');
+    } catch (e) { montrerErr('Le chargement a échoué. Réessayez.'); }
+    btnGo.disabled = false; btnGo.textContent = 'Ouvrir →';
+  });
+
+  btnCp.addEventListener('click', async function () {
+    if (!sel.value) return;
+    cacherEtats();
+    btnCp.disabled = true; btnCp.textContent = 'Préparation…';
+    try {
+      await chargerPrompt();
+      await copier(promptTexte);
+      btnCp.textContent = 'Copié ✓';
+      setTimeout(function () { btnCp.textContent = 'Copier le prompt'; btnCp.disabled = false; }, 1800);
+      return;
+    } catch (e) {
+      montrerErr('Le chargement a échoué. Réessayez.');
+      btnCp.textContent = 'Copier le prompt'; btnCp.disabled = false;
+    }
+  });
+
+  // ── Réinitialiser : sujet principal, documents secondaires, destination ──
+  document.getElementById('raz').addEventListener('click', function () {
+    choisis = []; promptTexte = '';
+    sel.selectedIndex = 0;
+    cacherEtats();
+    document.querySelectorAll('.modes button').forEach(function (x, i) {
+      x.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+    });
+    llm = 'claude';
+    rendre();
+  });
+
+  rendre();
+</script>
+</body></html>
