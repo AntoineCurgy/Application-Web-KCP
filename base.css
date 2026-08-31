@@ -778,3 +778,16 @@ textarea { resize:vertical; min-height:96px; }
 .llm-nom { font-family:var(--display); font-size:var(--t-body); font-weight:600; }
 .llm-sous { font-size:var(--t-sm); color:var(--muted); }
 .llm-a { margin-left:auto; display:flex; gap:var(--s2); align-items:center; flex-shrink:0; }
+
+/* ── Tout deplier, tout replier ──
+   Deux boutons opposes, au coin du cadre de la carte. Ils ne dependent
+   d'aucun etat : replier une carte deja repliee ne fait simplement rien.
+   Le cadre ne deborde plus horizontalement depuis la mise a l'echelle,
+   donc un enfant en position absolue n'y defile pas. */
+.carte-cadre { position:relative; }
+.plier { position:absolute; top:var(--s2); right:var(--s2); z-index:2;
+  display:inline-flex; gap:.35rem; align-items:center; }
+.plier button { padding:.3rem .6rem; border-radius:7px; border:1.5px solid var(--border-strong);
+  background:var(--surface); color:var(--ink-soft); cursor:pointer;
+  font-family:var(--text); font-size:var(--t-meta); line-height:1.2; }
+.plier button:hover { border-color:var(--ink); color:var(--ink); }

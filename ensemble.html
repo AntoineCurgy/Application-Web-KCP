@@ -92,6 +92,10 @@
         <div class="pleine-largeur">
           <div class="sect-title" style="margin-top:var(--s5)" id="titre-carte">Les sujets de cet ensemble</div>
           <div class="carte-cadre" style="margin-top:var(--s3)">
+            <span class="plier" id="plier" hidden>
+              <button type="button" id="tout-deplier">Tout déplier</button>
+              <button type="button" id="tout-replier">Tout replier</button>
+            </span>
             <div class="chargement" id="carte-attente">Chargement…</div>
             <div id="svg-boite" hidden><svg class="arbre" id="svg" role="img" aria-label="Carte des sujets de cet ensemble"></svg></div>
           </div>
@@ -295,6 +299,8 @@
     // `hidden` est un attribut HTML : il ne s'applique pas a un <svg>, qui vit
     // dans l'espace de noms SVG. C'est la boite qui porte la bascule.
     document.getElementById('svg-boite').hidden = false;
+    // Les deux boutons n'ont de sens qu'une fois la carte dessinée.
+    document.getElementById('plier').hidden = false;
     KCP_ARBRE.dessine(svg, {
       racine: labelAffiche(), donnees: donnees, ouverts: ouverts,
       // Les questions du document, et le total de sa descendance pour un nœud.
@@ -309,6 +315,16 @@
       }
     });
   }
+
+  // ── Les deux gestes opposés. Ici, les enfants dépliables sont ceux qui
+  // portent eux-mêmes des sujets — un composite sous ce nœud. ──
+  function toutDeplier() {
+    enfantsDirects.forEach(function (c) { if (c._enfants) ouverts[c.doc_int_id] = true; });
+    rendreCarte();
+  }
+  function toutReplier() { ouverts = {}; rendreCarte(); }
+  document.getElementById('tout-deplier').addEventListener('click', toutDeplier);
+  document.getElementById('tout-replier').addEventListener('click', toutReplier);
 
   function rendreFil(sujets) {
     var fil = document.getElementById('fil');
