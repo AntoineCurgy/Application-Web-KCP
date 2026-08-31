@@ -785,9 +785,16 @@ textarea { resize:vertical; min-height:96px; }
    Le cadre ne deborde plus horizontalement depuis la mise a l'echelle,
    donc un enfant en position absolue n'y defile pas. */
 .carte-cadre { position:relative; }
+/* Deux actions opposees qui portent sur le meme objet forment UN controle,
+   pas deux : une seule bordure, deux moities separees par un filet. */
 .plier { position:absolute; top:var(--s2); right:var(--s2); z-index:2;
-  display:inline-flex; gap:.35rem; align-items:center; }
-.plier button { padding:.3rem .6rem; border-radius:7px; border:1.5px solid var(--border-strong);
-  background:var(--surface); color:var(--ink-soft); cursor:pointer;
-  font-family:var(--text); font-size:var(--t-meta); line-height:1.2; }
-.plier button:hover { border-color:var(--ink); color:var(--ink); }
+  display:inline-flex; border:1.5px solid var(--border-strong); border-radius:8px;
+  overflow:hidden; background:var(--surface); }
+/* Le centrage est declare, jamais deduit des metriques de la police :
+   l'espace au-dessus et au-dessous d'un glyphe n'est pas symetrique, et
+   padding + line-height laissent donc le texte flotter au-dessus du milieu. */
+.plier button { display:inline-flex; align-items:center; justify-content:center;
+  height:28px; padding:0 .7rem; border:none; background:none; color:var(--ink-soft);
+  cursor:pointer; font-family:var(--text); font-size:var(--t-meta); line-height:1; }
+.plier button + button { border-left:1.5px solid var(--border-strong); }
+.plier button:hover { background:var(--surface2); color:var(--ink); }
