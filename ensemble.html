@@ -91,7 +91,7 @@
           <div class="sect-title" style="margin-top:var(--s5)" id="titre-carte">Les sujets de cet ensemble</div>
           <div class="carte-cadre" style="margin-top:var(--s3)">
             <div class="chargement" id="carte-attente">Chargement…</div>
-            <svg class="arbre" id="svg" role="img" aria-label="Carte des sujets de cet ensemble" hidden></svg>
+            <div id="svg-boite" hidden><svg class="arbre" id="svg" role="img" aria-label="Carte des sujets de cet ensemble"></svg></div>
           </div>
         </div>
       </div>
@@ -289,7 +289,9 @@
       return cle(a).localeCompare(cle(b), 'fr', { sensitivity: 'base' });
     });
     document.getElementById('carte-attente').hidden = true;
-    svg.hidden = false;
+    // `hidden` est un attribut HTML : il ne s'applique pas a un <svg>, qui vit
+    // dans l'espace de noms SVG. C'est la boite qui porte la bascule.
+    document.getElementById('svg-boite').hidden = false;
     KCP_ARBRE.dessine(svg, {
       racine: labelAffiche(), donnees: donnees, ouverts: ouverts,
       onOuvrir: function (n) { ouverts[n.id] = !ouverts[n.id]; rendreCarte(); },

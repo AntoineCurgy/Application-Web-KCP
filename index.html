@@ -46,7 +46,7 @@
         <div class="ligne-titre"><div class="sect-title">Votre mémoire</div></div>
         <div class="carte-cadre" id="cadre">
           <div class="chargement" id="carte-attente">Chargement de votre carte…</div>
-          <svg class="arbre" id="svg" role="img" aria-label="Carte de vos sujets" hidden></svg>
+          <div id="svg-boite" hidden><svg class="arbre" id="svg" role="img" aria-label="Carte de vos sujets"></svg></div>
         </div>
       </div>
     </div>
@@ -97,7 +97,9 @@
   function rendre() {
     if (!donneesArbre) return;
     document.getElementById('carte-attente').hidden = true;
-    svg.hidden = false;
+    // `hidden` est un attribut HTML : il ne s'applique pas a un <svg>, qui vit
+    // dans l'espace de noms SVG. C'est la boite qui porte la bascule.
+    document.getElementById('svg-boite').hidden = false;
     KCP_ARBRE.dessine(svg, {
       racine: (C.client_name || '').trim() || 'Head',
       donnees: donneesArbre, ouverts: ouverts,
