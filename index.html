@@ -47,6 +47,10 @@
       <div>
         <div class="ligne-titre"><div class="sect-title">Votre mémoire</div></div>
         <div class="carte-cadre" id="cadre">
+          <span class="plier" id="plier" hidden>
+            <button type="button" id="tout-deplier">Tout déplier</button>
+            <button type="button" id="tout-replier">Tout replier</button>
+          </span>
           <div class="chargement" id="carte-attente">Chargement de votre carte…</div>
           <div id="svg-boite" hidden><svg class="arbre" id="svg" role="img" aria-label="Carte de vos sujets"></svg></div>
         </div>
@@ -107,6 +111,8 @@
     // `hidden` est un attribut HTML : il ne s'applique pas a un <svg>, qui vit
     // dans l'espace de noms SVG. C'est la boite qui porte la bascule.
     document.getElementById('svg-boite').hidden = false;
+    // Les deux boutons n'ont de sens qu'une fois la carte dessinée.
+    document.getElementById('plier').hidden = false;
     KCP_ARBRE.dessine(svg, {
       racine: (C.client_name || '').trim() || 'Head',
       donnees: donneesArbre, ouverts: ouverts,
@@ -118,6 +124,16 @@
       onSel: function (n) { ouvrirFiche(n.id); }
     });
   }
+
+  // ── Les deux gestes opposés. L'état déplié vit déjà dans la page :
+  // rien à demander au réseau, rien à recalculer. ──
+  function toutDeplier() {
+    (donneesArbre || []).forEach(function (d) { if (d.enfants) ouverts[d.id] = true; });
+    rendre();
+  }
+  function toutReplier() { ouverts = {}; rendre(); }
+  document.getElementById('tout-deplier').addEventListener('click', toutDeplier);
+  document.getElementById('tout-replier').addEventListener('click', toutReplier);
 
   function ouvrirFiche(id) {
     var doc = null;
