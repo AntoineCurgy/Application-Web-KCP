@@ -35,7 +35,7 @@
       <div class="side-grp">Organiser</div>
       <a class="nav-i" href="nouveau-sujet.html"><span class="ico">+</span>Nouveau sujet</a>
       <a class="nav-i" href="modifier-sujet.html"><span class="ico">✎</span>Modifier un sujet</a>
-      <a class="nav-i" href="reorganiser.html"><span class="ico">⇄</span>Réorganiser<span class="n" id="nav-n-props" hidden></span></a>
+      <a class="nav-i" href="reorganiser.html"><span class="ico">✦</span>Améliorer<span class="n" id="nav-n-props" hidden></span></a>
       <div class="side-grp" id="grp-notion" hidden>Notion</div>
       <a class="nav-i" href="#" id="nav-reunions" hidden target="_blank" rel="noopener"><span class="ico">↗</span>Mes réunions</a>
     </nav>
@@ -64,7 +64,7 @@
         <div class="aside-b">
           <div class="sect-h" style="margin-bottom:var(--s2)">Sujet visé</div>
           <div class="champ"><label for="sv" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(100%)">Sujet visé</label>
-            <select id="sv"><option value="">— choisir un sujet —</option></select></div>
+            <select id="sv"></select></div>
         </div>
         <div class="aside-b">
           <p style="font-size:var(--t-sm);color:var(--ink-soft)">La réponse ne porte que sur ce que ce sujet contient.</p>
@@ -107,16 +107,8 @@
   // ── Sujets et ensembles interrogeables : la valeur part sans croisillon ──
   (function chargerSujets() {
     kcpLoadTiroirs().then(function (data) {
-      var pret = function (t) { return String(t.attente_cycle || '').toLowerCase() !== 'oui'; };
-      (data.pcp || []).filter(pret).forEach(function (t) {
-        var o = document.createElement('option');
-        o.value = t.nom_tiroir; o.textContent = '#' + t.nom_tiroir;
-        sel.appendChild(o);
-      });
-      (data.gcp || []).filter(pret).forEach(function (t) {
-        var o = document.createElement('option');
-        o.value = t.nom_tiroir; o.textContent = kcpDocLabel(t);
-        sel.appendChild(o);
+      kcpRemplirHierarchie(sel, data, {
+        valeur: 'nom', avecNoeuds: true, vide: '— choisir un sujet —'
       });
     }).catch(function () { /* le fil reste utilisable dès qu'un sujet sera là */ });
   })();
@@ -132,7 +124,7 @@
     document.getElementById('fil-attente') && document.getElementById('fil-attente').remove();
     fil.textContent = '';
     if (!rows.length) {
-      bulle('lui', 'Posez votre question sur le sujet de votre choix — choisissez-le à droite.');
+      bulle('lui', 'Posez votre question sur le sujet de votre choix, à choisir à droite.');
       return;
     }
     rows.slice().reverse().forEach(function (row) {

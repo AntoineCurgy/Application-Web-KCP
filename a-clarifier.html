@@ -9,11 +9,8 @@
 <link rel="stylesheet" href="base.css">
 <script src="config.js"></script>
 <style>
-  .z { max-width:920px; }
-  .item { margin-bottom:var(--s4); }
+  .z { max-width:1000px; }
   .note > span:first-child { display:none; }
-  .actions-B { display:flex; gap:var(--s2); flex-wrap:wrap; align-items:center; margin-top:var(--s3); }
-  .actions-B .repousse { margin-left:auto; display:flex; gap:var(--s2); }
   .rep-txt { width:100%; margin-top:var(--s3); background:var(--surface2); border:1.5px solid var(--border);
     border-radius:var(--r-sm); padding:var(--s2) var(--s3); font-family:var(--text); font-size:var(--t-body);
     line-height:var(--lh); color:var(--ink); outline:none; }
@@ -35,7 +32,7 @@
       <div class="side-grp">Organiser</div>
       <a class="nav-i" href="nouveau-sujet.html"><span class="ico">+</span>Nouveau sujet</a>
       <a class="nav-i" href="modifier-sujet.html"><span class="ico">✎</span>Modifier un sujet</a>
-      <a class="nav-i" href="reorganiser.html"><span class="ico">⇄</span>Réorganiser<span class="n" id="nav-n-props" hidden></span></a>
+      <a class="nav-i" href="reorganiser.html"><span class="ico">✦</span>Améliorer<span class="n" id="nav-n-props" hidden></span></a>
       <div class="side-grp" id="grp-notion" hidden>Notion</div>
       <a class="nav-i" href="#" id="nav-reunions" hidden target="_blank" rel="noopener"><span class="ico">↗</span>Mes réunions</a>
     </nav>
@@ -53,13 +50,26 @@
         <p class="sub" style="margin-top:.4rem">Veuillez clarifier ces zones d'ombre que le système a détectées.</p>
       </div>
       <div class="alerte-err" id="err" hidden><span>›</span><span id="err-txt"></span></div>
-      <div id="file"><div class="chargement">Chargement…</div></div>
-      <p class="meta" id="reste" hidden><span id="reste-n"></span> · <a href="#" id="tout" style="color:var(--accent-deep)">tout afficher</a></p>
-      <div class="note"><div class="lignes">
-        <div><span class="m">›</span><span><u>Répondre</u> met le sujet à jour au cycle suivant.</span></div>
-        <div><span class="m">›</span><span>Une question <u>écartée</u> ne revient jamais.</span></div>
-        <div><span class="m">›</span><span>Une question <u>reportée</u> revient dans quinze jours.</span></div>
-      </div></div>
+      <div class="duo">
+        <div>
+          <div id="file"><div class="chargement">Chargement…</div></div>
+          <p class="meta" id="reste" hidden><span id="reste-n"></span> · <a href="#" id="tout" style="color:var(--accent-deep)">tout afficher</a></p>
+        </div>
+        <aside>
+          <div class="aside-b cle">
+            <div class="sect-h" style="margin-bottom:var(--s2)">À savoir</div>
+            <p><b>Répondre met le sujet à jour au cycle suivant.</b> Votre réponse est un fait établi : le système l'absorbe sans la discuter.</p>
+          </div>
+          <div class="aside-b">
+            <div class="sect-h" style="margin-bottom:var(--s2)">Ce qui se passe ensuite</div>
+            <div class="etapes">
+              <span class="n">1</span><span class="x"><b>Répondre</b> envoie votre réponse au sujet concerné.</span>
+              <span class="n">2</span><span class="x"><b>Plus tard</b> repousse la question de quinze jours.</span>
+              <span class="n">3</span><span class="x"><b>N’a plus d’importance</b> la ferme pour de bon. Elle ne revient jamais.</span>
+            </div>
+          </div>
+        </aside>
+      </div>
     </div>
   </main>
 </div>
@@ -85,12 +95,41 @@
   var labels = {};
   var deplie = false;
 
+  // Le niveau se lit dans `rang`, produit de deux notes de 1 a 5 posees par
+  // le cycle : l'incertitude que la reponse leverait, et l'impact sur les
+  // enjeux visibles. Il va donc de 1 a 25.
+  //
+  // Le champ `important` est lu en second, et il ne sert a rien aujourd'hui :
+  // la colonne est ecrite vide par le cycle. Lire ce champ seul, comme on le
+  // faisait, ne montrait JAMAIS de niveau, ni ici ni en production.
+  //
+  // Les classes sont celles de tout le site : n3 ce qui reclame une action,
+  // n1 ce qui peut attendre. Les noms metier restent ceux de la question.
+  // La couleur dit l'urgence, les barres comptent l'importance : élevée en
+  // allume trois. Les deux sont indépendantes — un périmètre solide allume
+  // trois barres lui aussi, mais en vert.
+  // Les mêmes seuils que le scénario, pour que la lecture de repli donne le
+  // même résultat que le champ : 20-25 haute, 9-19 moyenne, 1-8 basse.
+  var PALIERS = [
+    { min: 20, cls: 'n3 j3', lbl: 'Importance élevée' },
+    { min: 9,  cls: 'n2 j2', lbl: 'Importance moyenne' },
+    { min: 1,  cls: 'n1 j1', lbl: 'Importance faible' }
+  ];
   function critDe(p) {
+    // `important` fait foi : le scénario le calcule depuis `rang`, aux seuils
+    // posés sur la distribution réelle des lignes. Le champ arrivait vide
+    // jusqu'au 2 septembre — d'où la lecture de `rang` gardée en second,
+    // qui couvre les lignes anciennes.
     var v = String(p.important || '').trim().toLowerCase();
-    if (!v) return null;
-    if (v.indexOf('haut') === 0 || v.indexOf('elev') === 0 || v.indexOf('élev') === 0 || v === 'critique') return { cls: 'haute', lbl: 'Élevée' };
-    if (v.indexOf('moyen') === 0) return { cls: 'moyenne', lbl: 'Moyenne' };
-    if (v.indexOf('bas') === 0 || v.indexOf('faibl') === 0) return { cls: 'basse', lbl: 'Faible' };
+    if (v.indexOf('haut') === 0 || v.indexOf('elev') === 0 || v.indexOf('élev') === 0 || v === 'critique') return PALIERS[0];
+    if (v.indexOf('moyen') === 0) return PALIERS[1];
+    if (v.indexOf('bas') === 0 || v.indexOf('faibl') === 0) return PALIERS[2];
+    var r = parseInt(p.rang, 10);
+    if (r > 0) {
+      for (var i = 0; i < PALIERS.length; i++) {
+        if (r >= PALIERS[i].min) return PALIERS[i];
+      }
+    }
     return null;
   }
 
@@ -128,22 +167,26 @@
       if (!deplie && i >= VISIBLES) item.hidden = true;
 
       var crit = critDe(p);
-      if (crit) {
-        var tete = document.createElement('div'); tete.className = 'q-tete';
-        var c = document.createElement('span'); c.className = 'crit ' + crit.cls;
-        var pt = document.createElement('span'); pt.className = 'pt';
-        c.appendChild(pt); c.appendChild(document.createTextNode(crit.lbl));
-        tete.appendChild(c);
-        item.appendChild(tete);
-      }
 
       var bloc = document.createElement('div');
-      bloc.className = 'bloc' + (crit ? ' ' + crit.cls : '');
+      bloc.className = 'bloc' + (crit ? ' ' + crit.cls.split(' ')[0] : '');
 
+      // Le sujet à gauche, le niveau à droite, tous deux DANS le cadre :
+      // exactement la ligne d'en-tête d'un bloc d'Améliorer.
       var h = document.createElement('div'); h.className = 'bloc-h';
       var chip = document.createElement('span'); chip.className = 'chip-s';
       chip.textContent = labels[p.doc_id] || p.doc_id || '—';
-      h.appendChild(chip); bloc.appendChild(h);
+      h.appendChild(chip);
+      if (crit) {
+        var c = document.createElement('span'); c.className = 'crit ' + crit.cls;
+        var jauge = document.createElement('span'); jauge.className = 'jauge';
+        for (var k = 0; k < 3; k++) jauge.appendChild(document.createElement('i'));
+        var pt = document.createElement('span'); pt.className = 'pt';
+        c.appendChild(jauge); c.appendChild(pt);
+        c.appendChild(document.createTextNode(crit.lbl));
+        h.appendChild(c);
+      }
+      bloc.appendChild(h);
 
       var q = document.createElement('div'); q.className = 'bloc-q';
       q.textContent = (p.question || '').trim() || (p.doute || '').trim() || '—';
@@ -169,8 +212,23 @@
       var grp = document.createElement('span'); grp.className = 'repousse';
       var plus = document.createElement('button'); plus.className = 'btn'; plus.textContent = 'Plus tard';
       plus.addEventListener('click', function () { traiter(item, p, 'pas_maintenant', '', plus); });
-      var obso = document.createElement('button'); obso.className = 'btn'; obso.textContent = 'N’a plus d’importance';
-      obso.addEventListener('click', function () { traiter(item, p, 'obsolete', '', obso); });
+      var obso = document.createElement('button'); obso.className = 'btn btn-sortie';
+      obso.textContent = 'N’a plus d’importance';
+      obso.addEventListener('click', function () {
+        // Ce geste est définitif et il agit sur le document : il se confirme.
+        KCP_CONFIRMER({
+          titre: 'Fermer cette question pour de bon ?',
+          lignes: [
+            'Vous déclarez que ce doute n’a plus lieu d’être. Le système ne le reposera jamais : il ne revient pas dans quinze jours, il ne revient pas du tout.',
+            'Au prochain cycle, le doute quitte la section doutes du document et passe en archive avec la mention obsolète. Rien d’autre n’est touché : aucune synthèse, aucun périmètre, aucun contenu.',
+            'Si vous voulez seulement gagner du temps, choisissez Plus tard : la question revient dans quinze jours.'
+          ],
+          valider: 'Fermer la question',
+          danger: true
+        }).then(function (oui) {
+          if (oui) traiter(item, p, 'obsolete', '', obso);
+        });
+      });
       grp.appendChild(plus); grp.appendChild(obso);
       act.appendChild(grp);
       bloc.appendChild(act);

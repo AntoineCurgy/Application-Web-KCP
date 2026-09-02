@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   KCP — socle propose. Commun aux six maquettes.
+   KCP — la feuille de style du site. Chargee par les dix-sept pages.
    Ce fichier est la PROPOSITION : la palette de kcp.css est reprise
    telle quelle (c'est l'identite de KCP, on n'y touche pas).
    Ce qui change : la typographie, l'echelle, et le rythme vertical.
@@ -25,15 +25,24 @@
          Helvetica, Arial, sans-serif;           /* NOUVEAU : tout texte suivi */
   --mono:'DM Mono', ui-monospace, monospace;     /* donnees seules : dates, ids, #slug */
 
-  /* ── CE QUI CHANGE 2 : six pas au lieu de quatorze tailles ── */
-  --t-meta:12px; --t-sm:14px; --t-body:16px;
-  --t-lg:20px;   --t-xl:24px; --t-display:32px;
+  /* ── CE QUI CHANGE 2 : six pas au lieu de quatorze tailles ──
+     L'echelle retenue le 2 septembre. Elle etait posee au runtime par le
+     selecteur de la maquette ; sans lui, la feuille doit la porter, sinon
+     le site publie rend un cran au-dessus de ce qui a ete valide. */
+  --t-meta:11px; --t-sm:12.5px; --t-body:14px;
+  --t-lg:17px;   --t-xl:21px;   --t-display:27px;
 
   /* ── CE QUI CHANGE 3 : un rythme unique, plus de surcharge par page ── */
   --s1:0.5rem; --s2:0.75rem; --s3:1rem; --s4:1.5rem; --s5:2rem; --s6:3rem;
   --r:14px; --r-sm:10px;
   --lh:1.55;
 }
+
+/* La barre laterale garde l'echelle precedente : elle est un chrome de
+   navigation, pas du contenu, et ses entrees valent alors exactement la
+   taille du texte courant. C'est ce qui a ete valide. */
+.side { --t-meta:12px; --t-sm:14px; --t-body:16px;
+        --t-lg:20px;   --t-xl:24px; --t-display:32px; }
 
 html { background:var(--bg); }
 body {
@@ -306,7 +315,7 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
   width:100%; background:var(--surface2); border:1.5px solid var(--border); border-radius:8px;
   padding:.6rem .8rem; font-family:var(--text); font-size:var(--t-body); color:var(--ink); outline:none; }
 .champ input:focus, .champ select:focus, .champ textarea:focus, .cible select:focus {
-  border-color:var(--ink); background:var(--surface); }
+  border-color:var(--ink); background-color:var(--surface); }
 .champ select, .cible select { appearance:none;
   background-image:linear-gradient(45deg,transparent 50%,var(--ink-soft) 50%),
   linear-gradient(135deg,var(--ink-soft) 50%,transparent 50%);
@@ -334,6 +343,16 @@ textarea { resize:vertical; }
   padding:var(--s3) var(--s4); }
 .bloc + .bloc { margin-top:var(--s3); }
 .bloc-h { display:flex; align-items:center; gap:var(--s2); flex-wrap:wrap; margin-bottom:var(--s2); }
+/* Le sujet ouvre la ligne ; ce qui la ferme se pose a droite, que ce soit un
+   niveau ou le nom d'un defaut. Une seule regle, pour que les deux pages
+   n'aient pas a le redire chacune de son cote. */
+.bloc-h > .prop-geste, .bloc-h > .crit { margin-left:auto; }
+/* Combien de fois le systeme a vu la chose. A gauche de l'etiquette, en
+   metadonnee : c'est un compte, pas un jugement. */
+.bloc-h > .vues { margin-left:auto; font-family:var(--mono); font-size:var(--t-meta);
+  color:var(--muted); white-space:nowrap; }
+.bloc-h > .vues + .prop-geste { margin-left:var(--s2); }
+
 .bloc-q { font-size:var(--t-body); line-height:var(--lh); }
 .bloc-a { margin-top:var(--s3); display:grid; grid-template-columns:1fr auto auto; gap:var(--s2); align-items:stretch; }
 .bloc-a textarea { min-height:44px; }
@@ -356,6 +375,58 @@ textarea { resize:vertical; }
   border:1.5px solid var(--border-strong); border-radius:var(--r); padding:var(--s4); display:none;
   flex-direction:column; gap:var(--s3); box-shadow:0 18px 50px rgba(22,21,15,.25); }
 .pop.on { display:flex; }
+/* Une fenetre de confirmation : le titre, ce que le geste fait vraiment,
+   puis Annuler et le geste. L'action est a droite, la sortie a gauche. */
+.pop-t { font-family:var(--display); font-size:var(--t-lg); font-weight:700; color:var(--ink); }
+.pop-c { display:flex; flex-direction:column; gap:var(--s2); font-size:var(--t-sm);
+  line-height:1.55; color:var(--ink-soft); }
+.pop-c p { margin:0; }
+.pop-a { display:flex; gap:var(--s2); justify-content:flex-end; flex-wrap:wrap; }
+/* Une fenetre qui porte un formulaire a deux colonnes a besoin de largeur. */
+.pop.large { width:min(760px,calc(100vw - 2.5rem)); }
+.pop .champ + .champ { margin-top:var(--s3); }
+.pop-form { display:flex; flex-direction:column; gap:var(--s3); }
+.pop .perim-cmp { margin-top:0; }
+.btn-danger-plein { background:var(--danger); border-color:var(--danger); color:#fff; }
+.btn-danger-plein:hover { background:#732727; border-color:#732727; }
+/* L'accuse de reception. Un mot, dans le coin haut droit, cale sur la ligne
+   du titre et sur le bord droit de la colonne. Il ne dit que « c'est parti » :
+   quand le message a quelque chose a apprendre, il reste dans la page, a
+   l'endroit ou l'on vient d'agir. */
+.entete-geste { display:flex; align-items:flex-start; justify-content:space-between;
+  gap:var(--s3); }
+.envoye { display:inline-flex; align-items:center; gap:.45rem; flex-shrink:0;
+  height:calc(var(--t-xl) * 1.25); padding:0 var(--s3); border-radius:999px;
+  font-family:var(--display); font-size:var(--t-sm); font-weight:600;
+  background:var(--n1-bg); border:1.5px solid var(--n1-br); color:var(--n1);
+  opacity:0; transition:opacity .18s; }
+.envoye.on { opacity:1; }
+.envoye .c { display:inline-flex; align-items:center; justify-content:center;
+  width:16px; height:16px; border-radius:50%; background:var(--n1); color:#fff;
+  font-size:10px; line-height:1; }
+@media (prefers-reduced-motion: reduce) { .envoye { transition:none; } }
+
+/* Ce qui manque se signale. Un geste principal reste eteint tant que son
+   formulaire ne tient pas ; quand on le sollicite quand meme, ce qui reste a
+   remplir s'allume. Un bouton qui ne repond pas sans rien dire laisse
+   chercher, et c'est toujours au mauvais endroit qu'on cherche. */
+.btn.eteint { opacity:.5; cursor:not-allowed; }
+.a-completer { animation:kcp-signale .9s ease-out 2; }
+.a-completer, .a-completer .perim-vu, .a-completer input, .a-completer select,
+.a-completer textarea { border-color:var(--danger) !important; }
+.a-completer .btn { border-color:var(--danger); color:var(--danger); }
+@keyframes kcp-signale {
+  0%, 100% { box-shadow:0 0 0 0 rgba(138,47,47,0); }
+  35%      { box-shadow:0 0 0 4px rgba(138,47,47,.22); }
+}
+@media (prefers-reduced-motion: reduce) { .a-completer { animation:none; } }
+
+/* Un bouton qui ferme definitivement. Il se distingue par sa teinte, mais
+   PAS par le rouge : celui-la dit deja le niveau eleve d'une question, et
+   deux rouges dans le meme bloc se parasitent. Le beige du site suffit a
+   le mettre a part ; le rouge revient dans la fenetre, ou il est seul. */
+.btn-sortie { background:var(--surface3); border-color:var(--border-strong); color:var(--muted); }
+.btn-sortie:hover { border-color:var(--ink); color:var(--ink); background:var(--surface2); }
 .ex-t { font-family:var(--mono); font-size:var(--t-meta); letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
 .ex { padding:var(--s2) var(--s3); border-radius:8px; font-size:var(--t-sm); line-height:1.5; }
 .ex.bad { background:rgba(138,47,47,.07); border:1px solid rgba(138,47,47,.2); }
@@ -406,27 +477,61 @@ textarea { resize:vertical; }
 .nav-i.ancre:not([aria-current]):hover { border-color:var(--border-strong); }
 
 /* Criticite d'une question : trois niveaux, lisibles sans legende. */
-.crit { display:inline-flex; align-items:center; gap:.35rem; font-family:var(--mono);
-  font-size:var(--t-meta); padding:2px 8px; border-radius:6px; }
-.crit .pt { width:6px; height:6px; border-radius:50%; }
-.crit.haute { background:rgba(138,47,47,.08); color:var(--danger); }
-.crit.haute .pt { background:var(--danger); }
-.crit.moyenne { background:rgba(77,107,20,.09); color:var(--accent-deep); }
-.crit.moyenne .pt { background:var(--accent-deep); }
-.crit.basse { background:var(--surface2); color:var(--muted); }
-.crit.basse .pt { background:var(--border-strong); }
-.bloc.haute { border-left:3px solid var(--danger); }
-.bloc.moyenne { border-left:3px solid var(--accent-deep); }
+/* ═══ Le niveau ════════════════════════════════════════════════════
+   Trois niveaux, trois couleurs, un seul jeu pour tout le site. La couleur
+   dit le NIVEAU et rien d'autre : jamais le type d'un geste, jamais une
+   categorie. Les noms metier changent selon le module — eleve/moyen/faible
+   pour une question, mauvais/moyen/bon pour un perimetre — la classe est la
+   meme : `.n3` ce qui reclame une action, `.n2` l'entre-deux, `.n1` ce qui
+   va bien. Les anciens noms restent en alias pour ne rien casser. */
+:root {
+  --n3:#8a2f2f; --n3-bg:rgba(138,47,47,.10); --n3-br:rgba(138,47,47,.30);
+  --n2:#8a6420; --n2-bg:rgba(138,100,32,.11); --n2-br:rgba(138,100,32,.30);
+  --n1:#4d6b14; --n1-bg:rgba(77,107,20,.10); --n1-br:rgba(77,107,20,.28);
+}
+.n3, .crit.haute, .bloc.haute, .bloc.n3 { --niv:var(--n3); --niv-bg:var(--n3-bg); --niv-br:var(--n3-br); }
+.n2, .crit.moyenne, .bloc.moyenne, .bloc.n2 { --niv:var(--n2); --niv-bg:var(--n2-bg); --niv-br:var(--n2-br); }
+.n1, .crit.basse, .bloc.basse, .bloc.n1 { --niv:var(--n1); --niv-bg:var(--n1-bg); --niv-br:var(--n1-br); }
+
+/* L'etiquette de niveau. Une jauge de reseau : trois barres allumees quand
+   tout va bien, une seule quand il faut agir. La forme porte l'information
+   autant que la couleur — elle reste comprise en niveaux de gris.
+   Toutes les etiquettes ont la MEME largeur : une colonne de niveaux se lit
+   comme une colonne, pas comme un escalier. */
+.crit { display:inline-flex; align-items:center; gap:.45rem; font-family:var(--mono);
+  font-size:var(--t-meta); font-weight:600; padding:4px 10px; border-radius:6px;
+  letter-spacing:.01em; white-space:nowrap; min-width:196px;
+  background:var(--niv-bg); color:var(--niv); border:1px solid var(--niv-br); }
+.crit .jauge { display:inline-flex; gap:2px; align-items:flex-end; flex-shrink:0; }
+.crit .jauge i { width:3px; background:var(--niv); opacity:.22; border-radius:1px; }
+.crit .jauge i:nth-child(1) { height:5px; }
+.crit .jauge i:nth-child(2) { height:8px; }
+.crit .jauge i:nth-child(3) { height:11px; }
+/* Le nombre de barres et la couleur sont DEUX informations distinctes.
+   La couleur dit l'urgence — rouge il faut agir, vert tout va bien. Les
+   barres comptent ce que l'echelle nomme : une importance elevee en allume
+   trois, un perimetre solide aussi. Sans cette separation, la jauge devrait
+   se lire a l'envers d'une page a l'autre. */
+.j3 .jauge i { opacity:1; }
+.j2 .jauge i:nth-child(-n+2) { opacity:1; }
+.j1 .jauge i:nth-child(1) { opacity:1; }
+
+.bloc.haute, .bloc.moyenne, .bloc.basse,
+.bloc.n1, .bloc.n2, .bloc.n3 { border-left:4px solid var(--niv); }
 .bloc.basse { border-left:3px solid var(--border-strong); }
 
 /* La pastille du sujet, sur fond tenu — plus de blanc sur blanc. */
-.chip-s { font-family:var(--mono); font-size:var(--t-meta); color:var(--accent-deep);
-  background:rgba(77,107,20,.10); border:1px solid rgba(77,107,20,.22); border-radius:6px; padding:2px 8px; }
+/* Le nom d'un sujet. Neutre : le vert dit « c'est bon » ailleurs sur le
+   site, et un nom ne dit ni bien ni mal. */
+.chip-s { font-family:var(--mono); font-size:var(--t-meta); color:var(--ink-soft);
+  background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:2px 8px; }
 
-/* Une question a traiter : l'entete deborde du cadre a droite pour la date. */
-.q-tete { display:flex; align-items:center; justify-content:space-between; gap:var(--s2);
-  margin-bottom:var(--s1); }
-.q-date { font-family:var(--mono); font-size:var(--t-meta); color:var(--muted); }
+/* La rangee d'actions d'un bloc : le geste franc a gauche, ce qui repousse
+   pousse a droite. Commune a A clarifier et a Ameliorer, qui ont la meme
+   forme et doivent donc avoir les memes espacements. */
+.actions-B { display:flex; gap:var(--s2); flex-wrap:wrap; align-items:center; margin-top:var(--s3); }
+.actions-B .repousse { margin-left:auto; display:flex; gap:var(--s2); }
+
 
 /* Zone de reponse : le meme confort que le depot. Les boutons restent en haut
    quand la zone s'agrandit, ils ne s'etirent plus avec elle. */
@@ -470,6 +575,24 @@ textarea { resize:vertical; }
 .ms-panel .v { color:var(--accent-deep); font-size:13px; visibility:hidden; }
 .ms-panel button.pris .v { visibility:visible; }
 .ms-panel button.pris { color:var(--ink-soft); }
+
+/* ── Le formulaire et sa colonne de droite ──
+   Un repere visuel constant : ce qu'on fait a gauche, ce qu'il faut en
+   savoir a droite. Ce qui vivait en bas de page, sous le bouton, n'etait
+   lu qu'apres coup — donc jamais. */
+.duo { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:var(--s5); align-items:start; }
+@media(max-width:960px){ .duo{grid-template-columns:minmax(0,1fr)} }
+.duo > aside { display:flex; flex-direction:column; gap:var(--s3); }
+.aside-b { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r);
+  padding:var(--s3); }
+.aside-b p { font-size:var(--t-sm); color:var(--ink-soft); max-width:none; }
+.aside-b p + p { margin-top:var(--s2); }
+.aside-b b { color:var(--accent-deep); }
+/* Le premier bloc de la colonne porte l'essentiel : son liseré le dit. */
+.aside-b.cle { border-color:var(--accent-deep); }
+.etapes { display:grid; grid-template-columns:auto 1fr; gap:var(--s2); align-items:baseline; }
+.etapes .n { font-family:var(--mono); font-size:var(--t-meta); color:var(--accent-deep); }
+.etapes .x { font-size:var(--t-sm); color:var(--ink-soft); }
 
 /* Deux boutons cote a cote, centres, qui ne prennent pas toute la largeur. */
 .duo-btn { display:flex; gap:var(--s3); justify-content:center; }
@@ -535,24 +658,23 @@ textarea { resize:vertical; }
 .schema-bas > * { position:relative; }
 .schema-bas > *::before { content:''; position:absolute; top:-22px; left:50%;
   width:1.5px; height:22px; background:var(--border-strong); }
-.branches { position:relative; width:100%; height:22px; }
-.branches::before { content:''; position:absolute; top:0; left:50%; width:1.5px; height:11px;
-  background:var(--border-strong); }
-.branches .bar { position:absolute; top:11px; height:1.5px; background:var(--border-strong); }
 .deux-col { display:grid; grid-template-columns:1fr 1fr; gap:var(--s3); }
 @media(max-width:700px){ .deux-col{grid-template-columns:1fr} }
 .encadre { background:var(--surface2); border:1.5px solid var(--border); border-radius:var(--r);
   padding:var(--s4); display:flex; flex-direction:column; gap:var(--s3); }
 
-/* Fusion : les deux sources convergent vers le resultat. */
-.converge { position:relative; width:100%; height:26px; }
-.converge .bar { position:absolute; top:13px; height:1.5px; background:var(--border-strong); }
-.converge .haut { position:absolute; top:0; width:1.5px; height:13px; background:var(--border-strong); }
-.converge .bas { position:absolute; top:13px; left:50%; width:1.5px; height:13px; background:var(--border-strong); }
-
 /* Le sujet vise, sur une seule ligne : le depot ne perd plus de hauteur. */
 .rangee-cible { display:flex; align-items:center; gap:var(--s2); flex-wrap:wrap; }
 .rangee-cible select { min-width:230px; max-width:280px; }
+
+/* Le sujet sur lequel un geste porte : un champ qu'on lit sans pouvoir le
+   changer. Il a la forme d'un champ parce qu'il en occupe la place, et le
+   cadenas dit pourquoi il ne repond pas. */
+.sujet-fige { display:flex; align-items:center; gap:var(--s2); width:100%;
+  background:var(--surface3); border:1.5px solid var(--border); border-radius:8px;
+  padding:.6rem .8rem; font-family:var(--mono); font-size:var(--t-sm); color:var(--ink); }
+.sujet-fige .cad { color:var(--muted); font-size:12px; flex-shrink:0; }
+.sujet-fige .fl { color:var(--muted); font-family:var(--text); flex-shrink:0; }
 
 /* Un champ que l'on lit sans pouvoir le changer garde exactement son apparence. */
 input[readonly] { cursor:default; }
@@ -580,27 +702,38 @@ input[readonly]:focus { border-color:var(--border); background:var(--surface); }
 /* Un bloc de structure : le cadre delimite l'entite, sans aplat gris. */
 .encadre { background:var(--surface); }
 
-/* La fourchette : des traits plus francs. */
-.branches { height:30px; }
-.branches .bar { top:15px; }
-.converge { height:34px; }
-.converge .bar { top:17px; }
-.converge .haut { height:17px; }
-.converge .bas { top:17px; height:17px; }
+/* La fourchette. Scinder et Fusionner dessinent la MEME piece, retournee :
+   une source qui se divise, deux sources qui se rejoignent. Un seul jeu de
+   mesures, sinon les deux onglets divergent d'un pixel a chaque retouche.
+   `haut` est le segment vertical au-dessus de la barre, `bas` celui du
+   dessous ; ce que l'un appelle tronc, l'autre l'appelle descente. */
+.branches, .converge { position:relative; width:100%; height:34px; }
+.branches .bar, .converge .bar { position:absolute; top:17px; height:1.5px;
+  background:var(--border-strong); }
+.branches .haut, .converge .haut { position:absolute; top:0; width:1.5px; height:17px;
+  background:var(--border-strong); }
+.branches .bas, .converge .bas { position:absolute; top:17px; width:1.5px; height:17px;
+  background:var(--border-strong); }
+/* Fusionner n'a qu'une seule descente, au milieu, et n'a pas besoin de la placer. */
+.converge > .bas { left:50%; }
 
 /* Reorganiser reprend la forme d'A clarifier : un bloc par element, un liseré
    qui dit la nature du geste, une action franche. */
-.prop-h { display:flex; align-items:center; justify-content:space-between; gap:var(--s2);
-  margin-bottom:var(--s1); }
-.prop-geste { display:inline-flex; align-items:center; gap:.35rem; font-family:var(--mono);
-  font-size:var(--t-meta); padding:2px 8px; border-radius:6px;
-  background:rgba(77,107,20,.09); color:var(--accent-deep); }
-.prop-geste .pt { width:6px; height:6px; border-radius:50%; background:var(--accent-deep); }
-.prop-l { font-family:var(--display); font-size:var(--t-sm); font-weight:700; color:var(--ink);
-  margin-top:var(--s3); }
-.prop-t { font-size:var(--t-body); line-height:var(--lh); margin-top:.2rem; }
-.prop-r { font-size:var(--t-sm); color:var(--muted); margin-top:.2rem; }
-.prop-a { display:flex; gap:var(--s2); margin-top:var(--s3); flex-wrap:wrap; }
+/* Le nom d'un geste. Meme boite que l'etiquette de niveau : les deux se
+   font face d'un bloc a l'autre, dans la meme colonne. Sans point : le
+   rond n'ajoutait rien et ramenait l'idee d'un niveau qui n'existe pas. */
+/* Le defaut nomme : ce qui ne va pas, pas ce qu'on va faire. Une pastille
+   sourde — une boite, mais sans bordure et sans relief : elle se lit comme
+   une etiquette collee, jamais comme quelque chose qui se clique.
+   Largeur commune : une colonne de defauts se lit comme une colonne. */
+/* La teinte dit « defaut », pas un niveau : elle est CONSTANTE sur les sept
+   termes. Une couleur qui ne varie jamais ne code rien d'autre qu'elle-meme,
+   et le gris faisait passer pour neutre ce qui ne l'est pas. */
+.prop-geste { display:inline-flex; align-items:center; justify-content:center;
+  min-width:172px; white-space:nowrap; font-family:var(--display);
+  font-size:var(--t-meta); font-weight:600; letter-spacing:.02em;
+  padding:3px 10px; border-radius:4px;
+  background:var(--n2-bg); color:var(--n2); }
 
 /* Les boutons d'une meme rangee de reglages ont la meme largeur. */
 .grp .btn { min-width:132px; justify-content:center; }
@@ -622,24 +755,15 @@ textarea { resize:vertical; min-height:96px; }
 .aside-b.actions { background:var(--surface2); }
 
 /* Reorganiser : une couleur par geste, du plus leger au plus lourd. */
-.prop-geste.g1 { background:rgba(77,107,20,.10); color:var(--accent-deep); }
-.prop-geste.g1 .pt { background:var(--accent-deep); }
-.prop-geste.g2 { background:rgba(120,110,40,.12); color:#6d6420; }
-.prop-geste.g2 .pt { background:#6d6420; }
-.prop-geste.g3 { background:rgba(150,110,40,.13); color:#8a6420; }
-.prop-geste.g3 .pt { background:#8a6420; }
-.prop-geste.g4 { background:rgba(138,47,47,.09); color:var(--danger); }
-.prop-geste.g4 .pt { background:var(--danger); }
-.bloc.g1 { border-left:3px solid var(--accent-deep); }
-.bloc.g2 { border-left:3px solid #6d6420; }
-.bloc.g3 { border-left:3px solid #8a6420; }
-.bloc.g4 { border-left:3px solid var(--danger); }
+/* Un geste n'a pas de niveau : il a un nom. Le colorer par type faisait lire
+   une criticite la ou il n'y en a pas — c'est precisement ce qui trompait. */
+.bloc.g1, .bloc.g2, .bloc.g3, .bloc.g4 { border-left:4px solid var(--border-strong); }
 
 /* Une proposition et son etiquette forment un ensemble : de l'air entre deux. */
-.item + .item { margin-top:var(--s5); }
+.item + .item { margin-top:var(--s4); }
 
 /* Les lignes d'une note, chacune avec son marqueur. */
-.lignes { display:flex; flex-direction:column; gap:var(--s2); }
+.lignes { display:flex; flex-direction:column; gap:var(--s1); }
 .lignes > div { display:flex; gap:var(--s2); align-items:flex-start; }
 .lignes .m { color:var(--accent-deep); flex-shrink:0; }
 .lignes u { text-decoration-color:var(--border-strong); text-underline-offset:3px; }
@@ -671,7 +795,6 @@ textarea { resize:vertical; min-height:96px; }
   font-size:var(--t-body); display:block; }
 
 /* La fourchette : le tronc et la barre au meme niveau, des deux cotes. */
-.branches::before { height:15px; }
 
 /* ═══ v14 — etats reseau, communs a toutes les pages ══════════════ */
 
@@ -798,3 +921,236 @@ textarea { resize:vertical; min-height:96px; }
   cursor:pointer; font-family:var(--text); font-size:var(--t-meta); line-height:1; }
 .plier button + button { border-left:1.5px solid var(--border-strong); }
 .plier button:hover { background:var(--surface2); color:var(--ink); }
+
+/* ═══ v16 — Ameliorer, le perimetre en trois questions ════════════ */
+
+/* ── Les trois onglets d'Ameliorer, en pastilles ──
+   Pleine sur Confirmees : le compte compte. Neutre sur Potentielles et
+   Analyser : ils n'interpellent pas. */
+.bascule { display:inline-flex; gap:.4rem; flex-wrap:wrap; }
+.bascule button { display:inline-flex; align-items:center; gap:.5rem; border:1.5px solid var(--border);
+  background:var(--surface); color:var(--muted); font-family:var(--display);
+  font-size:var(--t-sm); font-weight:600; padding:.5rem .9rem; border-radius:999px; cursor:pointer; }
+.bascule button[aria-selected="true"] { background:var(--ink); color:var(--surface); border-color:var(--ink); }
+.bascule .p { min-width:1.35rem; height:1.35rem; border-radius:999px; display:inline-grid;
+  place-items:center; font-family:var(--mono); font-size:.72rem; padding:0 .3rem; }
+.bascule .p-alerte { background:var(--accent); color:var(--accent-deep); }
+.bascule .p-neutre { background:var(--surface3); color:var(--muted); }
+.bascule button[aria-selected="true"] .p-neutre { background:rgba(255,255,255,.18); color:var(--surface); }
+/* Le niveau de confiance ouvre l'onglet : ce qu'il vaut, et pourquoi. Une
+   ligne grise ne se lisait pas ; un bloc teinte dit lequel des deux on
+   regarde avant meme d'avoir lu. */
+.conf { display:flex; gap:var(--s2); align-items:baseline; flex-wrap:wrap;
+  padding:var(--s2) var(--s3); border-radius:var(--r-sm);
+  background:var(--niv-bg); border:1px solid var(--niv-br); border-left:4px solid var(--niv); }
+.conf .t { font-family:var(--display); font-size:var(--t-sm); font-weight:700; color:var(--niv); }
+.conf .x { font-size:var(--t-sm); color:var(--ink-soft); line-height:1.5; }
+/* Un onglet sans niveau garde la meme forme, en gris : la coherence tient a
+   la forme, pas a la couleur. */
+.conf.neutre { --niv:var(--muted); --niv-bg:var(--surface2); --niv-br:var(--border); }
+
+/* La coupure entre ce qui reclame une action et ce qui n'en reclame pas.
+   Ce n'est pas un degre de plus, c'est une autre nature : le blanc autour
+   d'elle vaut plus que celui qui separe deux blocs, et le mot se voit. */
+/* Le meme blanc de part et d'autre : une coupure separe deux ensembles, elle
+   n'appartient a aucun des deux. */
+.coupure { display:flex; align-items:center; gap:var(--s3); margin:calc(var(--s6) * 1.5) 0; }
+.coupure::before, .coupure::after { content:''; flex:1; height:1.5px; background:var(--n1);
+  opacity:.35; }
+.coupure span { display:inline-flex; align-items:center; gap:.45rem;
+  font-family:var(--display); font-size:var(--t-sm); font-weight:700; color:var(--n1);
+  background:var(--n1-bg); border:1.5px solid var(--n1-br); border-radius:999px;
+  padding:5px 14px; white-space:nowrap; }
+.coupure span .c { display:inline-flex; align-items:center; justify-content:center;
+  width:16px; height:16px; border-radius:50%; background:var(--n1); color:#fff; font-size:10px;
+  line-height:1; flex-shrink:0; }
+
+/* Les trois volets d'Ameliorer respirent au meme pas que le reste. */
+#v-conf, #v-pot, #v-ana { display:flex; flex-direction:column; gap:var(--s4); }
+
+/* Un signal : une observation brute, sans proposition redigee. */
+
+/* L'onglet Analyser : un seul geste, qui se voit. */
+/* La rangee des onglets porte le geste de l'onglet actif, a son extremite
+   droite : il se lit sur la meme ligne que l'onglet qu'il sert, et son bord
+   droit tombe sur celui de la colonne de droite. */
+.rangee-onglets { display:flex; align-items:center; gap:var(--s3); flex-wrap:wrap; }
+.rangee-onglets > .btn { margin-left:auto; }
+
+/* ── Un perimetre analyse ──
+   A gauche ce qui est ecrit, a droite ce que l'IA propose. Le fond distingue
+   les deux : on ne confond jamais son texte avec celui de la machine. */
+.perim-cmp { display:grid; grid-template-columns:1fr 1fr; gap:var(--s3); margin-top:var(--s3); }
+@media(max-width:700px){ .perim-cmp{grid-template-columns:1fr} }
+.perim-cmp > div { display:flex; flex-direction:column; gap:var(--s1); }
+.perim-cmp .t { font-family:var(--mono); font-size:var(--t-meta); letter-spacing:.06em;
+  text-transform:uppercase; color:var(--muted); }
+.perim-cmp .txt { padding:var(--s2) var(--s3); border-radius:8px; font-size:var(--t-sm);
+  line-height:1.55; white-space:pre-line; }
+/* `flex:1` imposait la hauteur et rendait la poignee de redimensionnement
+   inoperante : on tirait, rien ne bougeait. La hauteur est libre, bornee en
+   bas seulement, et les deux colonnes se synchronisent par script. */
+.perim-cmp textarea.txt { min-height:180px; height:180px; }
+.perim-cmp .actuel .txt { background:var(--surface2); border:1px solid var(--border); color:var(--ink-soft); }
+.perim-cmp .propose .t { color:var(--accent-deep); }
+.perim-cmp .propose .txt { background:rgba(77,107,20,.07); border:1px solid rgba(77,107,20,.22);
+  color:var(--accent-deep); }
+.perim-cmp .txt.vide { color:var(--muted); font-style:italic; }
+/* Une zone de texte garde exactement l'aspect du cadre qu'elle remplace. */
+.perim-cmp textarea.txt { font-family:var(--text); resize:vertical; outline:none; width:100%; }
+.perim-cmp .actuel textarea.txt:focus { border-color:var(--border-strong); }
+.perim-cmp .propose textarea.txt:focus { border-color:var(--accent-deep); }
+.perim-cmp > div > .btn { align-self:flex-start; }
+/* Quand deux textes s'offrent, celui qui partira se signale. */
+.perim-cmp > .choisie > .txt { box-shadow:0 0 0 2px var(--niv, var(--accent-deep)); }
+
+/* Un perimetre juge bon : rien a faire, et ca se dit. */
+.valide { display:inline-flex; align-items:center; gap:.4rem; font-family:var(--mono);
+  font-size:var(--t-meta); color:var(--n1); }
+.valide .c { display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px;
+  border-radius:50%; background:var(--n1); color:#fff; font-size:10px; line-height:1; }
+
+/* ── Le perimetre : une phrase, puis une question a la fois ──
+   L'humain n'ecrit qu'une phrase ; le systeme propose, il repond oui ou non.
+   La forme le dit : une grande zone au depart, une seule carte au centre
+   pendant les questions, un texte relisible a la fin. */
+
+/* La phrase de depart. Grande : c'est tout ce qu'on demande. */
+.perim-graine { width:100%; background:var(--surface2); border:1.5px solid var(--border);
+  border-radius:8px; padding:.85rem 1rem; font-family:var(--text); font-size:var(--t-body);
+  line-height:1.5; color:var(--ink); outline:none; resize:vertical; min-height:110px; }
+.perim-graine:focus { border-color:var(--ink); background:var(--surface); }
+.perim-graine::placeholder { color:var(--muted); }
+
+/* L'attente : un decompte qui ne ment pas. */
+.perim-attente { display:flex; align-items:center; gap:var(--s2); font-size:var(--t-sm);
+  color:var(--muted); }
+/* Un travail long qui tourne en arriere-plan : la page reste utilisable, mais
+   elle ne fait pas semblant d'avoir fini. */
+.attente-ana { display:flex; align-items:flex-start; gap:var(--s2); padding:var(--s3);
+  background:var(--surface2); border:1.5px solid var(--border); border-radius:var(--r-sm);
+  font-size:var(--t-sm); color:var(--ink-soft); line-height:1.5; }
+.attente-ana .perim-rond { margin-top:3px; }
+.perim-rond { width:14px; height:14px; border-radius:50%; border:2px solid var(--border);
+  border-top-color:var(--accent-deep); animation:perim-tourne 1s linear infinite; flex-shrink:0; }
+@keyframes perim-tourne { to { transform:rotate(360deg); } }
+
+/* Une question, seule au centre. Deux reponses franches, une sortie
+   discrete : la difference de taille dit laquelle est le geste normal. */
+.perim-une { border:1.5px solid var(--border-strong); border-radius:var(--r); padding:var(--s5) var(--s4);
+  display:flex; flex-direction:column; gap:var(--s3); align-items:center; text-align:center;
+  background:var(--surface2); }
+.perim-une .q { font-family:var(--display); font-size:var(--t-lg); font-weight:700; line-height:1.35;
+  max-width:34ch; }
+.perim-une .aide { font-size:var(--t-sm); color:var(--muted); }
+/* L'avertissement de recouvrement. Il nomme un sujet voisin — ce que le
+   perimetre enregistre n'a JAMAIS le droit de faire. D'ou sa place ici, a
+   l'ecran de la question, et nulle part ailleurs. */
+.perim-recouvre { display:flex; gap:var(--s2); align-items:flex-start; text-align:left;
+  background:var(--n2-bg); border:1px solid var(--n2-br); border-radius:8px;
+  padding:var(--s2) var(--s3); max-width:46ch; }
+.perim-recouvre .ic { color:var(--n2); flex-shrink:0; font-size:var(--t-body); line-height:1.35; }
+.perim-recouvre .l1 { font-size:var(--t-sm); color:var(--n2); line-height:1.45; }
+.perim-recouvre .l1 b { font-family:var(--mono); }
+.perim-recouvre .l2 { font-size:var(--t-sm); color:var(--muted); line-height:1.45; margin-top:.15rem; }
+
+.perim-duo-b { display:flex; gap:var(--s2); margin-top:var(--s1); }
+.perim-duo-b .btn { min-width:132px; justify-content:center; font-size:var(--t-body);
+  padding:.65rem 1rem; }
+.perim-duo-b .btn.oui { background:var(--n1); border-color:var(--n1); color:#fff; }
+.perim-duo-b .btn.oui:hover { background:#3f5810; border-color:#3f5810; }
+.perim-duo-b .btn.non { background:var(--n3); border-color:var(--n3); color:#fff; }
+.perim-duo-b .btn.non:hover { background:#732727; border-color:#732727; }
+.perim-passer { color:var(--muted); }
+.perim-points { display:flex; gap:5px; }
+.perim-points i { width:7px; height:7px; border-radius:50%; background:var(--border); }
+.perim-points i.fait { background:var(--accent-deep); }
+.perim-points i.ici { background:var(--ink); transform:scale(1.35); }
+
+/* Sur la page : ce qui est defini se lit dans un bloc gris, et un bouton
+   ouvre la fenetre. Ces trois regles avaient disparu avec la refonte du
+   module, et le texte se retrouvait nu sur le fond de la carte. */
+.perim-champ { display:flex; flex-direction:column; gap:var(--s1); }
+.perim-vu { background:var(--surface2); border:1.5px solid var(--border); border-radius:8px;
+  padding:var(--s3); font-size:var(--t-sm); line-height:1.5; color:var(--ink-soft);
+  white-space:pre-line; }
+.perim-vu.vide { color:var(--muted); font-style:italic; }
+.perim-vu.relu { color:var(--accent-deep); }
+.perim-a { display:flex; gap:var(--s2); align-items:center; flex-wrap:wrap; }
+
+/* La reformulation. Pas de poignee : elle grandit avec son texte, et le
+   blanc sous la derniere ligne vaut celui du dessus. */
+.perim-reform { background:rgba(77,107,20,.07); border:1px solid rgba(77,107,20,.22);
+  border-radius:8px; padding:var(--s2) var(--s3); margin-top:var(--s2); }
+.perim-reform textarea { width:100%; background:transparent; border:0; outline:none;
+  resize:none; overflow:hidden; font-family:var(--text); font-size:var(--t-body);
+  line-height:1.5; color:var(--accent-deep); display:block; padding:0;
+  min-height:0; height:auto; }
+
+/* Le bilan. Une ligne ne change jamais de place quand elle change de camp. */
+.perim-bilan { display:flex; flex-direction:column; gap:.4rem; margin-top:var(--s2); }
+.perim-bilan .rangee { display:flex; align-items:center; gap:var(--s2); font-size:var(--t-sm);
+  padding:.4rem .6rem; border:1px solid var(--border); border-radius:8px; background:var(--surface2); }
+.perim-bilan .nom { flex:1; line-height:1.4; }
+.perim-bilan .marq { font-family:var(--mono); font-size:var(--t-meta); padding:2px 8px;
+  border-radius:5px; flex-shrink:0; min-width:62px; text-align:center; }
+.perim-bilan .marq.oui { background:rgba(77,107,20,.12); color:var(--n1); }
+.perim-bilan .marq.non { background:rgba(138,47,47,.09); color:var(--n3); }
+
+/* Le texte enregistre. Modifiable : c'est lui qui part. */
+.perim-assemble { width:100%; margin-top:var(--s2); background:var(--surface2);
+  border:1.5px solid var(--border); border-radius:8px; padding:var(--s3);
+  font-family:var(--text); font-size:var(--t-sm); line-height:1.6; color:var(--ink-soft);
+  outline:none; resize:vertical; min-height:132px; }
+.perim-assemble:focus { border-color:var(--ink); background:var(--surface); color:var(--ink); }
+
+.perim-fen { position:fixed; z-index:71; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:min(860px,calc(100vw - 2.5rem)); max-height:90vh; background:var(--surface);
+  border:1.5px solid var(--border-strong); border-radius:var(--r);
+  box-shadow:0 18px 50px rgba(22,21,15,.25); display:none; flex-direction:column; overflow:hidden; }
+.perim-fen.on { display:flex; }
+.perim-fen-voile { position:fixed; inset:0; background:rgba(22,21,15,.45); z-index:70; display:none; }
+.perim-fen-voile.on { display:block; }
+.perim-fen-tete { padding:var(--s4) var(--s4) var(--s3); border-bottom:1.5px solid var(--border); }
+.perim-fen-tete h2 { font-size:var(--t-lg); }
+.perim-fen-tete .sub { margin-top:.3rem; }
+.perim-fen-tete .sub:empty { display:none; }
+.perim-fen-corps { padding:var(--s4); overflow-y:auto; flex:1;
+  display:flex; flex-direction:column; gap:var(--s4); }
+.perim-fen-pied { padding:var(--s3) var(--s4); border-top:1.5px solid var(--border);
+  background:var(--surface2); display:flex; align-items:center; gap:var(--s2); flex-wrap:wrap; }
+/* Ce qui agit se range a droite ; ce qui informe ou fait marche arriere
+   reste a gauche. Le meme partage que dans une rangee d'actions. */
+.perim-fen-pied .droite { margin-left:auto; display:flex; gap:var(--s2); }
+.t-sec { font-family:var(--mono); font-size:var(--t-meta); color:var(--muted);
+  letter-spacing:.09em; text-transform:uppercase; }
+
+/* ── MAQUETTE — la carte blanche autour d'un formulaire, en option ──
+   Elle enferme le formulaire dans une boite alors que la page en est
+   deja une. Sans elle, les champs se posent directement sur le fond. */
+
+/* La carte d'un formulaire de geste. Une seule definition pour les trois
+   pages : trois copies identiques finissaient par diverger d'un pas. */
+.carte-f { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r);
+  padding:var(--s4); display:flex; flex-direction:column; gap:var(--s4); }
+.modes { display:flex; gap:var(--s1); }
+.apercu { font-family:var(--mono); font-size:var(--t-meta); color:var(--accent-deep); }
+.hint.err { color:var(--danger); }
+.panneau { display:none; flex-direction:column; gap:var(--s4); }
+.panneau.on { display:flex; }
+/* Un bouton d'action se dimensionne a son texte : dans une colonne flexible
+   il s'etirerait sur toute la largeur et passerait pour une barre. */
+.carte-f > .btn, .panneau > .btn { align-self:flex-start; }
+/* Le geste qui conclut le formulaire garde une largeur minimale : reduit a
+   son seul texte, « Creer → » se perdrait sous la carte. */
+.carte-f > .btn-1, .panneau > .btn-1 { min-width:168px; justify-content:center; }
+
+/* Deux encadres cote a cote : leurs contenus se font face parce qu'ils
+   ont la meme forme — un libelle, une commande, une aide — et la meme
+   hauteur, le champ fige valant exactement celle d'une liste. */
+.encadre.serre { padding:var(--s3); }
+/* Un bloc seul sous deux colonnes garde la largeur d'une colonne et se
+   place au milieu : il resume les deux, il ne les surpasse pas. */
+.deux-col > .col-centree { grid-column:1 / -1; width:calc(50% - var(--s3) / 2); margin:0 auto; }
+@media(max-width:700px){ .deux-col > .col-centree { width:100%; } }
+.encadre.serre .fige, .encadre.serre select { min-height:38px; display:flex; align-items:center; }
