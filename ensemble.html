@@ -39,7 +39,7 @@
       <div class="side-grp">Organiser</div>
       <a class="nav-i" href="nouveau-sujet.html"><span class="ico">+</span>Nouveau sujet</a>
       <a class="nav-i" href="modifier-sujet.html"><span class="ico">✎</span>Modifier un sujet</a>
-      <a class="nav-i" href="reorganiser.html"><span class="ico">⇄</span>Réorganiser<span class="n" id="nav-n-props" hidden></span></a>
+      <a class="nav-i" href="reorganiser.html"><span class="ico">✦</span>Améliorer<span class="n" id="nav-n-props" hidden></span></a>
       <div class="side-grp" id="grp-notion" hidden>Notion</div>
       <a class="nav-i" href="#" id="nav-reunions" hidden target="_blank" rel="noopener"><span class="ico">↗</span>Mes réunions</a>
     </nav>
@@ -177,7 +177,7 @@
     if (resume.length) resume.forEach(function (l) {
       var p = document.createElement('p'); p.textContent = l; p.style.marginBottom = '.5rem'; el.appendChild(p);
     });
-    else el.appendChild(rien('Pas encore de synthèse — elle s’écrira au prochain cycle.'));
+    else el.appendChild(rien('Pas encore de synthèse : elle s’écrira au prochain cycle.'));
 
     var sec1 = document.createElement('div'); sec1.className = 'fiche-sec';
     sec1.appendChild(sectionTitre('Échéances'));
@@ -429,7 +429,7 @@
         if (!poserDoc(data) && !docCourant) {
           document.getElementById('fiche').textContent = '';
           var v = document.createElement('div'); v.className = 'alerte-err';
-          v.textContent = 'Ce document n’existe pas — ou pas encore : un ensemble nouveau apparaît après son premier cycle.';
+          v.textContent = 'Ce document n’existe pas, ou pas encore : un ensemble nouveau apparaît après son premier cycle.';
           document.getElementById('fiche').appendChild(v);
         }
       }

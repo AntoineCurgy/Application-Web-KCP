@@ -36,7 +36,7 @@ localStorage.setItem('kcp_session', JSON.stringify({client_id:'…', client_name
 **Il n'y a pas de backend dans ce repo.** Toute la logique métier vit dans des scénarios
 **Make.com** appelés en `POST` JSON depuis le navigateur. `config.js` est le seul point de
 couplage : il déclare `KCP_WEBHOOKS` (un webhook Make par fonctionnalité, commenté avec le nom
-du scénario correspondant). Vingt webhooks, tous appelés par au moins une page.
+du scénario correspondant). Vingt-quatre webhooks, tous appelés par au moins une page.
 
 Les pages, depuis la refonte du 31/08 :
 
@@ -46,10 +46,10 @@ Les pages, depuis la refonte du 31/08 :
 | `ensemble.html`, `sujet.html` | fiches (`?doc=GCPxxx` / `?doc=PCPxxx`) | `carte`, `points_a_clarifier`, `captures`, `reponse_clarification` |
 | `deposer.html`, `interroger.html` | les deux moitiés de l'ancien chat | `chat`, `captures` / `chat`, `history` |
 | `a-clarifier.html` | questions du cycle | `points_a_clarifier`, `reponse_clarification` |
-| `reorganiser.html` | propositions du cycle | `propositions`, `reponse_proposition` |
+| `reorganiser.html` | **Améliorer** : trois onglets, Confirmées / Potentielles / Analyser les périmètres | `propositions`, `reponse_proposition`, `signaux`, `rediger_signal`, `lancer_analyse`, `carte`, `update_perimetre`, `renommer`, `deplacer`, `restructurer`, `creer_tiroir` |
 | `modifier-sujet.html` | six onglets (`?doc=&mode=perim|nom|depl|scinder|fusionner|archiver`) | `update_perimetre`, `renommer`, `deplacer`, `restructurer` |
 | `nouveau-sujet.html`, `nouvel-ensemble.html` | créations (`?nom=&perimetre=` pré-remplit) | `creer_tiroir`, `creer_ensemble` |
-| `initialiser-ia.html` | prompt vers Claude/ChatGPT | `prompt` |
+| `initialiser-ia.html` | prompt vers Claude, Claude MCP, Claude Code ou ChatGPT | `prompt` |
 | `enregistrer-reunion.html` | robot de réunion | `creer_bot` |
 | `informations-capturees(-tout).html` | journal des dépôts | `captures` |
 | `parametres.html` | fenêtre de réglages | `parametres`, `reset_password` |
@@ -57,6 +57,36 @@ Les pages, depuis la refonte du 31/08 :
 
 Ajouter une fonctionnalité back = créer le scénario côté Make, puis ajouter son URL dans
 `KCP_WEBHOOKS` — jamais d'URL de webhook en dur dans une page.
+
+### Le périmètre — une phrase, puis une question à la fois
+
+L'humain n'écrit **qu'une phrase**. `completer_perimetre` lit toute la carte et les résumés des
+fiches, puis rend une reformulation et une dizaine de candidats ; l'humain répond Oui ou Non,
+une question à la fois. Comptez **huit secondes** de latence, mesurées sur quarante et un sujets :
+l'attente doit rester visible.
+
+`KCP_PERIMETRE.champ(hôte, opts)` pose le résumé et le bouton ; `ouvrirFenetre` ouvre **la seule
+et même fenêtre partout**, pré-remplie avec le texte stocké quand il existe. Six emplacements :
+nouveau sujet, nouvel ensemble, l'onglet Périmètre de Modifier un sujet, chaque cible d'une
+scission, l'ensemble d'une scission, et le sujet d'arrivée d'une fusion.
+
+**`vit_dans` s'affiche, il ne s'écrit jamais.** Le CODEX interdit qu'un périmètre nomme un autre
+document, et le moteur qui note retire un point pour ça. Le champ sert d'avertissement de
+recouvrement à l'écran de la question, et disparaît du texte enregistré.
+
+Au stockage : **un seul texte**, deux ancres — `Y entrent : ` et `N'y ont pas leur place : `.
+Aucune colonne ajoutée. Un périmètre ancien sans ancres se charge entièrement dans la phrase.
+
+### Trois pièces partagées de `config.js`
+
+| Fonction | Ce qu'elle fait |
+| --- | --- |
+| `KCP_GESTE(btn, pret, manque)` | **le geste principal n'est jamais `disabled`** — un bouton désactivé ne reçoit aucun clic, donc ne peut rien expliquer. Il porte `.eteint` et `aria-disabled`, reste cliquable, et allume ce qui manque |
+| `KCP_CONFIRMER({titre, lignes, corps, pret, manque, valider, large, danger})` | une fenêtre, avec ou sans formulaire. Rend une promesse. Une fenêtre qui porte une saisie ne se ferme pas d'un clic à côté |
+| `KCP_ENVOYE(mot)` | l'accusé de réception dans le coin haut droit. **Uniquement pour un simple accusé** : quand le message apprend quelque chose, il reste dans la page, là où l'on vient d'agir |
+
+`KCP_SIGNALER(éléments)` allume ce qui reste à remplir : cadre rouge, deux clignotements, focus
+sur le premier. Les deux premières fonctions s'en servent.
 
 ### Session et multi-tenant
 
@@ -124,8 +154,23 @@ dépôt au **SAS** ; la page affiche alors son propre message (« le système ra
 ## Conventions CSS
 
 `base.css` porte la palette (`:root`), les trois polices à trois rôles (Syne = marque seule,
-système = texte et titres, DM Mono = données), six tailles (12/14/16/20/24/32) et toutes les
-classes partagées, sections v3 à v14. Il est chargé **avant** le `<style>` de chaque page.
+système = texte et titres, DM Mono = données), six tailles et toutes les classes partagées.
+
+**Deux échelles typographiques**, et c'est voulu : `:root` porte celle du contenu
+(11 / 12.5 / 14 / 17 / 21 / 27) et `.side` garde la précédente (12 / 14 / 16 / 20 / 24 / 32).
+La barre latérale est un chrome de navigation, pas du contenu ; ses entrées valent alors
+exactement la taille du texte courant, ce qui la rend lisible sans la faire peser.
+
+**Le niveau** — `.n1` `.n2` `.n3` — dit l'urgence par la couleur, et `.j1` `.j2` `.j3` comptent
+les barres de la jauge. Les deux sont **indépendants** : une importance élevée allume trois
+barres en rouge, un périmètre solide trois barres en vert. Chaque niveau expose `--niv`,
+`--niv-bg` et `--niv-br`, que tout composant lit sans jamais nommer un rouge ou un vert.
+
+**Des frères qui se masquent s'espacent par `gap`, jamais par `margin`** : `display:none` ne
+retire pas un élément de la fratrie, et `.a + .a { margin-top }` mord quand même.
+
+`background` en raccourci sur `:focus` efface le chevron d'un `<select>`, peint en
+`background-image` : utiliser `background-color`. Il est chargé **avant** le `<style>` de chaque page.
 
 Une page qui doit dévier **ne modifie pas `base.css`** — elle redéfinit la règle chez elle.
 Ne toucher à `base.css` que pour un changement voulu sur toutes les pages. `[hidden]` y gagne
@@ -143,5 +188,14 @@ La barre latérale est dupliquée dans chaque page (motif assumé du site) : seu
   construits dans la page).
 - Le code est en JS navigateur natif, style conservateur (`var`/`function`, pas de modules,
   pas d'import). Rester dans cet idiome.
-- Valider avant PR : équilibre local des balises + `node --check` des scripts en ligne, puis le
-  validateur W3C (`validator.w3.org/nu`, espacer les appels de 26 s — quota Cloudflare long).
+- Valider avant PR : équilibre local des balises + `node --check` des scripts en ligne, croiser
+  les `getElementById` avec les `id` réellement présents, puis le validateur W3C
+  (`validator.w3.org/nu`, espacer les appels de 26 s — quota Cloudflare long).
+- **Un faux positif connu du validateur**, sur `interroger.html` : *« CSS: height: The types
+  are incompatible »* pour `calc(100vh - 2 * var(--s5))`. Son vérificateur CSS ne résout pas
+  `var()`, donc ne peut pas typer l'opération. La règle réelle — MDN, `calc()` — autorise
+  **un seul opérande porteur d'unité** dans une multiplication, et `2` n'en porte pas.
+  Ne rien corriger.
+- **Cinq pages portent des champs hors `<form>`** — `enregistrer-reunion`, `modifier-sujet`,
+  `nouveau-sujet`, `nouvel-ensemble`, `parametres`. La touche Entrée n'y valide pas. Connu,
+  pas corrigé.

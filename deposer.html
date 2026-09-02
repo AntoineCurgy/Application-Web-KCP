@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="base.css">
 <script src="config.js"></script>
 <style>
-  .z { max-width:860px; }
+  .z { max-width:1000px; }
   .depot { background:var(--surface); border:1.5px solid var(--border-strong); border-radius:var(--r);
     padding:var(--s4); display:flex; flex-direction:column; gap:var(--s3); }
   .depot textarea { width:100%; min-height:200px; border:none; outline:none; resize:vertical;
@@ -41,7 +41,7 @@
       <div class="side-grp">Organiser</div>
       <a class="nav-i" href="nouveau-sujet.html"><span class="ico">+</span>Nouveau sujet</a>
       <a class="nav-i" href="modifier-sujet.html"><span class="ico">✎</span>Modifier un sujet</a>
-      <a class="nav-i" href="reorganiser.html"><span class="ico">⇄</span>Réorganiser<span class="n" id="nav-n-props" hidden></span></a>
+      <a class="nav-i" href="reorganiser.html"><span class="ico">✦</span>Améliorer<span class="n" id="nav-n-props" hidden></span></a>
       <div class="side-grp" id="grp-notion" hidden>Notion</div>
       <a class="nav-i" href="#" id="nav-reunions" hidden target="_blank" rel="noopener"><span class="ico">↗</span>Mes réunions</a>
     </nav>
@@ -57,12 +57,14 @@
       <div><h1>Déposer</h1>
       <p class="sub" style="margin-top:.4rem">Déposez ici une information que vous souhaitez enregistrer.</p></div>
 
+      <div class="duo">
+        <div class="stack">
       <div class="depot">
         <label for="d" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(100%)">Ce que vous savez</label>
         <textarea id="d" placeholder="En fait je me suis trompé, le budget 2026 est de 15 000 euros, pas 12 000. Julien me l'a confirmé hier."></textarea>
         <div class="pied-depot">
           <div class="rangee-cible"><label for="rd">Ranger dans</label>
-            <select id="rd"><option value="">Laisser le système choisir</option></select></div>
+            <select id="rd"></select></div>
           <button class="btn btn-1" id="go">Déposer →</button>
         </div>
       </div>
@@ -70,12 +72,26 @@
       <div class="confirme" id="ok" hidden><span>✓</span><span id="ok-txt"></span></div>
       <div class="alerte-err" id="err" hidden><span>›</span><span id="err-txt"></span></div>
 
-      <div class="note"><span>›</span><span>Un dépôt est absorbé au cycle suivant, <b>chaque nuit</b>. Si vous ne choisissez pas de sujet, le système le route lui-même — et le met de côté s'il hésite.</span></div>
-
       <div>
         <div class="ligne-titre"><div class="sect-title">Vos derniers dépôts</div>
           <a class="meta" href="informations-capturees.html" style="color:var(--accent-deep)">tout voir</a></div>
         <div class="recents" id="recents"><div class="chargement">Chargement…</div></div>
+      </div>
+        </div>
+        <aside>
+          <div class="aside-b cle">
+            <div class="sect-h" style="margin-bottom:var(--s2)">À savoir</div>
+            <p><b>Un dépôt est absorbé au cycle suivant, chaque nuit.</b> Il n'apparaît donc pas tout de suite dans le sujet.</p>
+          </div>
+          <div class="aside-b">
+            <div class="sect-h" style="margin-bottom:var(--s2)">Ce qui se passe ensuite</div>
+            <div class="etapes">
+              <span class="n">1</span><span class="x">Le dépôt est enregistré immédiatement et vous le voyez ci-dessous.</span>
+              <span class="n">2</span><span class="x">Cette nuit, le cycle le lit et l'écrit dans le sujet visé.</span>
+              <span class="n">3</span><span class="x">Si vous n'avez pas choisi de sujet, le système le route lui-même, et le met de côté s'il hésite.</span>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   </main>
@@ -103,19 +119,13 @@
   (function chargerCibles() {
     kcpLoadTiroirs().then(function (data) {
       var sel = document.getElementById('rd');
-      var pret = function (t) { return String(t.attente_cycle || '').toLowerCase() !== 'oui'; };
-      var pcp = (data.pcp || []).filter(pret);
-      var gcp = (data.gcp || []).filter(pret);
-      pcp.concat(gcp).forEach(function (t) { if (t.doc_int_id) labels[t.doc_int_id] = kcpDocLabel(t); });
-      pcp.forEach(function (t) {
-        var o = document.createElement('option');
-        o.value = t.nom_tiroir; o.textContent = '#' + t.nom_tiroir;
-        sel.appendChild(o);
+      ((data.pcp || []).concat(data.gcp || [])).forEach(function (t) {
+        if (t.doc_int_id) labels[t.doc_int_id] = kcpDocLabel(t);
       });
-      gcp.forEach(function (t) {
-        var o = document.createElement('option');
-        o.value = t.nom_tiroir; o.textContent = kcpDocLabel(t);
-        sel.appendChild(o);
+      // La liste montre l'arbre : chaque sujet sous son nœud.
+      kcpRemplirHierarchie(sel, data, {
+        valeur: 'nom', avecNoeuds: true,
+        tete: [{ valeur: '', texte: 'Laisser le système choisir' }]
       });
       rendreRecents(kcpReadCapturesCache());
     }).catch(function () { /* la liste par défaut reste : le système choisit */ });
@@ -216,7 +226,7 @@
       document.getElementById('d').value = '';
       rafraichirRecents();
     } catch (e) {
-      document.getElementById('err-txt').textContent = 'Le dépôt n’a pas pu partir. Votre texte est conservé — réessayez.';
+      document.getElementById('err-txt').textContent = 'Le dépôt n’a pas pu partir. Votre texte est conservé, réessayez.';
       document.getElementById('err').hidden = false;
     }
     kcpOccupe(btn, false);

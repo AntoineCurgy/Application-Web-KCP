@@ -27,6 +27,13 @@ const KCP_WEBHOOKS = {
   propositions: 'https://hook.eu2.make.com/w7a7cjlruolk1l6lecayiy5k8c8rqt6t', // Make: KCP - WebApp - Propositions
   reponse_proposition: 'https://hook.eu2.make.com/lp4hd6igjskrirfp29ma2fsuv58c43fo', // Make: KCP - WebApp - Reponse Proposition
   parametres: 'https://hook.eu2.make.com/vch7qngui955s1ux6kfu5h6u26h39hx3', // Make: KCP - WebApp - Parametres
+  completer_perimetre: 'https://hook.eu2.make.com/dk8ww888lghieii868ttg6hc4u99jmuy', // Make: KCP - Perimetre Completer
+  signaux: 'https://hook.eu2.make.com/w2h121ktmb0nrrrshh982w17chte1k4o', // Make: KCP - WebApp - Signaux
+  rediger_signal: 'https://hook.eu2.make.com/m5mgc1tuzlsrdth7iz4hiisp2z96t5q2', // Make: KCP - WebApp - Reponse Signal
+  // Ce webhook LANCE l'analyse et repond aussitot. Il ne rend aucun resultat :
+  // le scenario met quatre minutes sur quarante et un sujets. Ce qu'il produit
+  // se lit ensuite dans `carte.perimetre_niveau` et dans `propositions`.
+  lancer_analyse: 'https://hook.eu2.make.com/bm574i7x334fhu7y667r4n77kf2zuk3t', // Make: KCP - Analyse Perimetres
 };
 
 // Guide d'utilisation, Google Doc partage en lecture. L'identifiant d'un
@@ -366,7 +373,7 @@ var KCP_FICHE = (function () {
     var lab = document.createElement('span'); lab.className = 'f-q-t';
     lab.textContent = qs.length > 1 ? 'questions ouvertes' : 'question ouverte';
     var sub = document.createElement('span'); sub.className = 'sub';
-    sub.textContent = '— y répondre met ce document à jour au cycle suivant.';
+    sub.textContent = 'Y répondre met ce document à jour au cycle suivant.';
     t.appendChild(n); t.appendChild(lab); t.appendChild(sub);
     b.appendChild(t);
     var ul = document.createElement('ul'); ul.className = 'f-q-liste';
@@ -419,7 +426,7 @@ var KCP_FICHE = (function () {
     if (qs.length) {
       document.getElementById('kcp-f-notif-n').textContent = qs.length;
       var lbl = qs.length + (qs.length > 1 ? ' questions ouvertes' : ' question ouverte') +
-        ' — aller au bloc de réponse';
+        ', aller au bloc de réponse';
       notif.setAttribute('aria-label', lbl); notif.title = lbl;
       notif.hidden = false;
     } else { notif.hidden = true; }
@@ -437,7 +444,7 @@ var KCP_FICHE = (function () {
     var resume = lignes(doc.fiche_resume);
     if (resume.length) resume.forEach(function (l) {
       var p = document.createElement('p'); p.textContent = l; p.style.marginBottom = '.5rem'; c.appendChild(p);
-    }); else c.appendChild(rien('Pas encore de synthèse — elle s’écrira au prochain cycle.'));
+    }); else c.appendChild(rien('Pas encore de synthèse : elle s’écrira au prochain cycle.'));
 
     var ech = lignes(doc.fiche_echeances);
     c.appendChild(titre('Échéances'));
@@ -467,3 +474,672 @@ var KCP_FICHE = (function () {
 
   return { ouvrir: ouvrir, fermer: fermer };
 })();
+
+// ─────────────────────────────────────────────────────────────
+// Le périmètre en trois questions.
+// Trois champs à la saisie, UN SEUL TEXTE au stockage : rien ne change
+// au référentiel, aucun scénario n'est touché, le CODEX est inchangé.
+// Les deux marqueurs servent d'ancres pour redécouper à la relecture.
+// ─────────────────────────────────────────────────────────────
+var KCP_PERIMETRE = (function () {
+  var ANCRE_E = 'Y entrent : ';
+  var ANCRE_R = "N'y ont pas leur place : ";
+
+  // Une énumération de phrases : chacune commence par une majuscule. Le
+  // redécoupage sépare sur « point puis espace », la capitale survit donc à
+  // l'aller-retour et le texte se lit sans buter à chaque point.
+  function majuscule(x) {
+    var t = String(x || '').trim();
+    return t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+  }
+
+  function assembler(v) {
+    function liste(x) { return x.map(majuscule).join('. ') + '.'; }
+    var t = [];
+    if (v.objet) t.push(majuscule(v.objet));
+    if (v.entre.length) t.push(ANCRE_E + liste(v.entre));
+    if (v.refuse.length) t.push(ANCRE_R + liste(v.refuse));
+    return t.join('\n');
+  }
+
+  // Un périmètre ancien ne porte aucune ancre : il se charge entièrement
+  // dans le champ 1. C'est le comportement correct, pas un repli.
+  function redecouper(txt) {
+    var s = String(txt || '');
+    var iE = s.indexOf(ANCRE_E), iR = s.indexOf(ANCRE_R);
+    if (iE < 0 && iR < 0) return { objet: s.trim(), entre: [], refuse: [] };
+    var fin = iR >= 0 ? iR : s.length;
+    function couper(x) {
+      return String(x).split(/\.\s+|\.$|\n/).map(function (y) { return y.trim(); }).filter(Boolean);
+    }
+    return {
+      objet: s.slice(0, iE >= 0 ? iE : fin).trim(),
+      entre: iE >= 0 ? couper(s.slice(iE + ANCRE_E.length, fin)) : [],
+      refuse: iR >= 0 ? couper(s.slice(iR + ANCRE_R.length)) : []
+    };
+  }
+
+  // ── Une liste : un champ par entrée. La première ne se retire jamais ──
+  return { assembler: assembler, redecouper: redecouper };
+})();
+
+// ─────────────────────────────────────────────────────────────
+// Une liste de sujets qui montre la hiérarchie.
+// Le nœud en titre de groupe, ses sujets dessous par ordre alphabétique.
+// `optgroup` est le motif standard d'une liste hiérarchique : lu
+// correctement par les lecteurs d'écran, aucun code de mise en page.
+//
+//   sel     — le <select> à remplir (il est vidé)
+//   data    — la réponse du webhook `tiroirs`
+//   opts.valeur    — ce que porte chaque option : 'id' (défaut) ou 'nom'
+//   opts.vide      — le libellé d'une première option vide, s'il en faut une
+//   opts.exclure   — un doc_int_id à ne pas proposer
+//   opts.filtre    — un test supplémentaire sur chaque sujet
+//   opts.tete      — des options libres avant les groupes, [{valeur, texte}]
+// ─────────────────────────────────────────────────────────────
+function kcpRemplirHierarchie(sel, data, opts) {
+  opts = opts || {};
+  sel.textContent = '';
+
+  if (opts.vide) {
+    var o0 = document.createElement('option');
+    o0.value = ''; o0.textContent = opts.vide;
+    sel.appendChild(o0);
+  }
+  (opts.tete || []).forEach(function (x) {
+    var o = document.createElement('option');
+    o.value = x.valeur; o.textContent = x.texte;
+    sel.appendChild(o);
+  });
+
+  var pret = function (t) { return String(t.attente_cycle || '').toLowerCase() !== 'oui'; };
+  var sujets = (data.pcp || []).filter(pret).filter(function (t) {
+    if (opts.exclure && t.doc_int_id === opts.exclure) return false;
+    return opts.filtre ? opts.filtre(t) : true;
+  });
+  var noeuds = (data.gcp || []).filter(pret);
+
+  // Les nœuds dans l'ordre de la carte : la racine d'abord, puis les autres
+  // par ordre alphabétique — le même ordre que l'arbre de l'accueil.
+  var racine = noeuds.filter(function (n) { return (n.parent || '') === 'N/A'; });
+  var autres = noeuds.filter(function (n) { return (n.parent || '') !== 'N/A'; })
+    .sort(function (a, b) {
+      return kcpDocLabel(a).localeCompare(kcpDocLabel(b), 'fr', { sensitivity: 'base' });
+    });
+
+  function ajouter(n) {
+    var dessous = sujets.filter(function (t) { return t.parent === n.doc_int_id; })
+      .sort(function (a, b) {
+        return kcpDocLabel(a).localeCompare(kcpDocLabel(b), 'fr', { sensitivity: 'base' });
+      });
+    // Un nœud proposable apparaît comme première entrée de son propre groupe.
+    var noeudProposable = opts.avecNoeuds && (!opts.exclure || n.doc_int_id !== opts.exclure);
+    if (!dessous.length && !noeudProposable) return;
+    var g = document.createElement('optgroup');
+    g.label = kcpDocLabel(n) + ((n.parent || '') === 'N/A' ? ' — la racine' : '');
+    if (noeudProposable) {
+      var on = document.createElement('option');
+      on.value = opts.valeur === 'nom' ? n.nom_tiroir : n.doc_int_id;
+      on.textContent = kcpDocLabel(n);
+      g.appendChild(on);
+    }
+    dessous.forEach(function (t) {
+      var o = document.createElement('option');
+      o.value = opts.valeur === 'nom' ? t.nom_tiroir : t.doc_int_id;
+      o.textContent = kcpDocLabel(t);
+      g.appendChild(o);
+    });
+    sel.appendChild(g);
+  }
+  racine.concat(autres).forEach(ajouter);
+}
+
+// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Dit qu'un geste est parti, et rien de plus. Le mot s'affiche dans le coin
+// haut droit, sur la ligne du titre, puis s'efface.
+//
+// À n'utiliser QUE pour un simple accusé de réception. Quand le message
+// apprend quelque chose — « les cartes des deux ensembles seront à jour au
+// prochain cycle » —, il reste dans la page, à l'endroit où l'on vient
+// d'agir : c'est là qu'on le lit.
+// ─────────────────────────────────────────────────────────────
+function KCP_ENVOYE(mot) {
+  var e = document.getElementById('kcp-envoye');
+  if (!e) return;
+  e.textContent = '';
+  var c = document.createElement('span'); c.className = 'c'; c.textContent = '✓';
+  e.appendChild(c);
+  e.appendChild(document.createTextNode(mot || 'Envoyé'));
+  e.hidden = false;
+  // Le passage par un cadre d'animation laisse la transition s'accrocher :
+  // poser la classe dans la même tâche que `hidden = false` ne montre rien.
+  requestAnimationFrame(function () { e.classList.add('on'); });
+  clearTimeout(e._t);
+  e._t = setTimeout(function () {
+    e.classList.remove('on');
+    setTimeout(function () { e.hidden = true; }, 220);
+  }, 2600);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Éteint un geste sans le rendre muet. `disabled` empêche le clic, donc
+// empêche aussi d'expliquer : le bouton passe en `aria-disabled`, garde son
+// clic, et va montrer ce qui manque. Standard du site.
+//   btn      le geste principal
+//   pret     () => bool
+//   manque   () => [éléments à allumer]
+// ─────────────────────────────────────────────────────────────
+function KCP_GESTE(btn, pret, manque) {
+  if (!btn) return function () {};
+  btn.disabled = false;
+  btn.addEventListener('click', function (e) {
+    if (pret()) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    KCP_SIGNALER(manque ? manque() : []);
+  }, true);
+  return function () {
+    var p = pret();
+    btn.classList.toggle('eteint', !p);
+    btn.setAttribute('aria-disabled', p ? 'false' : 'true');
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Signale ce qui reste à remplir. Le standard du site : un geste qui refuse
+// de partir n'est jamais muet, il montre où ça coince — et il y emmène.
+// ─────────────────────────────────────────────────────────────
+function KCP_SIGNALER(elements) {
+  var l = (elements || []).filter(Boolean);
+  if (!l.length) return;
+  l.forEach(function (e) {
+    e.classList.remove('a-completer');
+    // Relancer l'animation demande de la redéclencher : sans cette lecture,
+    // le navigateur regroupe le retrait et l'ajout et rien ne clignote.
+    void e.offsetWidth;
+    e.classList.add('a-completer');
+    setTimeout(function () { e.classList.remove('a-completer'); }, 2000);
+  });
+  var p = l[0];
+  if (p.scrollIntoView) p.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  var f = p.matches('input, select, textarea') ? p : p.querySelector('input, select, textarea, button');
+  if (f && f.focus) f.focus();
+}
+
+// ─────────────────────────────────────────────────────────────
+// Une confirmation. Rend une promesse : true si l'utilisateur valide.
+// Un geste irréversible se confirme ; un geste qui se défait, jamais —
+// sinon la confirmation devient un réflexe et ne protège plus rien.
+//   opts.titre    la question, à la deuxième personne
+//   opts.lignes   ce que le geste fait vraiment, une idée par ligne
+//   opts.corps    un élément à insérer sous les lignes (un formulaire)
+//   opts.pret     () => bool, dit si le bouton d'action est actionnable
+//   opts.manque   () => [éléments], ce qui reste à remplir. Cliquer le geste
+//                 quand il n'est pas prêt les allume au lieu de ne rien faire
+//   opts.valider  le libellé du bouton qui agit (défaut : Valider)
+//   opts.large    élargit la fenêtre, pour un formulaire à deux colonnes
+//   opts.danger   colore ce bouton en rouge
+// ─────────────────────────────────────────────────────────────
+function KCP_CONFIRMER(opts) {
+  opts = opts || {};
+  return new Promise(function (resoudre) {
+    var voile = document.createElement('div'); voile.className = 'pop-voile on';
+    var pop = document.createElement('div'); pop.className = 'pop on';
+    pop.setAttribute('role', 'dialog');
+    pop.setAttribute('aria-modal', 'true');
+
+    var t = document.createElement('h2'); t.className = 'pop-t';
+    t.id = 'kcp-conf-t'; t.textContent = opts.titre || 'Confirmer ?';
+    pop.setAttribute('aria-labelledby', t.id);
+    pop.appendChild(t);
+
+    var c = document.createElement('div'); c.className = 'pop-c';
+    (opts.lignes || []).forEach(function (x) {
+      var l = document.createElement('p'); l.textContent = x; c.appendChild(l);
+    });
+    pop.appendChild(c);
+    if (opts.large) pop.classList.add('large');
+    if (opts.corps) pop.appendChild(opts.corps);
+
+    var a = document.createElement('div'); a.className = 'pop-a';
+    var annuler = document.createElement('button');
+    annuler.type = 'button'; annuler.className = 'btn'; annuler.textContent = 'Annuler';
+    var ok = document.createElement('button');
+    ok.type = 'button';
+    ok.className = 'btn ' + (opts.danger ? 'btn-danger-plein' : 'btn-1');
+    ok.textContent = opts.valider || 'Valider';
+    a.appendChild(annuler); a.appendChild(ok);
+    pop.appendChild(a);
+
+    // Le focus part dans la fenêtre et revient d'où il venait : sans cela,
+    // une fenêtre modale est un cul-de-sac au clavier.
+    var avant = document.activeElement;
+    function fermer(reponse) {
+      document.removeEventListener('keydown', clavier, true);
+      voile.remove(); pop.remove();
+      if (avant && avant.focus) avant.focus();
+      resoudre(reponse);
+    }
+    function clavier(e) {
+      // Une fenetre peut en ouvrir une autre (le perimetre, par exemple).
+      // Celle qui ne porte pas le focus se tait : sans cela, la seconde est
+      // inutilisable au clavier et Echap ferme la mauvaise.
+      if (!pop.contains(document.activeElement)) return;
+      if (e.key === 'Escape') { e.preventDefault(); fermer(false); return; }
+      if (e.key !== 'Tab') return;
+      var f = pop.querySelectorAll('button:not([disabled]), input, textarea, select');
+      var premier = f[0], dernier = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === premier) { e.preventDefault(); dernier.focus(); }
+      else if (!e.shiftKey && document.activeElement === dernier) { e.preventDefault(); premier.focus(); }
+    }
+    annuler.addEventListener('click', function () { fermer(false); });
+    ok.addEventListener('click', function () {
+      if (!ok.classList.contains('eteint')) return fermer(true);
+      // Le geste ne part pas, mais il dit pourquoi : ce qui reste à remplir
+      // s'allume. Un bouton qui ne répond rien fait chercher au mauvais endroit.
+      KCP_SIGNALER(opts.manque ? opts.manque() : []);
+    });
+    // Un clic à côté ne ferme pas une fenêtre qui porte une saisie : ce qui
+    // est tapé ne s'efface jamais par accident.
+    if (!opts.corps) voile.addEventListener('click', function () { fermer(false); });
+    document.addEventListener('keydown', clavier, true);
+
+    // Le bouton d'action refuse le clic tant que le formulaire ne tient pas.
+    if (opts.pret) {
+      // Éteint, mais pas `disabled` : un bouton désactivé ne reçoit aucun
+      // clic, donc ne peut rien expliquer.
+      var jauger = function () {
+        var pret = opts.pret();
+        ok.classList.toggle('eteint', !pret);
+        ok.setAttribute('aria-disabled', pret ? 'false' : 'true');
+      };
+      pop.addEventListener('input', jauger);
+      pop.addEventListener('change', jauger);
+      pop.addEventListener('kcp-maj', jauger);
+      jauger();
+    }
+
+    document.body.appendChild(voile);
+    document.body.appendChild(pop);
+    if (opts.corps) {
+      var premier = opts.corps.querySelector('input, textarea, select, button');
+      (premier || annuler).focus();
+    } else {
+      annuler.focus();
+    }
+  });
+}
+
+// Le périmètre en fenêtre : la même pièce partout.
+// Sur la page : ce qui est défini se lit, un bouton ouvre la fenêtre.
+// Trois questions répétées trois fois sur un écran étaient illisibles ;
+// et un périmètre se pense d'un bloc, pas en marge d'autre chose.
+// ─────────────────────────────────────────────────────────────
+KCP_PERIMETRE.champ = function (hote, opts) {
+  opts = opts || {};
+  var texte = opts.valeur || '';
+  var relu = false;
+
+  var c = document.createElement('div'); c.className = 'perim-champ';
+  var vu = document.createElement('div'); vu.className = 'perim-vu';
+  var act = document.createElement('div'); act.className = 'perim-a';
+  var btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'btn btn-s';
+  act.appendChild(btn);
+  c.appendChild(vu); c.appendChild(act);
+  hote.appendChild(c);
+
+  function peindre() {
+    vu.classList.toggle('vide', !texte);
+    vu.classList.toggle('relu', relu);
+    vu.textContent = texte || 'Périmètre non défini';
+    btn.textContent = texte ? 'Modifier le périmètre' : 'Définir le périmètre';
+    if (opts.onChange) opts.onChange();
+  }
+
+  btn.addEventListener('click', function () {
+    KCP_PERIMETRE.ouvrirFenetre({
+      valeur: texte, ensemble: opts.ensemble,
+      doc: typeof opts.doc === 'function' ? opts.doc() : opts.doc,
+      titre: opts.titre || (opts.ensemble ? 'Périmètre de l’ensemble' : 'Périmètre du sujet'),
+      voisins: opts.voisins ? opts.voisins() : null,
+      libelle: opts.libelle || 'Valider ce périmètre',
+      onValider: function (t, estRelu) { texte = t; relu = estRelu; peindre(); }
+    }, btn);
+  });
+
+  peindre();
+  return {
+    texte: function () { return texte; },
+    poser: function (t) { texte = t || ''; relu = false; peindre(); },
+    valide: function () { return texte.trim().length > 0; }
+  };
+};
+
+// ─────────────────────────────────────────────────────────────
+// La fenêtre du périmètre. Une phrase, puis une question à la fois.
+//
+// L'ancienne version demandait trois champs et deux listes : c'était faire
+// faire à l'humain le travail du système. Il n'écrit plus qu'une phrase ;
+// le scénario lit toute la carte et les résumés des fiches, propose une
+// reformulation et une dizaine de candidats déjà tranchés, et l'humain se
+// contente de répondre oui ou non.
+//
+// Le contrat de stockage ne bouge pas : un seul texte, les deux ancres.
+// ─────────────────────────────────────────────────────────────
+KCP_PERIMETRE.MIN_PHRASE = 50;
+
+KCP_PERIMETRE.ouvrirFenetre = function (opts, ouvreur) {
+  var voile = document.getElementById('kcp-perim-voile');
+  var fen = document.getElementById('kcp-perim-fen');
+  if (!fen) {
+    voile = document.createElement('div');
+    voile.className = 'perim-fen-voile'; voile.id = 'kcp-perim-voile';
+    fen = document.createElement('div');
+    fen.className = 'perim-fen'; fen.id = 'kcp-perim-fen';
+    fen.setAttribute('role', 'dialog'); fen.setAttribute('aria-modal', 'true');
+    fen.setAttribute('aria-labelledby', 'kcp-perim-titre');
+    fen.innerHTML =
+      '<div class="perim-fen-tete">' +
+        '<h2 id="kcp-perim-titre"></h2>' +
+        '<p class="sub" id="kcp-perim-sous"></p>' +
+      '</div>' +
+      '<div class="perim-fen-corps" id="kcp-perim-corps"></div>' +
+      '<div class="perim-fen-pied" id="kcp-perim-pied"></div>';
+    document.body.appendChild(voile);
+    document.body.appendChild(fen);
+  }
+
+  var titre = document.getElementById('kcp-perim-titre');
+  var sous = document.getElementById('kcp-perim-sous');
+  var corps = document.getElementById('kcp-perim-corps');
+  var pied = document.getElementById('kcp-perim-pied');
+  titre.textContent = opts.titre || 'Périmètre';
+
+  function el(t, c, txt) {
+    var e = document.createElement(t);
+    if (c) e.className = c;
+    if (txt !== undefined) e.textContent = txt;
+    return e;
+  }
+  function tsec(x) { return el('div', 't-sec', x); }
+  function vider() { corps.textContent = ''; pied.textContent = ''; corps.scrollTop = 0; }
+
+  function fermer() {
+    voile.classList.remove('on'); fen.classList.remove('on');
+    document.removeEventListener('keydown', echap, true);
+    if (ouvreur && ouvreur.focus) ouvreur.focus();
+  }
+  function echap(e) {
+    if (e.key === 'Escape' && fen.classList.contains('on')) { e.preventDefault(); fermer(); }
+  }
+  // Une saisie en cours ne s'efface pas d'un clic à côté.
+  voile.onclick = null;
+  document.addEventListener('keydown', echap, true);
+
+  // ── Étape 1 · la phrase ────────────────────────────────────
+  function etapeGraine(depart) {
+    vider();
+    sous.textContent = 'Décrivez ce que ce sujet couvre. Plus vous êtes précis et '
+      + 'complet, plus ce que le système vous proposera sera juste.';
+
+    var z = el('textarea', 'perim-graine');
+    z.value = depart || '';
+    z.placeholder = opts.ensemble
+      ? 'Cet ensemble regroupe tout ce qui touche à mes finances personnelles : le patrimoine, les placements, la fiscalité.'
+      : 'Je veux un sujet qui suive mes investissements immobiliers : les biens, leur financement, leur rendement.';
+    z.setAttribute('aria-label', 'Ce que ce sujet couvre');
+    corps.appendChild(z);
+
+    var att = el('div', 'perim-attente'); att.hidden = true;
+    att.appendChild(el('span', 'perim-rond'));
+    var msg = el('span', '', '');
+    att.setAttribute('role', 'status'); att.setAttribute('aria-live', 'polite');
+    att.appendChild(msg);
+    corps.appendChild(att);
+
+    var compteur = el('span', 'sub', '');
+    var annuler = el('button', 'btn', 'Annuler');
+    annuler.type = 'button'; annuler.addEventListener('click', fermer);
+    var go = el('button', 'btn btn-1', '✦ Compléter');
+    go.type = 'button';
+    var droite = el('div', 'droite');
+    droite.appendChild(annuler); droite.appendChild(go);
+    pied.appendChild(compteur); pied.appendChild(droite);
+
+    function etat() {
+      var n = z.value.trim().length;
+      var manque = KCP_PERIMETRE.MIN_PHRASE - n;
+      go.disabled = manque > 0;
+      compteur.textContent = manque > 0
+        ? 'Encore ' + manque + ' caractère' + (manque > 1 ? 's' : '')
+        : '';
+    }
+    z.addEventListener('input', etat);
+    etat();
+
+    go.addEventListener('click', function () {
+      go.disabled = true; annuler.disabled = true; z.disabled = true;
+      att.hidden = false;
+      // Mesure sur quarante et un sujets : huit secondes, pas trois.
+      var n = 9;
+      function dire() {
+        msg.textContent = n > 0
+          ? 'Le système lit votre carte et les résumés de vos sujets… ' + n + ' s'
+          : 'Presque…';
+      }
+      dire();
+      var tic = setInterval(function () { n -= 1; dire(); }, 1000);
+      completer(z.value.trim(), function (p) {
+        clearInterval(tic);
+        annuler.disabled = false;
+        if (!p) {
+          att.hidden = true; z.disabled = false; go.disabled = false;
+          var e = el('div', 'alerte-err');
+          e.appendChild(el('span', '', '›'));
+          e.appendChild(el('span', '', 'Le système n’a pas répondu. Réessayez, '
+            + 'ou écrivez le périmètre vous-même.'));
+          corps.appendChild(e);
+          // Un champ qui appartient à l'humain ne dépend jamais d'une
+          // machine pour être écrit : la sortie manuelle reste ouverte.
+          var manuel = el('button', 'btn btn-s', 'Écrire le périmètre moi-même');
+          manuel.type = 'button';
+          manuel.addEventListener('click', function () {
+            etapeTexte(z.value.trim(), [], []);
+          });
+          corps.appendChild(manuel);
+          return;
+        }
+        etapeQuestions(p);
+      });
+    });
+
+    z.focus();
+  }
+
+  // ── L'appel au scénario ────────────────────────────────────
+  function completer(phrase, suite) {
+    var url = KCP_WEBHOOKS.completer_perimetre;
+    if (!url) return suite(null);
+    kcpFetch(url, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id_client: KCP_CONFIG.client_id, phrase: phrase,
+        doc_int_id: opts.doc || '', ensemble: !!opts.ensemble
+      })
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.text();
+    }).then(function (raw) {
+      var c = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      var d = JSON.parse(c);
+      if (!d || !d.candidats || !d.candidats.length) throw new Error('vide');
+      suite(d);
+    }).catch(function () { suite(null); });
+  }
+
+  // ── Étape 2 · une question à la fois ───────────────────────
+  function etapeQuestions(p) {
+    vider();
+    sous.textContent = '';
+    var oui = [], non = [], i = 0;
+    var reform = String(p.reformulation || '').trim();
+
+    var annuler = el('button', 'btn', 'Annuler');
+    annuler.type = 'button'; annuler.addEventListener('click', fermer);
+    var droite = el('div', 'droite'); droite.appendChild(annuler);
+    var etat = el('span', 'sub', '');
+    pied.appendChild(etat); pied.appendChild(droite);
+
+    function poser() {
+      corps.textContent = '';
+      if (i >= p.candidats.length) return etapeTexte(reform, oui, non);
+      var it = p.candidats[i];
+      etat.textContent = 'question ' + (i + 1) + ' sur ' + p.candidats.length;
+
+      var c = el('div', 'perim-une');
+      var pts = el('div', 'perim-points');
+      p.candidats.forEach(function (x, k) {
+        var d = el('i');
+        d.className = k < i ? 'fait' : (k === i ? 'ici' : '');
+        pts.appendChild(d);
+      });
+      c.appendChild(pts);
+      c.appendChild(el('div', 'q', '« ' + it.texte + ' »'));
+      // `vit_dans` est un AVERTISSEMENT, jamais une part du texte. Le CODEX
+      // interdit qu'un périmètre nomme un autre document, et le moteur qui
+      // note retire un point pour ça : le nom se montre, il ne s'enregistre pas.
+      if (it.vit_dans) {
+        var av = el('div', 'perim-recouvre');
+        var ic = el('span', 'ic', '⚠'); ic.setAttribute('aria-hidden', 'true');
+        av.appendChild(ic);
+        var tx = el('div');
+        var l1 = el('div', 'l1');
+        l1.appendChild(document.createTextNode('Cette matière est déjà dans '));
+        var b2 = document.createElement('b'); b2.textContent = it.vit_dans;
+        l1.appendChild(b2); l1.appendChild(document.createTextNode('.'));
+        tx.appendChild(l1);
+        tx.appendChild(el('div', 'l2', 'La mettre ici aussi ferait se recouvrir les deux sujets.'));
+        av.appendChild(tx);
+        c.appendChild(av);
+      }
+      c.appendChild(el('div', 'aide', 'Est-ce que ça appartient à ce sujet ?'));
+
+      var duo = el('div', 'perim-duo-b');
+      [['oui', 'Oui', oui], ['non', 'Non', non]].forEach(function (x) {
+        var b = el('button', 'btn ' + x[0], x[1]);
+        b.type = 'button';
+        b.addEventListener('click', function () { x[2].push(it.texte); i += 1; poser(); });
+        duo.appendChild(b);
+      });
+      c.appendChild(duo);
+
+      var sk = el('button', 'btn btn-s perim-passer', 'Passer');
+      sk.type = 'button';
+      sk.title = 'Ni dedans ni dehors : cet élément n’entrera pas dans le périmètre';
+      sk.addEventListener('click', function () { i += 1; poser(); });
+      c.appendChild(sk);
+
+      corps.appendChild(c);
+      duo.firstChild.focus();
+    }
+    poser();
+  }
+
+  // ── Étape 3 · le bilan, et le texte que l'on enregistre ────
+  function etapeTexte(reform, oui, non) {
+    vider();
+    sous.textContent = 'Relisez, corrigez ce qui est faux, et enregistrez.';
+
+    var bloc = el('div');
+    bloc.appendChild(tsec('Votre description reformulée'));
+    var w = el('div', 'perim-reform');
+    var zr = el('textarea');
+    zr.value = reform;
+    zr.setAttribute('aria-label', 'Votre description reformulée');
+    // La zone épouse son texte : une hauteur fixe laissait du blanc sous la
+    // dernière ligne, et ce blanc-là ne vaut pas celui du dessus.
+    zr.rows = 1;
+    function ajuster() { zr.style.height = 'auto'; zr.style.height = zr.scrollHeight + 'px'; }
+    zr.addEventListener('input', ajuster);
+    w.appendChild(zr); bloc.appendChild(w);
+    corps.appendChild(bloc);
+
+    // Une seule liste, dans l'ordre où les questions ont été posées : une
+    // ligne qui change de camp ne bouge pas de place, sinon on la perd.
+    var lignes = oui.map(function (t) { return { t: t, v: 'oui' }; })
+      .concat(non.map(function (t) { return { t: t, v: 'non' }; }));
+    var bl = el('div');
+    if (lignes.length) {
+      bl.appendChild(tsec('Vos réponses'));
+      var lst = el('div', 'perim-bilan');
+      lignes.forEach(function (l) {
+        var g = el('div', 'rangee');
+        var m = el('span', 'marq ' + l.v, l.v === 'oui' ? 'dedans' : 'dehors');
+        g.appendChild(m);
+        g.appendChild(el('span', 'nom', l.t));
+        var b = el('button', 'btn btn-s', 'changer');
+        b.type = 'button';
+        b.setAttribute('aria-label', 'Changer de camp : ' + l.t);
+        b.addEventListener('click', function () {
+          l.v = l.v === 'oui' ? 'non' : 'oui';
+          m.className = 'marq ' + l.v;
+          m.textContent = l.v === 'oui' ? 'dedans' : 'dehors';
+          poserTexte();
+        });
+        g.appendChild(b);
+        lst.appendChild(g);
+      });
+      bl.appendChild(lst);
+      corps.appendChild(bl);
+    }
+
+    var fin = el('div');
+    fin.appendChild(tsec('Le périmètre enregistré'));
+    var zt = el('textarea', 'perim-assemble');
+    zt.setAttribute('aria-label', 'Le périmètre enregistré');
+    fin.appendChild(zt);
+    corps.appendChild(fin);
+
+    // Tant que l'humain n'a pas écrit dans le texte final, il suit ses
+    // réponses. Dès qu'il y touche, c'est lui qui décide : on cesse de le
+    // réécrire sous ses doigts.
+    var mien = false;
+    zt.addEventListener('input', function () { mien = true; });
+    function poserTexte() {
+      if (mien) return;
+      zt.value = KCP_PERIMETRE.assembler({
+        objet: zr.value.trim(),
+        entre: lignes.filter(function (l) { return l.v === 'oui'; }).map(function (l) { return l.t; }),
+        refuse: lignes.filter(function (l) { return l.v === 'non'; }).map(function (l) { return l.t; })
+      });
+    }
+    zr.addEventListener('input', poserTexte);
+    poserTexte();
+    ajuster();
+
+    var annuler = el('button', 'btn', 'Annuler');
+    annuler.type = 'button'; annuler.addEventListener('click', fermer);
+    var ok = el('button', 'btn btn-1', opts.libelle || 'Enregistrer ce périmètre');
+    ok.type = 'button';
+    ok.addEventListener('click', function () {
+      opts.onValider && opts.onValider(zt.value.trim(), true);
+      fermer();
+    });
+    var droite = el('div', 'droite');
+    droite.appendChild(annuler); droite.appendChild(ok);
+    pied.appendChild(droite);
+
+    function etatOk() { ok.disabled = !zt.value.trim(); }
+    zt.addEventListener('input', etatOk);
+    etatOk();
+    zr.focus();
+  }
+
+  // Une seule fenêtre, un seul chemin. Un périmètre déjà écrit arrive
+  // pré-rempli dans la phrase, tel qu'il est stocké : le système repart de
+  // tout ce qu'on lui avait dit, exclusions comprises.
+  etapeGraine(String(opts.valeur || '').trim());
+
+  voile.classList.add('on'); fen.classList.add('on');
+};

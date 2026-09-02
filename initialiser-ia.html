@@ -9,9 +9,7 @@
 <link rel="stylesheet" href="base.css">
 <script src="config.js"></script>
 <style>
-  .z { max-width:760px; }
-  .carte-f { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r);
-    padding:var(--s4); display:flex; flex-direction:column; gap:var(--s4); }
+  .z { max-width:1000px; }
 </style>
 </head><body>
 <div class="shell">
@@ -29,7 +27,7 @@
       <div class="side-grp">Organiser</div>
       <a class="nav-i" href="nouveau-sujet.html"><span class="ico">+</span>Nouveau sujet</a>
       <a class="nav-i" href="modifier-sujet.html"><span class="ico">✎</span>Modifier un sujet</a>
-      <a class="nav-i" href="reorganiser.html"><span class="ico">⇄</span>Réorganiser<span class="n" id="nav-n-props" hidden></span></a>
+      <a class="nav-i" href="reorganiser.html"><span class="ico">✦</span>Améliorer<span class="n" id="nav-n-props" hidden></span></a>
       <div class="side-grp" id="grp-notion" hidden>Notion</div>
       <a class="nav-i" href="#" id="nav-reunions" hidden target="_blank" rel="noopener"><span class="ico">↗</span>Mes réunions</a>
     </nav>
@@ -44,9 +42,10 @@
     <div class="z stack">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s3)"><div><h1>Initialiser une IA</h1>
       <p class="sub" style="margin-top:.4rem">Charge un sujet dans une conversation Claude ou ChatGPT, avec tout son contexte déjà en place.</p></div><button type="button" class="reset-btn" id="raz" title="Réinitialiser" aria-label="Réinitialiser">↻</button></div>
-      <div class="carte-f">
+      <div class="duo">
+        <div class="carte-f">
         <div class="champ"><label for="s1">Sujet principal</label>
-          <select id="s1"><option value="">— choisir —</option></select></div>
+          <select id="s1"></select></div>
 
         <div class="champ">
           <div class="lbl-q"><span><label for="ms-t">Documents secondaires</label>
@@ -71,10 +70,17 @@
             </div>
             <div class="llm-l" data-off="1">
               <span class="llm-pastille claude-mcp" data-marque="claude"></span>
-              <span><span class="llm-nom">Claude (MCP)</span><br><span class="llm-sous">avec le connecteur KCP branché — Claude uniquement</span></span>
+              <span><span class="llm-nom">Claude (MCP)</span><br><span class="llm-sous">avec le connecteur KCP branché, Claude uniquement</span></span>
               <span class="llm-a">
                 <button class="btn btn-s" data-llm="claude-mcp" data-mode="copier">Copier</button>
                 <button class="btn btn-1 btn-s" data-llm="claude-mcp" data-mode="ouvrir">Ouvrir →</button>
+              </span>
+            </div>
+            <div class="llm-l" id="llm-code" data-off="1">
+              <span class="llm-pastille claude-mcp" data-marque="claude"></span>
+              <span><span class="llm-nom">Claude Code</span><br><span class="llm-sous">tout votre univers, pour travailler dans un dossier local</span></span>
+              <span class="llm-a">
+                <button class="btn btn-1 btn-s" data-llm="claude-code" data-mode="copier">Copier</button>
               </span>
             </div>
             <div class="llm-l" data-off="1">
@@ -85,20 +91,27 @@
                 <button class="btn btn-1 btn-s" data-llm="chatgpt" data-mode="ouvrir">Ouvrir →</button>
               </span>
             </div>
-            <div class="llm-l" id="llm-code" data-off="1">
-              <span class="llm-pastille claude-mcp" data-marque="claude"></span>
-              <span><span class="llm-nom">Claude Code</span><br><span class="llm-sous">tout votre univers, pour travailler dans un dossier local</span></span>
-              <span class="llm-a">
-                <button class="btn btn-1 btn-s" data-llm="claude-code" data-mode="copier">Copier</button>
-              </span>
-            </div>
           </div>
         </div>
 
         <div class="confirme" id="ok" hidden><span>✓</span><span id="ok-txt"></span></div>
         <div class="alerte-err" id="err" hidden><span>›</span><span id="err-txt"></span></div>
       </div>
-      <div class="note"><span>›</span><span>Le contexte part dans votre presse-papier, puis la conversation s'ouvre. Il ne reste qu'à faire <b>Ctrl+V</b>.</span></div>
+        <aside>
+          <div class="aside-b cle">
+            <div class="sect-h" style="margin-bottom:var(--s2)">À savoir</div>
+            <p><b>Le contexte part dans votre presse-papier</b>, puis la conversation s'ouvre. Il ne reste qu'à faire <b>Ctrl+V</b>.</p>
+          </div>
+          <div class="aside-b">
+            <div class="sect-h" style="margin-bottom:var(--s2)">Ce qui se passe ensuite</div>
+            <div class="etapes">
+              <span class="n">1</span><span class="x">Le système assemble le contexte des sujets choisis.</span>
+              <span class="n">2</span><span class="x">Il le copie dans votre presse-papier.</span>
+              <span class="n">3</span><span class="x">La conversation s'ouvre dans un nouvel onglet : collez, et l'IA sait tout.</span>
+            </div>
+          </div>
+        </aside>
+      </div>
     </div>
   </main>
 </div>
@@ -163,16 +176,10 @@
       secondaires = (data.pcp_anx || []).filter(pret);
       // « Autre » : la session sans sujet. Ce qui en sort part dans le sas,
       // et le système le range ensuite.
-      var oAutre = document.createElement('option');
-      oAutre.value = 'autre'; oAutre.textContent = '#autre — je ne sais pas encore';
-      sel.appendChild(oAutre);
-      var oSep = document.createElement('option'); oSep.disabled = true; oSep.textContent = '— — —';
-      sel.appendChild(oSep);
-      pcp.forEach(function (x) {
-        docIds[x.nom_tiroir] = x.doc_int_id;
-        var o = document.createElement('option');
-        o.value = x.nom_tiroir; o.textContent = '#' + x.nom_tiroir;
-        sel.appendChild(o);
+      pcp.forEach(function (x) { docIds[x.nom_tiroir] = x.doc_int_id; });
+      kcpRemplirHierarchie(sel, data, {
+        valeur: 'nom', vide: '— choisir —',
+        tete: [{ valeur: 'autre', texte: '#autre — je ne sais pas encore' }]
       });
     }).catch(function () {
       montrerErr('La liste des sujets n’a pas pu être chargée. Rechargez la page.');
@@ -227,7 +234,8 @@
     var a = !!sel.value;
     t.disabled = !a;
     document.querySelectorAll('.llm-l').forEach(function (l) { l.dataset.off = a ? '0' : '1'; });
-    // Le sas est une destination d'ecriture, pas un sujet : il ne peut pas ancrer un dossier.
+    // Le sas est une destination d'ecriture, pas un sujet : il ne peut pas
+    // ancrer un dossier local.
     document.getElementById('llm-code').dataset.off = (a && sel.value !== 'autre') ? '0' : '1';
   }
   sel.addEventListener('change', function () {
@@ -288,7 +296,8 @@
   // ── Un bouton, une destination, un geste. La destination EST l'action. ──
   document.querySelectorAll('.llm-a button').forEach(function (b) {
     b.addEventListener('click', async function () {
-      if (!sel.value) return;
+      // Un retour muet laisse chercher : le champ manquant s'allume.
+      if (!sel.value) return KCP_SIGNALER([sel]);
       cacherEtats();
       kcpOccupe(b, true);
       try {

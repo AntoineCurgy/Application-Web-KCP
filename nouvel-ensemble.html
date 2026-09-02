@@ -9,12 +9,7 @@
 <link rel="stylesheet" href="base.css">
 <script src="config.js"></script>
 <style>
-  .z { max-width:760px; }
-  .carte-f { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r);
-    padding:var(--s4); display:flex; flex-direction:column; gap:var(--s4); }
-  .modes { display:flex; gap:var(--s1); }
-  .apercu { font-family:var(--mono); font-size:var(--t-meta); color:var(--accent-deep); }
-  .hint.err { color:var(--danger); }
+  .z { max-width:1000px; }
 </style>
 </head><body>
 <div class="shell">
@@ -32,7 +27,7 @@
       <div class="side-grp">Organiser</div>
       <a class="nav-i" aria-current="page" href="nouveau-sujet.html"><span class="ico">+</span>Nouveau sujet</a>
       <a class="nav-i" href="modifier-sujet.html"><span class="ico">✎</span>Modifier un sujet</a>
-      <a class="nav-i" href="reorganiser.html"><span class="ico">⇄</span>Réorganiser<span class="n" id="nav-n-props" hidden></span></a>
+      <a class="nav-i" href="reorganiser.html"><span class="ico">✦</span>Améliorer<span class="n" id="nav-n-props" hidden></span></a>
       <div class="side-grp" id="grp-notion" hidden>Notion</div>
       <a class="nav-i" href="#" id="nav-reunions" hidden target="_blank" rel="noopener"><span class="ico">↗</span>Mes réunions</a>
     </nav>
@@ -47,57 +42,46 @@
     <div class="z stack">
       <div><h1>Nouvel ensemble</h1>
       <p class="sub" style="margin-top:.4rem">Un ensemble regroupe plusieurs sujets et permet une meilleure organisation.</p></div>
-      <div class="carte-f">
-        <div class="champ"><span style="font-size:var(--t-sm);font-weight:600">Nature</span>
+<div class="duo">
+        <div class="carte-f">        <div class="champ"><span style="font-size:var(--t-sm);font-weight:600">Nature</span>
           <div class="modes">
             <a class="btn" href="nouveau-sujet.html" style="flex:1;justify-content:center">Un sujet</a>
             <a class="btn" href="nouvel-ensemble.html" style="flex:1;justify-content:center;background:var(--dark);border-color:var(--dark);color:var(--accent)">Un ensemble</a>
           </div></div>
+        <div class="champ"><div class="lbl-q"><span><label for="n">Nom</label></span>
+          <span class="hint err" id="n-dup" hidden>nom déjà utilisé</span></div>
+          <input type="text" id="n" placeholder="Direction commerciale" autocomplete="off" spellcheck="false" maxlength="60">
+          <span class="apercu" id="n-ap" hidden></span></div>
+
         <div class="champ"><label for="p">Rattaché à</label>
           <select id="p"></select></div>
 
-        <div class="encadre">
-          <div class="champ"><div class="lbl-q"><span><label for="n">Nom de l'ensemble</label></span>
-            <span class="hint err" id="n-dup" hidden>nom déjà utilisé</span></div>
-            <input type="text" id="n" placeholder="Direction commerciale" autocomplete="off" spellcheck="false" maxlength="60">
-            <span class="apercu" id="n-ap" hidden></span></div>
-          <div class="champ"><div class="lbl-q"><span><label for="pe">Périmètre de l'ensemble</label>
-            <button type="button" class="qmark" data-pop="ensemble" aria-label="À quoi sert le périmètre d'un ensemble ?">?</button></span><span class="hint" id="pe-hint">min. 40 caractères</span></div>
-            <textarea id="pe" rows="4" placeholder="Cet ensemble couvre …"></textarea></div>
-          <div class="note"><span>›</span><span>Un ensemble naît avec deux sujets. Décrivez sa frontière, puis celle de chacun de ses sujets — vous pouvez en ajouter d'autres ensuite via <b>Nouveau sujet</b>.</span></div>
+        <div class="champ">
+          <div class="lbl-q"><span><label>Périmètre</label>
+            <button type="button" class="qmark" data-pop="ensemble" aria-label="À quoi sert le périmètre d'un ensemble ?">?</button></span></div>
+          <div id="hote-pe"></div>
         </div>
 
-        <div class="branches">
-          <span class="bar" style="left:25%;right:25%"></span>
-          <span style="position:absolute;top:15px;left:25%;width:1.5px;height:15px;background:var(--border-strong)"></span>
-          <span style="position:absolute;top:15px;right:25%;width:1.5px;height:15px;background:var(--border-strong)"></span>
-        </div>
-
-        <div class="deux-col">
-          <div style="display:flex;flex-direction:column;gap:var(--s3)">
-            <div class="champ"><div class="lbl-q"><span><label for="s1">Nom du sujet 1</label></span>
-              <span class="hint err" id="s1-dup" hidden>nom déjà utilisé</span></div>
-              <input type="text" id="s1" placeholder="refonte-site-web" autocomplete="off" spellcheck="false" maxlength="60">
-              <span class="apercu" id="s1-ap" hidden></span></div>
-            <div class="champ"><div class="lbl-q"><span><label for="s1p">Périmètre du sujet 1</label>
-              <button type="button" class="qmark" data-pop="sujet" aria-label="À quoi sert le périmètre ?">?</button></span><span class="hint" id="s1p-hint">min. 40 caractères</span></div>
-              <textarea id="s1p" rows="4" placeholder="Ce sujet couvre …"></textarea></div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:var(--s3)">
-            <div class="champ"><div class="lbl-q"><span><label for="s2">Nom du sujet 2</label></span>
-              <span class="hint err" id="s2-dup" hidden>nom déjà utilisé</span></div>
-              <input type="text" id="s2" placeholder="recrutement-commercial" autocomplete="off" spellcheck="false" maxlength="60">
-              <span class="apercu" id="s2-ap" hidden></span></div>
-            <div class="champ"><div class="lbl-q"><span><label for="s2p">Périmètre du sujet 2</label>
-              <button type="button" class="qmark" data-pop="sujet" aria-label="À quoi sert le périmètre ?">?</button></span><span class="hint" id="s2p-hint">min. 40 caractères</span></div>
-              <textarea id="s2p" rows="4" placeholder="Ce sujet couvre …"></textarea></div>
-          </div>
-        </div>
-
-        <div class="confirme" id="ok" hidden><span>✓</span><span>Ensemble créé avec ses deux premiers sujets, prêt à travailler.</span></div>
+        <div class="confirme" id="ok" hidden><span>✓</span><span>Ensemble créé. Ajoutez-lui ses sujets avec <b>Nouveau sujet</b>.</span></div>
         <div class="alerte-err" id="err" hidden><span>›</span><span id="err-txt"></span></div>
 
-        <button class="btn btn-1" id="go" disabled>Créer l'ensemble et ses sujets →</button>
+        <button class="btn btn-1" id="go" disabled>Créer l'ensemble →</button>
+      </div>
+        <aside>
+          <div class="aside-b cle">
+            <div class="sect-h" style="margin-bottom:var(--s2)">À savoir</div>
+            <p><b>Un ensemble naît vide.</b> Créez ensuite les sujets lui appartenant avec <b>Nouveau sujet</b>.</p>
+            <p>Son périmètre dit ce que couvre la famille entière, pas ce que fait chacun de ses membres.</p>
+          </div>
+          <div class="aside-b">
+            <div class="sect-h" style="margin-bottom:var(--s2)">Ce qui se passe ensuite</div>
+            <div class="etapes">
+              <span class="n">1</span><span class="x">L'ensemble est créé et prend sa place dans l'arbre.</span>
+              <span class="n">2</span><span class="x">Vous lui rattachez ses sujets, un à un.</span>
+              <span class="n">3</span><span class="x">Au cycle suivant, il écrit la vue transverse de ses enfants.</span>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   </main>
@@ -124,9 +108,9 @@
     kcpNavBadges();
   })();
 
-  var btn = document.getElementById('go');
   var parentEl = document.getElementById('p');
   var existants = {};
+  var pEns = null, tousSujets = [], noeudsTous = [];
 
   function slugFinal(v) {
     return (v || '')
@@ -147,6 +131,8 @@
         existants[kcpDocLabel(t).toLowerCase()] = true;
       });
       var noeuds = (data.gcp || []);
+      tousSujets = (data.pcp || []).slice(); noeudsTous = noeuds.slice();
+      majVoisins();
       var racine = noeuds.filter(function (t) { return (t.parent || '') === 'N/A'; });
       var autres = noeuds.filter(function (t) { return (t.parent || '') !== 'N/A'; });
       (racine.length ? racine : [{ doc_int_id: 'GCP001', type: 'GCP', parent: 'N/A', nom_tiroir: 'Head' }])
@@ -164,44 +150,50 @@
     });
   })();
 
+  // Les voisins de l'ensemble : ceux qui partagent son futur parent.
+  function voisinsDuParent() {
+    var id = parentEl.value || 'GCP001';
+    var n = noeudsTous.filter(function (x) { return x.doc_int_id === id; })[0];
+    return {
+      noeud: n ? kcpDocLabel(n) : 'la racine',
+      labels: tousSujets.filter(function (t) { return t.parent === id; })
+        .map(function (t) { return kcpDocLabel(t); }).sort()
+    };
+  }
+  function majVoisins() {}
+
   function apercu(id, txt) {
     var el = document.getElementById(id + '-ap');
     el.textContent = txt; el.hidden = !txt;
   }
-  function perimOk(id) {
-    var len = val(id).trim().length;
-    var h = document.getElementById(id + '-hint');
-    if (len > 0 && len < 40) {
-      h.textContent = 'encore ' + (40 - len) + ' caractère' + (40 - len > 1 ? 's' : '');
-      h.classList.add('err');
-    } else { h.textContent = 'min. 40 caractères'; h.classList.remove('err'); }
-    return len >= 40;
-  }
-
   function check() {
-    var nomN = noeudFinal(val('n')), nomS1 = slugFinal(val('s1')), nomS2 = slugFinal(val('s2'));
+    var nomN = noeudFinal(val('n'));
     apercu('n', nomN && nomN !== val('n').trim() ? nomN : '');
-    apercu('s1', nomS1 && nomS1 !== val('s1').trim() ? '#' + nomS1 : '');
-    apercu('s2', nomS2 && nomS2 !== val('s2').trim() ? '#' + nomS2 : '');
     var dupN = nomN.length >= 2 && !!existants[nomN.toLowerCase()];
-    var dupS1 = nomS1.length >= 2 && !!existants[('#' + nomS1).toLowerCase()];
-    var dupS2 = nomS2.length >= 2 && (!!existants[('#' + nomS2).toLowerCase()] || (nomS1 && nomS2 === nomS1));
     document.getElementById('n-dup').hidden = !dupN;
-    document.getElementById('s1-dup').hidden = !dupS1;
-    document.getElementById('s2-dup').hidden = !dupS2;
-    var ok = nomN.length >= 2 && nomS1.length >= 2 && nomS2.length >= 2 &&
-      perimOk('pe') && perimOk('s1p') && perimOk('s2p') && !dupN && !dupS1 && !dupS2;
-    btn.disabled = !ok;
+    var ok = nomN.length >= 2 && !dupN && pEns && pEns.valide();
+    majGo();
+    return ok;
   }
-  ['n', 's1', 's2', 'pe', 's1p', 's2p'].forEach(function (id) {
-    document.getElementById(id).addEventListener('input', check);
-  });
 
-  btn.addEventListener('click', async function () {
+  // Le geste reste cliquable : sollicité alors qu'il ne peut pas partir, il
+  // allume ce qui manque au lieu de ne rien faire.
+  var majGo = KCP_GESTE(document.getElementById('go'),
+    function () {
+      var n = noeudFinal(val('n'));
+      return n.length >= 2 && !existants[n.toLowerCase()] && pEns && pEns.valide();
+    },
+    function () {
+      var m = [], n = noeudFinal(val('n'));
+      if (n.length < 2 || existants[n.toLowerCase()]) m.push(document.getElementById('n'));
+      if (!(pEns && pEns.valide())) m.push(document.getElementById('hote-pe').parentNode);
+      return m;
+    });
+  document.getElementById('n').addEventListener('input', check);
+
+  async function creer(btn) {
     var nom_noeud = noeudFinal(val('n'));
-    var nom_sujet_1 = slugFinal(val('s1'));
-    var nom_sujet_2 = slugFinal(val('s2'));
-    if (nom_noeud.length < 2 || nom_sujet_1.length < 2 || nom_sujet_2.length < 2 || nom_sujet_1 === nom_sujet_2) return;
+    if (nom_noeud.length < 2) return;
     document.getElementById('ok').hidden = true;
     document.getElementById('err').hidden = true;
     kcpOccupe(btn, true);
@@ -212,9 +204,7 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id_client: C.client_id, parent_id: parentEl.value || 'GCP001',
-          nom_noeud: nom_noeud, perimetre_noeud: sanitize(val('pe')),
-          nom_sujet_1: nom_sujet_1, perimetre_sujet_1: sanitize(val('s1p')),
-          nom_sujet_2: nom_sujet_2, perimetre_sujet_2: sanitize(val('s2p'))
+          nom_noeud: nom_noeud, perimetre_noeud: sanitize(pEns.texte())
         })
       });
       var raw = await res.text();
@@ -231,10 +221,9 @@
     if (res.ok && data.success) {
       kcpInvalidateTiroirs();
       existants[nom_noeud.toLowerCase()] = true;
-      existants[('#' + nom_sujet_1).toLowerCase()] = true;
-      existants[('#' + nom_sujet_2).toLowerCase()] = true;
       document.getElementById('ok').hidden = false;
-      ['n', 's1', 's2', 'pe', 's1p', 's2p'].forEach(function (id) { document.getElementById(id).value = ''; });
+      document.getElementById('n').value = '';
+      pEns.poser('');
       check();
     } else if (res.status === 409 || data.error === 'creation_refusee') {
       check();
@@ -246,13 +235,13 @@
       document.getElementById('err-txt').textContent = 'Création impossible. Réessayez.';
       document.getElementById('err').hidden = false;
     }
-  });
+  }
 
   // ── Les fenêtres du « ? » ──
   var TEXTES = {
     sujet: { t: "À quoi sert le périmètre ?",
       p: ["Le périmètre dit ce que ce sujet couvre, et surtout ce qu'il ne couvre pas.",
-        "C'est avec ce texte que le système trie. Chaque fois qu'une information arrive, il s'y réfère pour décider si elle appartient à ce sujet ou à un autre. Il est critique — rien n'est figé pour autant, vous pouvez le modifier à tout moment."],
+        "C'est avec ce texte que le système trie. Chaque fois qu'une information arrive, il s'y réfère pour décider si elle appartient à ce sujet ou à un autre. Il est critique : rien n'est figé pour autant, vous pouvez le modifier à tout moment."],
       bad: "« Ce sujet couvre le recrutement. »",
       good: "« Ce sujet couvre le recrutement des postes commerciaux : définition du besoin, entretiens, décision d'embauche. Ne couvre pas l'intégration une fois la personne arrivée. »" },
     ensemble: { t: "À quoi sert le périmètre d'un ensemble ?",
@@ -284,12 +273,14 @@
   document.getElementById('voile').addEventListener('click', fermerPop);
   document.getElementById('pop-ok').addEventListener('click', fermerPop);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fermerPop(); });
-  document.getElementById('pe').addEventListener('focus', function () {
-    try {
-      if (sessionStorage.getItem('kcp_pop_perim_ensemble')) return;
-      sessionStorage.setItem('kcp_pop_perim_ensemble', '1');
-    } catch (e) { return; }
-    ouvrirPop('ensemble');
+  // ── Les trois périmètres, et une seule barre pour les trois ──
+  pEns = KCP_PERIMETRE.champ(document.getElementById('hote-pe'), {
+    ensemble: true, titre: "Périmètre de l'ensemble",
+    voisins: voisinsDuParent, onChange: function () { check(); }
   });
+  document.getElementById('go').addEventListener('click', function () {
+    if (check()) creer(this);
+  });
+  check();
 </script>
 </body></html>
