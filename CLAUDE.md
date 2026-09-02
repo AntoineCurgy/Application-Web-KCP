@@ -36,7 +36,13 @@ localStorage.setItem('kcp_session', JSON.stringify({client_id:'…', client_name
 **Il n'y a pas de backend dans ce repo.** Toute la logique métier vit dans des scénarios
 **Make.com** appelés en `POST` JSON depuis le navigateur. `config.js` est le seul point de
 couplage : il déclare `KCP_WEBHOOKS` (un webhook Make par fonctionnalité, commenté avec le nom
-du scénario correspondant). Vingt-quatre webhooks, tous appelés par au moins une page.
+du scénario correspondant). Vingt-trois webhooks, tous appelés par au moins une page.
+
+**L'analyse des périmètres ne se lance pas depuis la page.** `KCP - Analyse
+Perimetres - Trigger` la déclenche le dimanche à 3 h. La page lit le résultat dans
+`carte.perimetre_niveau` et dans les propositions de type `perimetre` — deux
+webhooks qui répondent en moins de deux secondes, là où le balayage met quatre
+minutes.
 
 Les pages, depuis la refonte du 31/08 :
 
@@ -46,7 +52,7 @@ Les pages, depuis la refonte du 31/08 :
 | `ensemble.html`, `sujet.html` | fiches (`?doc=GCPxxx` / `?doc=PCPxxx`) | `carte`, `points_a_clarifier`, `captures`, `reponse_clarification` |
 | `deposer.html`, `interroger.html` | les deux moitiés de l'ancien chat | `chat`, `captures` / `chat`, `history` |
 | `a-clarifier.html` | questions du cycle | `points_a_clarifier`, `reponse_clarification` |
-| `reorganiser.html` | **Améliorer** : trois onglets, Confirmées / Potentielles / Analyser les périmètres | `propositions`, `reponse_proposition`, `signaux`, `rediger_signal`, `lancer_analyse`, `carte`, `update_perimetre`, `renommer`, `deplacer`, `restructurer`, `creer_tiroir` |
+| `reorganiser.html` | **Améliorer** : trois onglets, Confirmées / Potentielles / Périmètres | `propositions`, `reponse_proposition`, `signaux`, `rediger_signal`, `carte`, `update_perimetre`, `renommer`, `deplacer`, `restructurer`, `creer_tiroir` |
 | `modifier-sujet.html` | six onglets (`?doc=&mode=perim|nom|depl|scinder|fusionner|archiver`) | `update_perimetre`, `renommer`, `deplacer`, `restructurer` |
 | `nouveau-sujet.html`, `nouvel-ensemble.html` | créations (`?nom=&perimetre=` pré-remplit) | `creer_tiroir`, `creer_ensemble` |
 | `initialiser-ia.html` | prompt vers Claude, Claude MCP, Claude Code ou ChatGPT | `prompt` |
@@ -84,6 +90,12 @@ Aucune colonne ajoutée. Un périmètre ancien sans ancres se charge entièremen
 | `KCP_GESTE(btn, pret, manque)` | **le geste principal n'est jamais `disabled`** — un bouton désactivé ne reçoit aucun clic, donc ne peut rien expliquer. Il porte `.eteint` et `aria-disabled`, reste cliquable, et allume ce qui manque |
 | `KCP_CONFIRMER({titre, lignes, corps, pret, manque, valider, large, danger})` | une fenêtre, avec ou sans formulaire. Rend une promesse. Une fenêtre qui porte une saisie ne se ferme pas d'un clic à côté |
 | `KCP_ENVOYE(mot)` | l'accusé de réception dans le coin haut droit. **Uniquement pour un simple accusé** : quand le message apprend quelque chose, il reste dans la page, là où l'on vient d'agir |
+
+> **Une liste ne perd jamais un sujet.** `kcpRemplirHierarchie` groupe par parent ; un sujet
+> dont le parent est inconnu se range dans **« Sans rattachement connu »** au lieu de
+> disparaître. Le 2 septembre, `ListeTiroirs` ne servait `parent` que sur les nœuds : les
+> trente-trois sujets s'évaporaient de six listes, sans un mot ni une erreur. La source est
+> corrigée, le filet reste.
 
 `KCP_SIGNALER(éléments)` allume ce qui reste à remplir : cadre rouge, deux clignotements, focus
 sur le premier. Les deux premières fonctions s'en servent.
@@ -162,7 +174,10 @@ La barre latérale est un chrome de navigation, pas du contenu ; ses entrées va
 exactement la taille du texte courant, ce qui la rend lisible sans la faire peser.
 
 **Le niveau** — `.n1` `.n2` `.n3` — dit l'urgence par la couleur, et `.j1` `.j2` `.j3` comptent
-les barres de la jauge. Les deux sont **indépendants** : une importance élevée allume trois
+les barres de la jauge. **`.n0` est le quatrième état : l'absence de niveau**, gris, jauge
+éteinte. Ce n'est pas un cran de l'échelle — le plus bas dit « solide », et l'afficher sur un
+périmètre que personne n'a lu serait un compliment fabriqué. Un périmètre accepté redevient
+`.n0` : `Update Perimètre Déclaré` efface le verdict en même temps qu'il écrit le nouveau texte. Les deux sont **indépendants** : une importance élevée allume trois
 barres en rouge, un périmètre solide trois barres en vert. Chaque niveau expose `--niv`,
 `--niv-bg` et `--niv-br`, que tout composant lit sans jamais nommer un rouge ou un vert.
 

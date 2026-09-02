@@ -30,10 +30,6 @@ const KCP_WEBHOOKS = {
   completer_perimetre: 'https://hook.eu2.make.com/dk8ww888lghieii868ttg6hc4u99jmuy', // Make: KCP - Perimetre Completer
   signaux: 'https://hook.eu2.make.com/w2h121ktmb0nrrrshh982w17chte1k4o', // Make: KCP - WebApp - Signaux
   rediger_signal: 'https://hook.eu2.make.com/m5mgc1tuzlsrdth7iz4hiisp2z96t5q2', // Make: KCP - WebApp - Reponse Signal
-  // Ce webhook LANCE l'analyse et repond aussitot. Il ne rend aucun resultat :
-  // le scenario met quatre minutes sur quarante et un sujets. Ce qu'il produit
-  // se lit ensuite dans `carte.perimetre_niveau` et dans `propositions`.
-  lancer_analyse: 'https://hook.eu2.make.com/bm574i7x334fhu7y667r4n77kf2zuk3t', // Make: KCP - Analyse Perimetres
 };
 
 // Guide d'utilisation, Google Doc partage en lecture. L'identifiant d'un
@@ -567,6 +563,10 @@ function kcpRemplirHierarchie(sel, data, opts) {
       return kcpDocLabel(a).localeCompare(kcpDocLabel(b), 'fr', { sensitivity: 'base' });
     });
 
+  // Ce qui a ete range sous un noeud. On coche au passage : un sujet non
+  // reclame par aucun noeud ne doit pas disparaitre pour autant.
+  var reclames = {};
+
   function ajouter(n) {
     var dessous = sujets.filter(function (t) { return t.parent === n.doc_int_id; })
       .sort(function (a, b) {
@@ -584,6 +584,7 @@ function kcpRemplirHierarchie(sel, data, opts) {
       g.appendChild(on);
     }
     dessous.forEach(function (t) {
+      reclames[t.doc_int_id] = 1;
       var o = document.createElement('option');
       o.value = opts.valeur === 'nom' ? t.nom_tiroir : t.doc_int_id;
       o.textContent = kcpDocLabel(t);
@@ -592,6 +593,26 @@ function kcpRemplirHierarchie(sel, data, opts) {
     sel.appendChild(g);
   }
   racine.concat(autres).forEach(ajouter);
+
+  // Ce que personne n'a reclame. Aujourd'hui c'est la totalite des sujets :
+  // `ListeTiroirs` ne sert `parent` que sur les noeuds. Les omettre revenait
+  // a vider six listes du site sans un mot. Le groupe le dit au lieu de le
+  // taire ; il disparaitra de lui-meme quand le champ sera servi.
+  var orphelins = sujets.filter(function (t) { return !reclames[t.doc_int_id]; })
+    .sort(function (a, b) {
+      return kcpDocLabel(a).localeCompare(kcpDocLabel(b), 'fr', { sensitivity: 'base' });
+    });
+  if (orphelins.length) {
+    var go = document.createElement('optgroup');
+    go.label = 'Sans rattachement connu';
+    orphelins.forEach(function (t) {
+      var o = document.createElement('option');
+      o.value = opts.valeur === 'nom' ? t.nom_tiroir : t.doc_int_id;
+      o.textContent = kcpDocLabel(t);
+      go.appendChild(o);
+    });
+    sel.appendChild(go);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
