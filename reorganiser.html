@@ -53,9 +53,8 @@
       <div class="bascule" role="tablist" aria-label="Niveau de confiance">
         <button role="tab" id="t-conf" aria-selected="true" aria-controls="v-conf">CONFIRMÉES<span class="p p-alerte" id="n-conf">0</span></button>
         <button role="tab" id="t-pot" aria-selected="false" aria-controls="v-pot">POTENTIELLES<span class="p p-neutre" id="n-pot">0</span></button>
-        <button role="tab" id="t-ana" aria-selected="false" aria-controls="v-ana">ANALYSER LES PÉRIMÈTRES</button>
+        <button role="tab" id="t-ana" aria-selected="false" aria-controls="v-ana">PÉRIMÈTRES<span class="p p-neutre" id="n-ana">0</span></button>
       </div>
-        <button class="btn btn-1" id="btn-analyse" hidden>✦ Lancer l'analyse</button>
       </div>
 
       <div class="alerte-err" id="err" hidden><span>›</span><span id="err-txt"></span></div>
@@ -73,10 +72,6 @@
           </div>
 
           <div id="v-ana" role="tabpanel" aria-labelledby="t-ana" hidden>
-            <div class="attente-ana" id="ana-etat" role="status" aria-live="polite" hidden>
-              <span class="perim-rond"></span>
-              <span>L’analyse tourne. Elle relit vos sujets un par un et met environ quatre minutes ; les corrections apparaissent au fur et à mesure.</span>
-            </div>
             <div id="ana-props"></div>
           </div>
         </div>
@@ -171,10 +166,13 @@
     setTimeout(function () { document.getElementById('err').hidden = true; }, 5000);
   }
 
-  // `props` est la source unique des deux onglets. Les corrections de
-  // périmètre alimentent Analyser, où elles ont leurs deux colonnes : les
-  // laisser ici les montrerait deux fois, avec deux traitements différents
-  // pour la même chose.
+  // `props` est la source unique des deux onglets.
+  //
+  // Les corrections de périmètre s'affichent ICI AUSSI, et c'est voulu :
+  // Confirmées est le canal où le système pousse ce qu'il a trouvé, l'onglet
+  // Périmètres est une consultation qu'on va chercher. Un défaut qui
+  // n'apparaîtrait que dans la seconde ne serait jamais vu de qui ne l'ouvre
+  // pas. Traiter dans l'un retire de l'autre : la source est commune.
   function retirerProp(p) {
     return function () {
       props = props.filter(function (x) { return x.proposition_id !== p.proposition_id; });
@@ -186,7 +184,7 @@
     kcpCacheProps({ propositions: props });
     kcpNavBadges();
     propsEl.textContent = '';
-    var liste = props.filter(function (p) { return p.type !== 'perimetre'; });
+    var liste = props;
     document.getElementById('n-conf').textContent = liste.length;
     if (!liste.length) {
       var v = document.createElement('div'); v.className = 'vide-etat';
@@ -634,62 +632,18 @@
   }
 
   // ── L'analyse : le seul geste de cet onglet ──
-  // Le scénario met quatre minutes sur quarante et un sujets : attendre sa
-  // réponse serait tenir la page bloquée. Il répond `{"lance":true}` en deux
-  // dixièmes puis travaille ; la page relit `propositions` toutes les vingt
-  // secondes et voit les corrections arriver au fur et à mesure.
-  var relance = null;
-  document.getElementById('btn-analyse').addEventListener('click', async function () {
-    var b = this;
-    kcpOccupe(b, true);
-    try {
-      var r = await kcpFetch(C.webhooks.lancer_analyse, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ client_id: C.client_id })
-      });
-      var d = lireMake(await r.text());
-      if (!r.ok || !d.lance) throw new Error('refus');
-      KCP_ENVOYE('Analyse lancée');
-      majEtatAnalyse(true);
-      clearInterval(relance);
-      relance = setInterval(rafraichirAnalyse, 20000);
-      // Elle s'arrête d'elle-même : cinq minutes couvrent largement les
-      // quatre que met le scénario, et une page laissée ouverte n'appelle
-      // pas Make indéfiniment.
-      setTimeout(function () { clearInterval(relance); majEtatAnalyse(false); }, 300000);
-    } catch (e) { montrerErr('L’analyse n’a pas pu être lancée. Réessayez.'); }
-    kcpOccupe(b, false);
-  });
-
-  function majEtatAnalyse(enCours) {
-    var e = document.getElementById('ana-etat');
-    if (!e) return;
-    e.hidden = !enCours;
-  }
-
-  async function rafraichirAnalyse() {
-    try {
-      var r = await kcpFetch(C.webhooks.propositions, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ client_id: C.client_id })
-      });
-      var d = lireMake(await r.text());
-      if (d && d.propositions) { props = d.propositions.slice(); rendre(); rendreAnalyse(); }
-      var c = await kcpChargerCarte();
-      if (c) { niveaux = niveauxDe(c); rendreAnalyse(); }
-    } catch (e) { /* le prochain tour réessaiera */ }
-  }
-
-  // ── Ce que l'analyse a trouvé, affiché dans son propre onglet ──
-  // Le scénario note CHAQUE périmètre : mauvais, moyen, bon. Les trois
-  // s'affichent. Un périmètre bon n'a pas de geste à offrir — il est là pour
-  // dire que celui-là tient, et ce silence-là rassure.
   // La couleur dit l'urgence, les barres comptent la solidité du périmètre :
   // solide en allume trois, à revoir une seule.
   var NIVEAUX = {
     mauvais: { cls: 'n3 j1', lbl: 'Périmètre à revoir' },
     moyen:   { cls: 'n2 j2', lbl: 'Périmètre perfectible' },
-    bon:     { cls: 'n1 j3', lbl: 'Périmètre solide' }
+    bon:     { cls: 'n1 j3', lbl: 'Périmètre solide' },
+    // L'absence de niveau n'EST PAS un niveau. Le cran le plus bas de
+    // l'échelle dit « solide » : l'afficher sur un périmètre que personne
+    // n'a lu serait un compliment fabriqué. Et le pire moment serait juste
+    // après une correction — le balayage efface le verdict en même temps
+    // qu'il écrit le nouveau texte, et ne repasse que le dimanche.
+    '':      { cls: 'n0 j0', lbl: 'Non analysé' }
   };
 
   // L'onglet n'attend rien d'un scénario : il assemble deux sources qui
@@ -698,11 +652,19 @@
   // bon n'a jamais de correction — le scénario n'en rédige que pour les
   // moyens et les mauvais.
   var niveaux = {};
+  // La racine et les annexes sont hors du champ du balayage, définitivement.
+  // Les lister ici les afficherait « Pas encore relu, le prochain balayage
+  // passe dimanche » — une promesse qui ne sera jamais tenue. Les verdicts
+  // orphelins qu'elles portaient ont été effacés à la source ; ce filtre
+  // n'est plus là pour ça, il est là pour ne rien promettre de faux.
+  function horsChamp(id) { return id === 'GCP001' || String(id).indexOf('ANX') === 0; }
+
   function niveauxDe(carte) {
     var n = {};
     (carte.sujets || []).forEach(function (s) {
-      if (s.perimetre_niveau) n[s.doc_int_id] = {
-        niveau: s.perimetre_niveau, perimetre: s.perimetre || ''
+      if (horsChamp(s.doc_int_id)) return;
+      n[s.doc_int_id] = {
+        niveau: s.perimetre_niveau || '', perimetre: s.perimetre || ''
       };
     });
     return n;
@@ -719,16 +681,17 @@
     // correction a forcément été analysé, même si son niveau n'est pas encore
     // remonté. L'omettre ferait disparaître le geste qui compte le plus.
     var ids = Object.keys(niveaux);
-    Object.keys(corr).forEach(function (id) { if (ids.indexOf(id) < 0) ids.push(id); });
+    Object.keys(corr).forEach(function (id) {
+      if (ids.indexOf(id) < 0 && !horsChamp(id)) ids.push(id);
+    });
     var propsAnalyse = ids.map(function (id) {
       var c = corr[id] || {};
       var n = niveaux[id] || {};
       return {
         proposition_id: c.proposition_id || ('AN-' + id),
         type: 'perimetre', doc_a: id, doc_b: '',
-        // Sans niveau connu mais avec une correction : « moyen » est le
-        // jugement le plus prudent — le scénario n'écrit rien pour un bon.
-        niveau: n.niveau || 'moyen',
+        // Sans niveau, on ne dit pas un niveau : on dit qu'il n'y en a pas.
+        niveau: n.niveau || '',
         perimetre: n.perimetre || c.perimetre || '',
         changement: c.changement || '',
         constat: c.constat || ''
@@ -740,12 +703,19 @@
       el.appendChild(v); return;
     }
     // Du plus mauvais au meilleur : ce qui réclame une action se lit d'abord.
-    var POIDS = { mauvais: 0, moyen: 1, bon: 2 };
+    // Ce qui réclame une action d'abord, puis les bons, puis ce qui n'a pas
+    // encore été lu — on ne met pas en tête ce dont on ne sait rien.
+    var POIDS = { mauvais: 0, moyen: 1, bon: 2, '': 3 };
     var liste2 = propsAnalyse.sort(function (a, b) {
       var d = (POIDS[a.niveau] === undefined ? 1 : POIDS[a.niveau]) -
               (POIDS[b.niveau] === undefined ? 1 : POIDS[b.niveau]);
       return d || String(lbl(a.doc_a)).localeCompare(String(lbl(b.doc_a)), 'fr');
     });
+    // Le compteur de l'onglet ne compte QUE ce qui porte une correction :
+    // un périmètre non analysé n'appelle aucun geste, et un bon non plus.
+    var aFaire = liste2.filter(function (p) { return String(p.changement || '').trim(); }).length;
+    var cpt = document.getElementById('n-ana');
+    if (cpt) { cpt.textContent = aFaire; cpt.hidden = false; }
     var aRevoir = liste2.filter(function (p) { return (p.niveau || '') !== 'bon'; }).length;
     var t = document.createElement('div'); t.className = 'sect-title';
     t.textContent = liste2.length + ' périmètre' + (liste2.length > 1 ? 's' : '') +
@@ -756,14 +726,16 @@
     liste2.forEach(function (p) {
       // Une coupure là où l'on passe de ce qui demande un geste à ce qui n'en
       // demande aucun : deux natures, pas deux degrés.
-      if (!coupe && p.niveau === 'bon' && aRevoir) {
+      // La coupure sépare ce qui appelle un geste de ce qui n'en appelle
+      // aucun — un périmètre validé, ou un périmètre pas encore lu.
+      if (!coupe && !String(p.changement || '').trim() && aFaire) {
         var c = document.createElement('div'); c.className = 'coupure';
         var x = document.createElement('span');
-        var n = liste2.length - aRevoir;
+        var n = liste2.length - aFaire;
         var v = document.createElement('span'); v.className = 'c'; v.textContent = '✓';
         x.appendChild(v);
         x.appendChild(document.createTextNode(
-          n + ' périmètre' + (n > 1 ? 's' : '') + ' validé' + (n > 1 ? 's' : '')));
+          n + ' périmètre' + (n > 1 ? 's' : '') + ' sans rien à reprendre'));
         c.appendChild(x); el.appendChild(c); coupe = true;
       }
       el.appendChild(blocPerimetre(p));
@@ -805,7 +777,9 @@
       ok.appendChild(c);
       ok.appendChild(document.createTextNode(p.niveau === 'bon'
         ? 'Relu et jugé solide. Rien à reprendre.'
-        : 'Relu. La correction n’est pas encore rédigée.'));
+        : p.niveau
+          ? 'Relu. La correction n’est pas encore rédigée.'
+          : 'Pas encore relu. Le prochain balayage passe dimanche.'));
       bloc.appendChild(ok);
       item.appendChild(bloc);
       return item;
@@ -934,8 +908,6 @@
       document.querySelectorAll('[data-aside]').forEach(function (x) {
         x.hidden = x.dataset.aside !== o;
       });
-      // Le geste de l'onglet vit dans la rangée, pas dans le volet.
-      document.getElementById('btn-analyse').hidden = o !== 'ana';
     });
   });
 

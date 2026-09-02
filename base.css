@@ -492,6 +492,11 @@ textarea { resize:vertical; }
 .n3, .crit.haute, .bloc.haute, .bloc.n3 { --niv:var(--n3); --niv-bg:var(--n3-bg); --niv-br:var(--n3-br); }
 .n2, .crit.moyenne, .bloc.moyenne, .bloc.n2 { --niv:var(--n2); --niv-bg:var(--n2-bg); --niv-br:var(--n2-br); }
 .n1, .crit.basse, .bloc.basse, .bloc.n1 { --niv:var(--n1); --niv-bg:var(--n1-bg); --niv-br:var(--n1-br); }
+/* Le quatrieme etat : l'ABSENCE de niveau. Gris, jauge eteinte. Ce n'est pas
+   un cran de l'echelle, c'est ce qui se dit quand on n'a rien lu. Le cran le
+   plus bas dit « solide » : le mettre ici serait affirmer que le perimetre
+   est bon alors que personne ne l'a juge. */
+.n0, .bloc.n0 { --niv:var(--muted); --niv-bg:var(--surface2); --niv-br:var(--border); }
 
 /* L'etiquette de niveau. Une jauge de reseau : trois barres allumees quand
    tout va bien, une seule quand il faut agir. La forme porte l'information
@@ -517,7 +522,7 @@ textarea { resize:vertical; }
 .j1 .jauge i:nth-child(1) { opacity:1; }
 
 .bloc.haute, .bloc.moyenne, .bloc.basse,
-.bloc.n1, .bloc.n2, .bloc.n3 { border-left:4px solid var(--niv); }
+.bloc.n0, .bloc.n1, .bloc.n2, .bloc.n3 { border-left:4px solid var(--niv); }
 .bloc.basse { border-left:3px solid var(--border-strong); }
 
 /* La pastille du sujet, sur fond tenu — plus de blanc sur blanc. */
@@ -1025,12 +1030,6 @@ textarea { resize:vertical; min-height:96px; }
 /* L'attente : un decompte qui ne ment pas. */
 .perim-attente { display:flex; align-items:center; gap:var(--s2); font-size:var(--t-sm);
   color:var(--muted); }
-/* Un travail long qui tourne en arriere-plan : la page reste utilisable, mais
-   elle ne fait pas semblant d'avoir fini. */
-.attente-ana { display:flex; align-items:flex-start; gap:var(--s2); padding:var(--s3);
-  background:var(--surface2); border:1.5px solid var(--border); border-radius:var(--r-sm);
-  font-size:var(--t-sm); color:var(--ink-soft); line-height:1.5; }
-.attente-ana .perim-rond { margin-top:3px; }
 .perim-rond { width:14px; height:14px; border-radius:50%; border:2px solid var(--border);
   border-top-color:var(--accent-deep); animation:perim-tourne 1s linear infinite; flex-shrink:0; }
 @keyframes perim-tourne { to { transform:rotate(360deg); } }
