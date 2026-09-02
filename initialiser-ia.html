@@ -85,6 +85,13 @@
                 <button class="btn btn-1 btn-s" data-llm="chatgpt" data-mode="ouvrir">Ouvrir →</button>
               </span>
             </div>
+            <div class="llm-l" id="llm-code">
+              <span class="llm-pastille claude-mcp" data-marque="claude"></span>
+              <span><span class="llm-nom">Claude Code</span><br><span class="llm-sous">tout votre univers, pour travailler dans un dossier local</span></span>
+              <span class="llm-a">
+                <button class="btn btn-1 btn-s" data-llm="claude-mcp" data-doc="CLAUDE-CODE" data-mode="copier">Copier</button>
+              </span>
+            </div>
           </div>
         </div>
 
@@ -219,7 +226,7 @@
     t.classList.toggle('vide', !choisis.length);
     var a = !!sel.value;
     t.disabled = !a;
-    document.querySelectorAll('.llm-l').forEach(function (l) { l.dataset.off = a ? '0' : '1'; });
+    document.querySelectorAll('.llm-l:not(#llm-code)').forEach(function (l) { l.dataset.off = a ? '0' : '1'; });
   }
   sel.addEventListener('change', function () {
     // Le sujet principal ne peut pas être aussi un ajout.
@@ -238,7 +245,7 @@
   p.addEventListener('click', function (e) { e.stopPropagation(); });
 
   // ── Le prompt : récupéré, copié, puis l'assistant s'ouvre ──
-  async function chargerPrompt(llm) {
+  async function chargerPrompt(llm, doc) {
     var ajouts = choisis.map(function (it) {
       return { nom_tiroir: it.nom_tiroir, type: estAnx(it) ? 'ANX' : 'PCP', id: it.id || null, url: it.url || null };
     });
@@ -248,7 +255,7 @@
     var r = await kcpFetch(C.webhooks.prompt, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        client_id: C.client_id, doc_int_id: docIds[sel.value],
+        client_id: C.client_id, doc_int_id: doc || docIds[sel.value],
         ajouts: ajouts, liens_additionnels: liens_additionnels, llm: llm
       })
     });
@@ -266,8 +273,13 @@
       document.body.appendChild(a); a.select(); document.execCommand('copy'); document.body.removeChild(a);
     }
   }
-  function confirmer(n) {
+  function confirmer(n, doc) {
     var okTxt = document.getElementById('ok-txt');
+    if (doc) {
+      okTxt.textContent = 'Contexte Claude Code copié. Collez-le dans une session neuve.';
+      document.getElementById('ok').hidden = false;
+      return;
+    }
     okTxt.textContent = 'Contexte de ';
     var b = document.createElement('b');
     b.textContent = sel.value === 'autre' ? '#autre' : '#' + sel.value;
@@ -279,13 +291,13 @@
   // ── Un bouton, une destination, un geste. La destination EST l'action. ──
   document.querySelectorAll('.llm-a button').forEach(function (b) {
     b.addEventListener('click', async function () {
-      if (!sel.value) return;
+      if (!b.dataset.doc && !sel.value) return;
       cacherEtats();
       kcpOccupe(b, true);
       try {
-        await chargerPrompt(b.dataset.llm);
+        await chargerPrompt(b.dataset.llm, b.dataset.doc);
         await copier(promptTexte);
-        confirmer(choisis.length);
+        confirmer(choisis.length, b.dataset.doc);
         if (b.dataset.mode === 'ouvrir') {
           window.open(b.dataset.llm === 'chatgpt' ? 'https://chatgpt.com/' : 'https://claude.ai/new', '_blank');
         }
