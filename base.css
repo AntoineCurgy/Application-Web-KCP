@@ -355,7 +355,9 @@ textarea { resize:vertical; }
   color:var(--muted); white-space:nowrap; }
 .bloc-h > .vues + .crit { margin-left:var(--s2); }
 
-.bloc-q { font-size:var(--t-body); line-height:var(--lh); }
+/* Le moteur rend le constat avec ses sauts de ligne et ses tirets : sans
+   `pre-wrap`, tout se replie en un pave d'une seule coulee. */
+.bloc-q { font-size:var(--t-body); line-height:var(--lh); white-space:pre-wrap; }
 .bloc-a { margin-top:var(--s3); display:grid; grid-template-columns:1fr auto auto; gap:var(--s2); align-items:stretch; }
 .bloc-a textarea { min-height:44px; }
 .bloc-a .btn { white-space:nowrap; }
@@ -989,7 +991,7 @@ textarea { resize:vertical; min-height:96px; }
 .perim-cmp .t { font-family:var(--mono); font-size:var(--t-meta); letter-spacing:.06em;
   text-transform:uppercase; color:var(--muted); }
 .perim-cmp .txt { padding:var(--s2) var(--s3); border-radius:8px; font-size:var(--t-sm);
-  line-height:1.55; white-space:pre-line; }
+  line-height:1.55; white-space:pre-wrap; }
 /* `flex:1` imposait la hauteur et rendait la poignee de redimensionnement
    inoperante : on tirait, rien ne bougeait. La hauteur est libre, bornee en
    bas seulement, et les deux colonnes se synchronisent par script. */
