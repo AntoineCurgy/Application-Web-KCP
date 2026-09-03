@@ -123,8 +123,11 @@
         if (t.doc_int_id) labels[t.doc_int_id] = kcpDocLabel(t);
       });
       // La liste montre l'arbre : chaque sujet sous son nœud.
+      // Un noeud ne recoit pas d'information : il porte la vue transverse de
+      // ses enfants directs, pas de la matiere. Sans `avecNoeuds`, la liste
+      // ne montre les noeuds que comme groupes, jamais comme destination.
       kcpRemplirHierarchie(sel, data, {
-        valeur: 'nom', avecNoeuds: true,
+        valeur: 'nom',
         tete: [{ valeur: '', texte: 'Laisser le système choisir' }]
       });
       rendreRecents(kcpReadCapturesCache());
