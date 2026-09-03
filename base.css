@@ -1027,8 +1027,16 @@ textarea { resize:vertical; min-height:96px; }
 #v-ana .perim-cmp > div > .btn { font-size:var(--t-sm); padding:.45rem .85rem; }
 /* Le repere de droite remonte sur la ligne du titre : sur cet onglet la largeur
    sert aux textes, pas a une colonne de service. */
-.savoir-ana { flex-shrink:0; width:340px; background:var(--surface);
+/* Hors du flux : le bloc est plus haut que le titre, et dans le flux il
+   poussait les onglets de 50px des qu'on passait sur cet onglet-la. La barre
+   de navigation ne doit pas sauter d'un onglet a l'autre. */
+.entete-geste { position:relative; }
+.savoir-ana { position:absolute; right:0; top:0; width:340px; background:var(--surface);
   border:1.5px solid var(--accent-deep); border-radius:var(--r); padding:var(--s3); }
+/* Trop etroit pour tenir a cote du titre : il repasse dans le flux, ou il ne
+   chevauche rien. Le saut des onglets y est sans consequence, la colonne de
+   lecture ayant deja change de forme. */
+@media (max-width:1200px) { .savoir-ana { position:static; width:auto; } }
 .savoir-ana p { font-size:var(--t-sm); color:var(--ink-soft); max-width:none;
   margin-top:var(--s2); }
 .savoir-ana b { color:var(--accent-deep); }
