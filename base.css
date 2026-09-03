@@ -297,7 +297,9 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 
 /* Chat — depose et interrogation partagent le meme chassis. */
 .fil-msg { display:flex; flex-direction:column; gap:var(--s3); }
-.msg { max-width:76%; padding:var(--s2) var(--s3); border-radius:var(--r-sm); font-size:var(--t-body); line-height:var(--lh); }
+/* `pre-line` rend les sauts de ligne du message et replie le reste : sans
+   lui, retraduire les <br> du moteur ne se verrait pas. */
+.msg { max-width:76%; padding:var(--s2) var(--s3); border-radius:var(--r-sm); font-size:var(--t-body); line-height:var(--lh); white-space:pre-line; }
 .msg.moi { align-self:flex-end; background:var(--dark); color:var(--dark-text); }
 .msg.lui { align-self:flex-start; background:var(--surface); border:1.5px solid var(--border); }
 .saisie { display:flex; gap:var(--s2); align-items:flex-end; background:var(--surface);
