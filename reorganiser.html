@@ -524,6 +524,9 @@
       });
     });
     droite.classList.add('choisie');
+    // La liste appelait `lierHauteurs`, la fenetre non : ici, tirer la poignee
+    // d'une des deux zones ne bougeait que celle-la, et la comparaison boitait.
+    lierHauteurs(gauche.zone, droite.zone);
     var oui = await KCP_CONFIRMER({
       titre: 'Redéfinir le périmètre de ' + lbl(p.doc_a) + ' ?',
       lignes: [],
@@ -794,7 +797,6 @@
     droite.appendChild(bd);
     bg.addEventListener('click', function () { envoyer(item, p, gauche.zone.value, bg); });
     bd.addEventListener('click', function () { envoyer(item, p, droite.zone.value, bd); });
-    lierHauteurs(gauche.zone, droite.zone);
     cmp.appendChild(gauche); cmp.appendChild(droite);
     bloc.appendChild(cmp);
     // Pas de « Refuser » ici : « Garder ce texte » dit déjà que la
