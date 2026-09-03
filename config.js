@@ -478,41 +478,77 @@ var KCP_FICHE = (function () {
 // Les deux marqueurs servent d'ancres pour redécouper à la relecture.
 // ─────────────────────────────────────────────────────────────
 var KCP_PERIMETRE = (function () {
-  var ANCRE_E = 'Y entrent : ';
-  var ANCRE_R = "N'y ont pas leur place : ";
+  // Cinq intitules, chacun seul sur sa ligne, un bloc separe par une ligne
+  // vide. Trois d'entre eux portent une phrase et jamais une liste : une liste
+  // ne tranche pas un cas qu'elle n'a pas prevu, et c'est tout leur objet.
+  var A = {
+    regle:  'Entre ici :',
+    refuse: "N'entrent pas :",
+    doute:  'En cas de doute :',
+    detail: 'Niveau de détail :',
+    sous:   'Sujets sous cet ensemble :'
+  };
 
-  // Une énumération de phrases : chacune commence par une majuscule. Le
-  // redécoupage sépare sur « point puis espace », la capitale survit donc à
-  // l'aller-retour et le texte se lit sans buter à chaque point.
   function majuscule(x) {
     var t = String(x || '').trim();
-    return t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+    return t ? t.charAt(0).toUpperCase() + t.slice(1) : '';
   }
+
+  // L'intitule ouvre la phrase, qui la continue en minuscule : « Entre ici :
+  // toute information … ». Seule la premiere ligne du perimetre porte une
+  // capitale. Une phrase se termine par un point ; une puce, jamais.
+  function phrase(x) {
+    var t = String(x || '').trim();
+    return t && !/[.!?]$/.test(t) ? t + '.' : t;
+  }
+  function puces(l) {
+    return l.map(function (x) {
+      return '- ' + String(x || '').trim().replace(/\.$/, '');
+    }).join('\n');
+  }
+  function enListe(v) {
+    return String(v || '').split('\n')
+      .map(function (x) { return x.replace(/^\s*[-–•]\s*/, '').trim(); })
+      .filter(Boolean);
+  }
+
+  function bloc(intitule, contenu) { return intitule + '\n' + contenu; }
 
   function assembler(v) {
-    function liste(x) { return x.map(majuscule).join('. ') + '.'; }
+    v = v || {};
     var t = [];
     if (v.objet) t.push(majuscule(v.objet));
-    if (v.entre.length) t.push(ANCRE_E + liste(v.entre));
-    if (v.refuse.length) t.push(ANCRE_R + liste(v.refuse));
-    return t.join('\n');
+    if (v.regle) t.push(bloc(A.regle, phrase(v.regle)));
+    if (v.refuse && v.refuse.length) t.push(bloc(A.refuse, puces(v.refuse)));
+    if (v.doute) t.push(bloc(A.doute, phrase(v.doute)));
+    if (v.detail) t.push(bloc(A.detail, phrase(v.detail)));
+    if (v.sousSujets && v.sousSujets.length) t.push(bloc(A.sous, puces(v.sousSujets)));
+    return t.join('\n\n');
   }
 
-  // Un périmètre ancien ne porte aucune ancre : il se charge entièrement
-  // dans le champ 1. C'est le comportement correct, pas un repli.
+  // Un perimetre ancien ne porte aucun de ces intitules : il se charge
+  // entierement dans le champ 1. C'est le comportement correct, pas un repli.
   function redecouper(txt) {
-    var s = String(txt || '');
-    var iE = s.indexOf(ANCRE_E), iR = s.indexOf(ANCRE_R);
-    if (iE < 0 && iR < 0) return { objet: s.trim(), entre: [], refuse: [] };
-    var fin = iR >= 0 ? iR : s.length;
-    function couper(x) {
-      return String(x).split(/\.\s+|\.$|\n/).map(function (y) { return y.trim(); }).filter(Boolean);
-    }
-    return {
-      objet: s.slice(0, iE >= 0 ? iE : fin).trim(),
-      entre: iE >= 0 ? couper(s.slice(iE + ANCRE_E.length, fin)) : [],
-      refuse: iR >= 0 ? couper(s.slice(iR + ANCRE_R.length)) : []
-    };
+    var s = String(txt || '').replace(/\r\n?/g, '\n');
+    var vide = { objet: '', regle: '', refuse: [], doute: '', detail: '', sousSujets: [] };
+    // Les intitules sont cherches en debut de ligne : le meme mot au fil d'une
+    // phrase ne doit pas ouvrir un bloc.
+    var trouves = [];
+    Object.keys(A).forEach(function (cle) {
+      var m = new RegExp('^' + A[cle].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[ \t]*$', 'm').exec(s);
+      if (m) trouves.push({ cle: cle, i: m.index, l: m[0].length });
+    });
+    if (!trouves.length) { vide.objet = s.trim(); return vide; }
+    trouves.sort(function (x, y) { return x.i - y.i; });
+    vide.objet = s.slice(0, trouves[0].i).trim();
+    trouves.forEach(function (o, k) {
+      var fin = k + 1 < trouves.length ? trouves[k + 1].i : s.length;
+      var v = s.slice(o.i + o.l, fin).trim();
+      if (o.cle === 'refuse') vide.refuse = enListe(v);
+      else if (o.cle === 'sous') vide.sousSujets = enListe(v);
+      else vide[o.cle] = v;
+    });
+    return vide;
   }
 
   // ── Une liste : un champ par entrée. La première ne se retire jamais ──
@@ -966,7 +1002,7 @@ KCP_PERIMETRE.ouvrirFenetre = function (opts, ouvreur) {
           var manuel = el('button', 'btn btn-s', 'Écrire le périmètre moi-même');
           manuel.type = 'button';
           manuel.addEventListener('click', function () {
-            etapeTexte(z.value.trim(), [], []);
+            etapeTexte(null, z.value.trim(), [], []);
           });
           corps.appendChild(manuel);
           return;
@@ -1014,7 +1050,7 @@ KCP_PERIMETRE.ouvrirFenetre = function (opts, ouvreur) {
 
     function poser() {
       corps.textContent = '';
-      if (i >= p.candidats.length) return etapeTexte(reform, oui, non);
+      if (i >= p.candidats.length) return etapeTexte(p, reform, oui, non);
       var it = p.candidats[i];
       etat.textContent = 'question ' + (i + 1) + ' sur ' + p.candidats.length;
 
@@ -1068,7 +1104,12 @@ KCP_PERIMETRE.ouvrirFenetre = function (opts, ouvreur) {
   }
 
   // ── Étape 3 · le bilan, et le texte que l'on enregistre ────
-  function etapeTexte(reform, oui, non) {
+  // `p` porte les trois phrases que le moteur redige en plus de la
+  // reformulation : la regle d'entree, l'arbitrage et le niveau de detail.
+  // Elles ne recoivent pas de champ a elles — elles arrivent dans le texte
+  // final, qui est editable : c'est la qu'on les corrige, sans allonger la
+  // fenetre de trois zones de plus.
+  function etapeTexte(p, reform, oui, non) {
     vider();
     sous.textContent = 'Relisez, corrigez ce qui est faux, et enregistrez.';
 
@@ -1129,10 +1170,15 @@ KCP_PERIMETRE.ouvrirFenetre = function (opts, ouvreur) {
     zt.addEventListener('input', function () { mien = true; });
     function poserTexte() {
       if (mien) return;
+      // Les candidats acceptes ne sont plus enumeres : la regle d'entree les
+      // couvre, et une liste ne tranche pas un cas qu'elle n'a pas prevu.
+      // Seuls les refus restent une liste, c'est leur nature.
       zt.value = KCP_PERIMETRE.assembler({
         objet: zr.value.trim(),
-        entre: lignes.filter(function (l) { return l.v === 'oui'; }).map(function (l) { return l.t; }),
-        refuse: lignes.filter(function (l) { return l.v === 'non'; }).map(function (l) { return l.t; })
+        regle: (p && p.regle_entree) || '',
+        refuse: lignes.filter(function (l) { return l.v === 'non'; }).map(function (l) { return l.t; }),
+        doute: (p && p.arbitrage) || '',
+        detail: (p && p.grain) || ''
       });
     }
     zr.addEventListener('input', poserTexte);
