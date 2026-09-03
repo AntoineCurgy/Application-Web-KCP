@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>KCP — Connexion</title>
+<title>KCP | Connexion</title>
 <link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
 <link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,9 +26,9 @@
     </div>
     <form class="carte-f" id="f">
       <div class="champ"><label for="e">Email</label>
-        <input type="email" id="e" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
+        <input type="email" id="e" name="username" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
       <div class="champ"><label for="p">Mot de passe</label>
-        <input type="password" id="p" autocomplete="current-password">
+        <input type="password" id="p" name="password" autocomplete="current-password">
         <a class="mini" href="reset-password.html" id="lnk-reset">Mot de passe oublié ?</a></div>
       <div class="alerte-err" id="err" hidden><span>›</span><span id="err-txt"></span></div>
       <button class="btn btn-1" id="go" style="justify-content:center">Se connecter →</button>
@@ -87,7 +87,7 @@
             reunions: notionUrl(d.notion_uuid_reunions) || (d.notion && d.notion.reunions) || '',
           },
         });
-        location.replace('./index.html');
+        location.assign('./index.html');
         return;
       }
       showErr(d.message || d.error || 'Email ou mot de passe incorrect.');
