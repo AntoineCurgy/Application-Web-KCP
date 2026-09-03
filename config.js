@@ -483,6 +483,7 @@ var KCP_PERIMETRE = (function () {
   // ne tranche pas un cas qu'elle n'a pas prevu, et c'est tout leur objet.
   var A = {
     regle:  'Entre ici :',
+    entre:  'Y entrent notamment :',
     refuse: "N'entrent pas :",
     doute:  'En cas de doute :',
     detail: 'Niveau de détail :',
@@ -519,6 +520,8 @@ var KCP_PERIMETRE = (function () {
     var t = [];
     if (v.objet) t.push(majuscule(v.objet));
     if (v.regle) t.push(bloc(A.regle, phrase(v.regle)));
+    // Des exemples, jamais une regle : `Entre ici` tranche, ceux-ci illustrent.
+    if (v.entre && v.entre.length) t.push(bloc(A.entre, puces(v.entre)));
     if (v.refuse && v.refuse.length) t.push(bloc(A.refuse, puces(v.refuse)));
     if (v.doute) t.push(bloc(A.doute, phrase(v.doute)));
     if (v.detail) t.push(bloc(A.detail, phrase(v.detail)));
@@ -530,7 +533,7 @@ var KCP_PERIMETRE = (function () {
   // entierement dans le champ 1. C'est le comportement correct, pas un repli.
   function redecouper(txt) {
     var s = String(txt || '').replace(/\r\n?/g, '\n');
-    var vide = { objet: '', regle: '', refuse: [], doute: '', detail: '', sousSujets: [] };
+    var vide = { objet: '', regle: '', entre: [], refuse: [], doute: '', detail: '', sousSujets: [] };
     // Les intitules sont cherches en debut de ligne : le meme mot au fil d'une
     // phrase ne doit pas ouvrir un bloc.
     var trouves = [];
@@ -544,7 +547,8 @@ var KCP_PERIMETRE = (function () {
     trouves.forEach(function (o, k) {
       var fin = k + 1 < trouves.length ? trouves[k + 1].i : s.length;
       var v = s.slice(o.i + o.l, fin).trim();
-      if (o.cle === 'refuse') vide.refuse = enListe(v);
+      if (o.cle === 'entre') vide.entre = enListe(v);
+      else if (o.cle === 'refuse') vide.refuse = enListe(v);
       else if (o.cle === 'sous') vide.sousSujets = enListe(v);
       else vide[o.cle] = v;
     });
@@ -1131,30 +1135,92 @@ KCP_PERIMETRE.ouvrirFenetre = function (opts, ouvreur) {
     // ligne qui change de camp ne bouge pas de place, sinon on la perd.
     var lignes = oui.map(function (t) { return { t: t, v: 'oui' }; })
       .concat(non.map(function (t) { return { t: t, v: 'non' }; }));
+    // La liste s'affiche toujours, meme vide : on peut desormais y ajouter.
+    // Ajouter et retirer ici plutot que dans le texte du bas, c'est la meme
+    // matiere sans jamais pouvoir casser la structure du perimetre.
     var bl = el('div');
-    if (lignes.length) {
-      bl.appendChild(tsec('Vos réponses'));
-      var lst = el('div', 'perim-bilan');
-      lignes.forEach(function (l) {
-        var g = el('div', 'rangee');
-        var m = el('span', 'marq ' + l.v, l.v === 'oui' ? 'dedans' : 'dehors');
-        g.appendChild(m);
-        g.appendChild(el('span', 'nom', l.t));
-        var b = el('button', 'btn btn-s', 'changer');
-        b.type = 'button';
-        b.setAttribute('aria-label', 'Changer de camp : ' + l.t);
-        b.addEventListener('click', function () {
-          l.v = l.v === 'oui' ? 'non' : 'oui';
-          m.className = 'marq ' + l.v;
-          m.textContent = l.v === 'oui' ? 'dedans' : 'dehors';
-          poserTexte();
-        });
-        g.appendChild(b);
-        lst.appendChild(g);
+    bl.appendChild(tsec('Vos réponses'));
+    var lst = el('div', 'perim-bilan');
+    bl.appendChild(lst);
+
+    function rangee(l) {
+      var g = el('div', 'rangee');
+      var m = el('span', 'marq ' + l.v, l.v === 'oui' ? 'dedans' : 'dehors');
+      g.appendChild(m);
+      g.appendChild(el('span', 'nom', l.t));
+      var b = el('button', 'btn btn-s', 'changer');
+      b.type = 'button';
+      b.setAttribute('aria-label', 'Changer de camp : ' + l.t);
+      b.addEventListener('click', function () {
+        l.v = l.v === 'oui' ? 'non' : 'oui';
+        m.className = 'marq ' + l.v;
+        m.textContent = l.v === 'oui' ? 'dedans' : 'dehors';
+        poserTexte();
       });
-      bl.appendChild(lst);
-      corps.appendChild(bl);
+      g.appendChild(b);
+      // Une ligne dont on ne veut ni dedans ni dehors n'avait aucune sortie :
+      // `changer` bascule entre deux etats qui la gardent tous les deux.
+      var x = el('button', 'btn btn-s perim-x', '×');
+      x.type = 'button';
+      x.setAttribute('aria-label', 'Retirer : ' + l.t);
+      x.title = 'Retirer cette ligne';
+      x.addEventListener('click', function () {
+        var i = lignes.indexOf(l);
+        if (i >= 0) lignes.splice(i, 1);
+        dessiner();
+        poserTexte();
+      });
+      g.appendChild(x);
+      return g;
     }
+
+    function dessiner() {
+      lst.textContent = '';
+      lignes.forEach(function (l) { lst.appendChild(rangee(l)); });
+    }
+    dessiner();
+
+    // ── Ajouter une ligne, en place ──
+    var zoneAjout = el('div');
+    bl.appendChild(zoneAjout);
+    var plus = el('button', 'btn btn-s perim-plus', '+ Ajouter');
+    plus.type = 'button';
+    bl.appendChild(plus);
+
+    plus.addEventListener('click', function () {
+      plus.hidden = true;
+      var g = el('div', 'rangee rangee-neuve');
+      var sel = el('select', 'marq-sel');
+      [['oui', 'dedans'], ['non', 'dehors']].forEach(function (o) {
+        var op = el('option', null, o[1]); op.value = o[0]; sel.appendChild(op);
+      });
+      sel.setAttribute('aria-label', 'Dedans ou dehors');
+      var z = el('input', 'nom-neuf');
+      z.type = 'text';
+      z.placeholder = 'écrivez la matière, une ligne…';
+      z.setAttribute('aria-label', 'La matière à ajouter');
+      var ok = el('button', 'btn btn-1 btn-s', '✓');
+      ok.type = 'button';
+      ok.setAttribute('aria-label', 'Valider cette ligne');
+      function fermer() { g.remove(); plus.hidden = false; plus.focus(); }
+      function valider() {
+        var t = z.value.trim();
+        if (!t) { KCP_SIGNALER([z]); return; }
+        lignes.push({ t: t, v: sel.value });
+        fermer(); dessiner(); poserTexte();
+      }
+      ok.addEventListener('click', valider);
+      // Une ligne, pas un paragraphe : Entree valide, Echap renonce.
+      z.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); valider(); }
+        else if (e.key === 'Escape') { e.preventDefault(); fermer(); }
+      });
+      g.appendChild(sel); g.appendChild(z); g.appendChild(ok);
+      zoneAjout.appendChild(g);
+      z.focus();
+    });
+
+    corps.appendChild(bl);
 
     var fin = el('div');
     fin.appendChild(tsec('Le périmètre enregistré'));
@@ -1170,15 +1236,16 @@ KCP_PERIMETRE.ouvrirFenetre = function (opts, ouvreur) {
     zt.addEventListener('input', function () { mien = true; });
     function poserTexte() {
       if (mien) return;
-      // Les candidats acceptes ne sont plus enumeres : la regle d'entree les
-      // couvre, et une liste ne tranche pas un cas qu'elle n'a pas prevu.
-      // Seuls les refus restent une liste, c'est leur nature.
+      // `Entre ici` tranche, `Y entrent notamment` illustre : les acceptes
+      // sont des exemples, jamais la regle.
       zt.value = KCP_PERIMETRE.assembler({
         objet: zr.value.trim(),
         regle: (p && p.regle_entree) || '',
+        entre: lignes.filter(function (l) { return l.v === 'oui'; }).map(function (l) { return l.t; }),
         refuse: lignes.filter(function (l) { return l.v === 'non'; }).map(function (l) { return l.t; }),
         doute: (p && p.arbitrage) || '',
-        detail: (p && p.grain) || ''
+        detail: (p && p.grain) || '',
+        sousSujets: (p && p.sous_sujets) || []
       });
     }
     zr.addEventListener('input', poserTexte);
