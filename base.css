@@ -1009,6 +1009,32 @@ textarea { resize:vertical; min-height:96px; }
 /* Quand deux textes s'offrent, celui qui partira se signale. */
 .perim-cmp > .choisie > .txt { box-shadow:0 0 0 2px var(--niv, var(--accent-deep)); }
 
+/* ── L'onglet Perimetres prend toute la largeur ───────────────────────
+   Mesure sur le parc reel : la correction proposee fait 5,8 fois le perimetre
+   qu'elle remplace. Les colonnes restent egales — c'est ce qui se lit le mieux
+   — et c'est la hauteur qui absorbe l'ecart, chaque zone epousant son contenu.
+   A 772px de large, le plus long des textes demande 198px : le plancher de 200
+   ne tronque donc rien et rend toutes les fiches egales en hauteur. */
+.main.large { max-width:1660px; }
+/* La page borne elle-meme sa colonne de lecture : sur cet onglet on la leve,
+   sinon elargir `main` ne se voit nulle part. */
+.main.large .z { max-width:none; }
+.main.large .duo { grid-template-columns:minmax(0,1fr); }
+/* Le repere ayant remonte en tete, la colonne de droite n'a plus rien a
+   montrer ici : elle ne doit pas laisser un blanc sous la liste. */
+.main.large .duo > aside:empty { display:none; }
+#v-ana .perim-cmp textarea.txt { min-height:200px; height:auto; }
+/* Les deux boutons portent le geste de la page : un cran au-dessus du bouton
+   discret, sans aller jusqu'au bouton pleine taille. */
+#v-ana .perim-cmp > div > .btn { font-size:var(--t-sm); padding:.45rem .85rem; }
+/* Le repere de droite remonte sur la ligne du titre : sur cet onglet la largeur
+   sert aux textes, pas a une colonne de service. */
+.savoir-ana { flex-shrink:0; width:340px; background:var(--surface);
+  border:1.5px solid var(--accent-deep); border-radius:var(--r); padding:var(--s3); }
+.savoir-ana p { font-size:var(--t-sm); color:var(--ink-soft); max-width:none;
+  margin-top:var(--s2); }
+.savoir-ana b { color:var(--accent-deep); }
+
 /* Un perimetre juge bon : rien a faire, et ca se dit. */
 .valide { display:inline-flex; align-items:center; gap:.4rem; font-family:var(--mono);
   font-size:var(--t-meta); color:var(--n1); }
