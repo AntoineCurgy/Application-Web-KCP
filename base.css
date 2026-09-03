@@ -348,12 +348,12 @@ textarea { resize:vertical; }
 /* Le sujet ouvre la ligne ; ce qui la ferme se pose a droite, que ce soit un
    niveau ou le nom d'un defaut. Une seule regle, pour que les deux pages
    n'aient pas a le redire chacune de son cote. */
-.bloc-h > .prop-geste, .bloc-h > .crit { margin-left:auto; }
+.bloc-h > .crit { margin-left:auto; }
 /* Combien de fois le systeme a vu la chose. A gauche de l'etiquette, en
    metadonnee : c'est un compte, pas un jugement. */
 .bloc-h > .vues { margin-left:auto; font-family:var(--mono); font-size:var(--t-meta);
   color:var(--muted); white-space:nowrap; }
-.bloc-h > .vues + .prop-geste { margin-left:var(--s2); }
+.bloc-h > .vues + .crit { margin-left:var(--s2); }
 
 .bloc-q { font-size:var(--t-body); line-height:var(--lh); }
 .bloc-a { margin-top:var(--s3); display:grid; grid-template-columns:1fr auto auto; gap:var(--s2); align-items:stretch; }
@@ -736,11 +736,7 @@ input[readonly]:focus { border-color:var(--border); background:var(--surface); }
 /* La teinte dit « defaut », pas un niveau : elle est CONSTANTE sur les sept
    termes. Une couleur qui ne varie jamais ne code rien d'autre qu'elle-meme,
    et le gris faisait passer pour neutre ce qui ne l'est pas. */
-.prop-geste { display:inline-flex; align-items:center; justify-content:center;
-  min-width:172px; white-space:nowrap; font-family:var(--display);
-  font-size:var(--t-meta); font-weight:600; letter-spacing:.02em;
-  padding:3px 10px; border-radius:4px;
-  background:var(--n2-bg); color:var(--n2); }
+
 
 /* Les boutons d'une meme rangee de reglages ont la meme largeur. */
 .grp .btn { min-width:132px; justify-content:center; }

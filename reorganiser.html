@@ -186,13 +186,16 @@
       return;
     }
     liste.forEach(function (p) {
-      propsEl.appendChild(blocProposition(p, retirerProp(p)));
+      propsEl.appendChild(blocProposition(p, retirerProp(p), 'n3 j3'));
     });
   }
 
   // Un bloc de proposition. `apresTraitement` dit à qui appartient la liste :
   // celle du cycle, ou celle d'une analyse lancée à la main.
-  function blocProposition(p, apresTraitement) {
+  // `niveau` porte la confiance de l'onglet : la couleur dit s'il faut agir,
+  // les trois barres comptent ce sur quoi le systeme s'appuie. Meme composant
+  // que l'onglet Perimetres — la forme est ce qui fait la coherence.
+  function blocProposition(p, apresTraitement, niveau) {
     var t = TYPES[p.type] || { lbl: p.type || '—' };
     var item = document.createElement('div'); item.className = 'item';
 
@@ -210,8 +213,16 @@
       vu.title = 'Le système rédige une proposition à partir de trois observations.';
       h.appendChild(vu);
     }
-    var geste = document.createElement('span'); geste.className = 'prop-geste';
-    geste.textContent = t.lbl;
+    var geste = document.createElement('span');
+    geste.className = 'crit ' + (niveau || 'n3 j3');
+    var jg = document.createElement('span'); jg.className = 'jauge';
+    for (var k = 0; k < 3; k++) jg.appendChild(document.createElement('i'));
+    var pg = document.createElement('span'); pg.className = 'pt';
+    geste.appendChild(jg); geste.appendChild(pg);
+    geste.appendChild(document.createTextNode(t.lbl));
+    geste.title = (niveau || '').indexOf('n2') === 0
+      ? 'Confiance faible : le système ne l’a vu qu’une fois ou deux.'
+      : 'Confiance élevée : le système l’a établi sur plusieurs cycles.';
     h.appendChild(geste);
     bloc.appendChild(h);
 
@@ -604,7 +615,7 @@
         g.ids.forEach(function (i) { vus[i] = 1; });
         signaux = signaux.filter(function (x) { return !vus[x.signal_id]; });
         rendreSignaux();
-      }));
+      }, 'n2 j2'));
     });
   }
 
