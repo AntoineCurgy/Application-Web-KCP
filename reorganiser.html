@@ -56,8 +56,8 @@
       <div class="rangee-onglets">
       <div class="bascule" role="tablist" aria-label="Niveau de confiance">
         <button role="tab" id="t-conf" aria-selected="true" aria-controls="v-conf">CONFIRMÉES<span class="p p-alerte" id="n-conf">0</span></button>
-        <button role="tab" id="t-pot" aria-selected="false" aria-controls="v-pot">POTENTIELLES<span class="p p-neutre" id="n-pot">0</span></button>
-        <button role="tab" id="t-ana" aria-selected="false" aria-controls="v-ana">PÉRIMÈTRES<span class="p p-neutre" id="n-ana">0</span></button>
+        <button role="tab" id="t-pot" aria-selected="false" aria-controls="v-pot">POTENTIELLES</button>
+        <button role="tab" id="t-ana" aria-selected="false" aria-controls="v-ana">PÉRIMÈTRES</button>
       </div>
       </div>
 
@@ -573,7 +573,10 @@
   // ── Les signaux : une observation brute, sans proposition rédigée ──
   function rendreSignaux() {
     var el = document.getElementById('signaux');
-    document.getElementById('n-pot').textContent = grouper(signaux).length;
+    // Seul Confirmees porte un nombre : c'est le seul onglet ou le compte
+    // appelle un geste. Ailleurs il chiffrait sans rien demander.
+    var cp = document.getElementById('n-pot');
+    if (cp) cp.textContent = grouper(signaux).length;
     el.textContent = '';
     if (!signaux.length) {
       var v = document.createElement('div'); v.className = 'vide-etat';
