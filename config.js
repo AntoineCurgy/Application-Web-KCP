@@ -1270,10 +1270,23 @@ KCP_PERIMETRE.ouvrirFenetre = function (opts, ouvreur) {
     zr.focus();
   }
 
-  // Une seule fenêtre, un seul chemin. Un périmètre déjà écrit arrive
-  // pré-rempli dans la phrase, tel qu'il est stocké : le système repart de
-  // tout ce qu'on lui avait dit, exclusions comprises.
-  etapeGraine(String(opts.valeur || '').trim());
+  // Une seule fenêtre, et toujours une seule : le point d'entrée ne dépend pas
+  // d'un choix de l'utilisateur mais de ce qu'il y a à ouvrir. Un périmètre
+  // déjà écrit se découpe et s'ouvre dans ses champs — corriger un mot ne
+  // devrait pas coûter un aller-retour de huit secondes avec le moteur. Un
+  // périmètre vide, ou d'avant le format, n'a rien à découper : il part de la
+  // phrase, comme avant.
+  (function entrer() {
+    var brut = String(opts.valeur || '').trim();
+    var d = KCP_PERIMETRE.redecouper(brut);
+    var decoupe = !!(d.regle || d.doute || d.detail ||
+      d.entre.length || d.refuse.length || d.sousSujets.length);
+    if (!decoupe) return etapeGraine(brut);
+    etapeTexte({
+      regle_entree: d.regle, arbitrage: d.doute,
+      grain: d.detail, sous_sujets: d.sousSujets
+    }, d.objet, d.entre, d.refuse);
+  })();
 
   voile.classList.add('on'); fen.classList.add('on');
 };
