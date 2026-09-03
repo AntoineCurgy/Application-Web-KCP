@@ -95,10 +95,24 @@
   var btn = document.getElementById('go');
   var sel = document.getElementById('sv');
 
+  // Le moteur rend ses paragraphes en `<br>`, pas en sauts de ligne. Ecrits
+  // tels quels dans du texte, ils s'affichent litteralement au milieu de la
+  // phrase. On les retraduit en vrais sauts, et l'ecriture reste en
+  // `textContent` : rien de ce qui revient du reseau n'est interprete.
+  function enTexte(v) {
+    return String(v == null ? '' : v)
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
+      .replace(/<\/?p[^>]*>/gi, '')
+      .replace(/\r\n?/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
   function bulle(role, texte) {
     var d = document.createElement('div');
     d.className = 'msg ' + (role === 'moi' ? 'moi' : 'lui');
-    d.textContent = texte;
+    d.textContent = enTexte(texte);
     fil.appendChild(d);
     fil.scrollTop = fil.scrollHeight;
     return d;
@@ -178,7 +192,7 @@
       var raw = await r.text();
       var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
       var p; try { p = JSON.parse(cleaned); } catch (e) { p = { text: cleaned || 'Réponse vide.' }; }
-      attente.textContent = p.text || cleaned || 'Réponse vide.';
+      attente.textContent = enTexte(p.text || cleaned) || 'Réponse vide.';
     } catch (e) {
       attente.textContent = 'La question n’a pas pu partir. Réessayez.';
     }

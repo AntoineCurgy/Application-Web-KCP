@@ -46,14 +46,18 @@
           <h1>Améliorer</h1>
           <p class="sub" style="margin-top:.4rem">Ici, le système regarde la <b>structure</b> de vos sujets, leurs frontières, leurs noms, leurs recouvrements, et vous propose de la corriger.</p>
         </div>
+        <div class="savoir-ana" data-aside="ana" hidden>
+          <div class="sect-h" style="margin-bottom:var(--s2)">À savoir</div>
+          <p><b>Les deux textes se modifient.</b> Celui que vous envoyez remplace le périmètre du sujet, sans passer par un autre écran.</p>
+        </div>
         <div class="envoye" id="kcp-envoye" role="status" aria-live="polite" hidden></div>
       </div>
 
       <div class="rangee-onglets">
       <div class="bascule" role="tablist" aria-label="Niveau de confiance">
         <button role="tab" id="t-conf" aria-selected="true" aria-controls="v-conf">CONFIRMÉES<span class="p p-alerte" id="n-conf">0</span></button>
-        <button role="tab" id="t-pot" aria-selected="false" aria-controls="v-pot">POTENTIELLES<span class="p p-neutre" id="n-pot">0</span></button>
-        <button role="tab" id="t-ana" aria-selected="false" aria-controls="v-ana">PÉRIMÈTRES<span class="p p-neutre" id="n-ana">0</span></button>
+        <button role="tab" id="t-pot" aria-selected="false" aria-controls="v-pot">POTENTIELLES</button>
+        <button role="tab" id="t-ana" aria-selected="false" aria-controls="v-ana">PÉRIMÈTRES</button>
       </div>
       </div>
 
@@ -72,6 +76,7 @@
           </div>
 
           <div id="v-ana" role="tabpanel" aria-labelledby="t-ana" hidden>
+            <div class="conf neutre"><span class="t" id="ana-tete"></span></div>
             <div id="ana-props"></div>
           </div>
         </div>
@@ -104,18 +109,6 @@
             </div>
           </div>
 
-          <div class="aside-b cle" data-aside="ana" hidden>
-            <div class="sect-h" style="margin-bottom:var(--s2)">À savoir</div>
-            <p><b>Les deux textes se modifient.</b> Celui que vous envoyez remplace le périmètre du sujet, sans passer par un autre écran.</p>
-          </div>
-          <div class="aside-b" data-aside="ana" hidden>
-            <div class="sect-h" style="margin-bottom:var(--s2)">Les trois notes</div>
-            <div class="etapes">
-              <span class="n">1</span><span class="x"><b>À revoir</b> : le périmètre ne dit pas ce qu'il refuse.</span>
-              <span class="n">2</span><span class="x"><b>Perfectible</b> : il le dit à moitié.</span>
-              <span class="n">3</span><span class="x"><b>Solide</b> : rien à reprendre.</span>
-            </div>
-          </div>
         </aside>
       </div>
     </div>
@@ -193,13 +186,16 @@
       return;
     }
     liste.forEach(function (p) {
-      propsEl.appendChild(blocProposition(p, retirerProp(p)));
+      propsEl.appendChild(blocProposition(p, retirerProp(p), 'n3 j3'));
     });
   }
 
   // Un bloc de proposition. `apresTraitement` dit à qui appartient la liste :
   // celle du cycle, ou celle d'une analyse lancée à la main.
-  function blocProposition(p, apresTraitement) {
+  // `niveau` porte la confiance de l'onglet : la couleur dit s'il faut agir,
+  // les trois barres comptent ce sur quoi le systeme s'appuie. Meme composant
+  // que l'onglet Perimetres — la forme est ce qui fait la coherence.
+  function blocProposition(p, apresTraitement, niveau) {
     var t = TYPES[p.type] || { lbl: p.type || '—' };
     var item = document.createElement('div'); item.className = 'item';
 
@@ -217,8 +213,16 @@
       vu.title = 'Le système rédige une proposition à partir de trois observations.';
       h.appendChild(vu);
     }
-    var geste = document.createElement('span'); geste.className = 'prop-geste';
-    geste.textContent = t.lbl;
+    var geste = document.createElement('span');
+    geste.className = 'crit ' + (niveau || 'n3 j3');
+    var jg = document.createElement('span'); jg.className = 'jauge';
+    for (var k = 0; k < 3; k++) jg.appendChild(document.createElement('i'));
+    var pg = document.createElement('span'); pg.className = 'pt';
+    geste.appendChild(jg); geste.appendChild(pg);
+    geste.appendChild(document.createTextNode(t.lbl));
+    geste.title = (niveau || '').indexOf('n2') === 0
+      ? 'Confiance faible : le système ne l’a vu qu’une fois ou deux.'
+      : 'Confiance élevée : le système l’a établi sur plusieurs cycles.';
     h.appendChild(geste);
     bloc.appendChild(h);
 
@@ -531,6 +535,9 @@
       });
     });
     droite.classList.add('choisie');
+    // La liste appelait `lierHauteurs`, la fenetre non : ici, tirer la poignee
+    // d'une des deux zones ne bougeait que celle-la, et la comparaison boitait.
+    lierHauteurs(gauche.zone, droite.zone);
     var oui = await KCP_CONFIRMER({
       titre: 'Redéfinir le périmètre de ' + lbl(p.doc_a) + ' ?',
       lignes: [],
@@ -580,7 +587,10 @@
   // ── Les signaux : une observation brute, sans proposition rédigée ──
   function rendreSignaux() {
     var el = document.getElementById('signaux');
-    document.getElementById('n-pot').textContent = grouper(signaux).length;
+    // Seul Confirmees porte un nombre : c'est le seul onglet ou le compte
+    // appelle un geste. Ailleurs il chiffrait sans rien demander.
+    var cp = document.getElementById('n-pot');
+    if (cp) cp.textContent = grouper(signaux).length;
     el.textContent = '';
     if (!signaux.length) {
       var v = document.createElement('div'); v.className = 'vide-etat';
@@ -605,7 +615,7 @@
         g.ids.forEach(function (i) { vus[i] = 1; });
         signaux = signaux.filter(function (x) { return !vus[x.signal_id]; });
         rendreSignaux();
-      }));
+      }, 'n2 j2'));
     });
   }
 
@@ -717,11 +727,10 @@
     var cpt = document.getElementById('n-ana');
     if (cpt) { cpt.textContent = aFaire; cpt.hidden = false; }
     var aRevoir = liste2.filter(function (p) { return (p.niveau || '') !== 'bon'; }).length;
-    var t = document.createElement('div'); t.className = 'sect-title';
-    t.textContent = liste2.length + ' périmètre' + (liste2.length > 1 ? 's' : '') +
+    var tete = document.getElementById('ana-tete');
+    if (tete) tete.textContent = liste2.length + ' périmètre' + (liste2.length > 1 ? 's' : '') +
       ' relu' + (liste2.length > 1 ? 's' : '') +
       (aRevoir ? ', ' + aRevoir + ' à reprendre' : ', aucun à reprendre');
-    el.appendChild(t);
     var coupe = false;
     liste2.forEach(function (p) {
       // Une coupure là où l'on passe de ce qui demande un geste à ce qui n'en
@@ -740,6 +749,7 @@
       }
       el.appendChild(blocPerimetre(p));
     });
+    requestAnimationFrame(ajusterZones);
   }
 
   // Un périmètre relu. À gauche ce qui est écrit, à droite ce que l'IA
@@ -876,6 +886,26 @@
     obs.observe(a); obs.observe(b);
   }
 
+  // Une zone qui epouse son contenu : c'est ce qui rend le texte entierement
+  // lisible, la largeur ne fait que le rendre confortable. Les deux zones
+  // d'une meme paire s'alignent ensuite sur la plus haute.
+  function ajusterZones() {
+    if (!document.querySelector('main.main').classList.contains('large')) return;
+    var paires = [];
+    document.querySelectorAll('#ana-props .perim-cmp').forEach(function (c) {
+      var z = c.querySelectorAll('textarea.txt');
+      if (z.length === 2) paires.push(z);
+      z.forEach(function (x) { x.style.height = 'auto'; x.style.height = x.scrollHeight + 'px'; });
+    });
+    // Toutes les lectures d'abord, toutes les ecritures ensuite : lire une
+    // hauteur apres avoir ecrit un style dans la meme tache force un recalcul.
+    var h = paires.map(function (p) { return Math.max(p[0].scrollHeight, p[1].scrollHeight); });
+    paires.forEach(function (p, i) {
+      p[0].style.height = h[i] + 'px'; p[1].style.height = h[i] + 'px';
+    });
+  }
+  window.addEventListener('resize', function () { requestAnimationFrame(ajusterZones); });
+
   function colonne(cls, titre, texte, editable) {
     var d = document.createElement('div'); d.className = cls;
     var t = document.createElement('div'); t.className = 't'; t.textContent = titre;
@@ -904,6 +934,10 @@
         document.getElementById('t-' + q).setAttribute('aria-selected', on ? 'true' : 'false');
         document.getElementById('v-' + q).hidden = !on;
       });
+      // Seul l'onglet Perimetres compare deux textes : lui seul prend toute
+      // la largeur, les deux autres gardent la colonne de lecture.
+      document.querySelector('main.main').classList.toggle('large', o === 'ana');
+      requestAnimationFrame(ajusterZones);
       // Le repère de droite est constant, son contenu suit le geste.
       document.querySelectorAll('[data-aside]').forEach(function (x) {
         x.hidden = x.dataset.aside !== o;
