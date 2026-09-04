@@ -83,6 +83,33 @@ recouvrement à l'écran de la question, et disparaît du texte enregistré.
 Au stockage : **un seul texte**, deux ancres — `Y entrent : ` et `N'y ont pas leur place : `.
 Aucune colonne ajoutée. Un périmètre ancien sans ancres se charge entièrement dans la phrase.
 
+### Quels sujets une liste propose — la règle, sans exception
+
+**La sélection d'un sujet ne dépend JAMAIS du statut du cycle.** Ni
+`attente_cycle`, ni un cycle en cours, ni rien de ce que le moteur est en train
+de faire. Un document en cours de traitement reste sélectionnable.
+
+**Le seul critère d'exposition est `available_in_app = oui`, et le webhook
+`tiroirs` l'applique déjà à la source** : il ne sert que ce qui vaut « oui ».
+Le champ n'est même pas dans sa réponse. **La page n'a donc rien à filtrer** —
+elle affiche ce qu'elle reçoit.
+
+Ce que chaque geste propose, et rien d'autre :
+
+| Geste | Ce qui est proposable |
+| --- | --- |
+| **Déposer** | « autre » (le sas) ou n'importe quel **sujet terminal**. Jamais un nœud : un nœud ne reçoit pas d'information |
+| **Interroger** | n'importe quel **sujet ou ensemble**, **la racine comprise** |
+| **Documents secondaires** | n'importe quel **sujet terminal** sauf le principal déjà choisi, et **n'importe quelle annexe** |
+
+Les sujets terminaux sont dans `data.pcp`, les nœuds dans `data.gcp`, et
+`data.pcp_anx` porte les sujets **plus** les annexes — c'est la seule source
+qui les contient.
+
+Un filtre `attente_cycle` posé ici a retiré **23 sujets sur 33** et vidé cinq
+groupes entiers, sans qu'aucun message ne le dise. Il vivait à trois endroits :
+la fonction partagée et deux pages qui redéfinissaient le leur.
+
 ### Trois pièces partagées de `config.js`
 
 | Fonction | Ce qu'elle fait |

@@ -588,17 +588,17 @@ function kcpRemplirHierarchie(sel, data, opts) {
     sel.appendChild(o);
   });
 
-  var pret = function (t) { return String(t.attente_cycle || '').toLowerCase() !== 'oui'; };
-  var sujets = (data.pcp || []).filter(pret).filter(function (t) {
+  // La selection d'un sujet ne depend JAMAIS du statut du cycle. Le seul
+  // critere d'exposition est `available_in_app`, et le webhook l'applique deja
+  // a la source : il ne sert que ce qui vaut « oui ». Filtrer ici sur
+  // `attente_cycle` retirait vingt-trois sujets sur trente-trois et vidait
+  // cinq groupes entiers, sans qu'aucun message ne le dise.
+  var sujets = (data.pcp || []).filter(function (t) {
     if (opts.exclure && t.doc_int_id === opts.exclure) return false;
     return opts.filtre ? opts.filtre(t) : true;
   });
-  // Les noeuds ne passent PAS par `pret`. `attente_cycle` dit qu'un document
-  // attend son prochain cycle : sur un sujet, c'est une raison de ne pas l'y
-  // deposer ; sur un noeud, ca n'a aucun rapport avec sa capacite a servir de
-  // titre de groupe. Les filtrer faisait disparaitre le groupe et jetait tous
-  // ses sujets dans « Sans rattachement connu » — dix sujets de CDP d'un coup,
-  // et le defaut se deplacait au fil des cycles.
+  // Les noeuds arrivent entiers, eux aussi. Les filtrer faisait disparaitre le
+  // groupe et jetait tous ses sujets dans « Sans rattachement connu ».
   var noeuds = (data.gcp || []);
 
   // Les nœuds dans l'ordre de la carte : la racine d'abord, puis les autres

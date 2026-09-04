@@ -171,9 +171,11 @@
   // ── Les listes : le menu principal (sujets + « autre »), le second (PCP + annexes) ──
   (function chargerTiroirs() {
     kcpLoadTiroirs().then(function (data) {
-      var pret = function (x) { return String(x.attente_cycle || '').toLowerCase() !== 'oui'; };
-      var pcp = (data.pcp || []).filter(pret);
-      secondaires = (data.pcp_anx || []).filter(pret);
+      // Documents secondaires : tout sujet terminal et toute annexe. Le sujet
+      // principal en est retire plus bas, a la selection. Aucun filtre sur le
+      // statut du cycle : la selection n'en depend jamais.
+      var pcp = (data.pcp || []);
+      secondaires = (data.pcp_anx || []);
       // « Autre » : la session sans sujet. Ce qui en sort part dans le sas,
       // et le système le range ensuite.
       pcp.forEach(function (x) { docIds[x.nom_tiroir] = x.doc_int_id; });
