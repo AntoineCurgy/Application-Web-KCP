@@ -662,12 +662,12 @@
   // bon n'a jamais de correction — le scénario n'en rédige que pour les
   // moyens et les mauvais.
   var niveaux = {};
-  // La racine et les annexes sont hors du champ du balayage, définitivement.
-  // Les lister ici les afficherait « Pas encore relu, le prochain balayage
-  // passe dimanche » — une promesse qui ne sera jamais tenue. Les verdicts
-  // orphelins qu'elles portaient ont été effacés à la source ; ce filtre
-  // n'est plus là pour ça, il est là pour ne rien promettre de faux.
-  function horsChamp(id) { return id === 'GCP001' || String(id).indexOf('ANX') === 0; }
+  // La racine est hors du champ du balayage, définitivement : l'analyse ne la
+  // reprendra jamais, et l'y lister promettrait un passage qui ne viendra pas.
+  // Les annexes, elles, y sont entrées — l'analyse les note et la carte les
+  // sert, à la seule condition qu'elles soient exposées à l'application. Les
+  // deux cas vivaient dans la même ligne alors qu'ils n'ont rien à voir.
+  function horsChamp(id) { return id === 'GCP001'; }
 
   function niveauxDe(carte) {
     var n = {};
@@ -734,8 +734,14 @@
     var cpt = document.getElementById('n-ana');
     if (cpt) { cpt.textContent = aFaire; cpt.hidden = false; }
     var tete = document.getElementById('ana-tete');
+    // On ne dit « analysés » que de ceux qui le sont. Depuis que les annexes
+    // entrent, la liste porte des documents que rien n'a encore lu : les
+    // compter comme analysés contredisait leur propre bloc, deux lignes plus
+    // bas, qui dit « pas encore analysé ».
+    var analyses = liste2.filter(function (p) { return (p.niveau || ''); }).length;
     if (tete) tete.textContent = liste2.length + ' périmètre' + (liste2.length > 1 ? 's' : '') +
-      ' analysé' + (liste2.length > 1 ? 's' : '') +
+      (analyses < liste2.length ? ', ' + analyses + ' analysé' + (analyses > 1 ? 's' : '')
+                                : ' analysé' + (liste2.length > 1 ? 's' : '')) +
       // Le meme mot compte la meme chose partout : « a reprendre », c'est un
       // perimetre qui porte une correction a lire. Compter « pas encore
       // valide » donnait quarante d'un cote et dix-sept de l'autre sur le
