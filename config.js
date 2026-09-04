@@ -593,7 +593,13 @@ function kcpRemplirHierarchie(sel, data, opts) {
     if (opts.exclure && t.doc_int_id === opts.exclure) return false;
     return opts.filtre ? opts.filtre(t) : true;
   });
-  var noeuds = (data.gcp || []).filter(pret);
+  // Les noeuds ne passent PAS par `pret`. `attente_cycle` dit qu'un document
+  // attend son prochain cycle : sur un sujet, c'est une raison de ne pas l'y
+  // deposer ; sur un noeud, ca n'a aucun rapport avec sa capacite a servir de
+  // titre de groupe. Les filtrer faisait disparaitre le groupe et jetait tous
+  // ses sujets dans « Sans rattachement connu » — dix sujets de CDP d'un coup,
+  // et le defaut se deplacait au fil des cycles.
+  var noeuds = (data.gcp || []);
 
   // Les nœuds dans l'ordre de la carte : la racine d'abord, puis les autres
   // par ordre alphabétique — le même ordre que l'arbre de l'accueil.

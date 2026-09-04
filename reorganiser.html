@@ -726,11 +726,14 @@
     var aFaire = liste2.filter(function (p) { return String(p.changement || '').trim(); }).length;
     var cpt = document.getElementById('n-ana');
     if (cpt) { cpt.textContent = aFaire; cpt.hidden = false; }
-    var aRevoir = liste2.filter(function (p) { return (p.niveau || '') !== 'bon'; }).length;
     var tete = document.getElementById('ana-tete');
     if (tete) tete.textContent = liste2.length + ' périmètre' + (liste2.length > 1 ? 's' : '') +
       ' relu' + (liste2.length > 1 ? 's' : '') +
-      (aRevoir ? ', ' + aRevoir + ' à reprendre' : ', aucun à reprendre');
+      // Le meme mot compte la meme chose partout : « a reprendre », c'est un
+      // perimetre qui porte une correction a lire. Compter « pas encore
+      // valide » donnait quarante d'un cote et dix-sept de l'autre sur le
+      // meme ecran.
+      (aFaire ? ', ' + aFaire + ' à reprendre' : ', aucun à reprendre');
     var coupe = false;
     liste2.forEach(function (p) {
       // Une coupure là où l'on passe de ce qui demande un geste à ce qui n'en
@@ -786,10 +789,10 @@
       var c = document.createElement('span'); c.className = 'c'; c.textContent = '✓';
       ok.appendChild(c);
       ok.appendChild(document.createTextNode(p.niveau === 'bon'
-        ? 'Relu et jugé solide. Rien à reprendre.'
+        ? 'Périmètre valide.'
         : p.niveau
-          ? 'Relu. La correction n’est pas encore rédigée.'
-          : 'Périmètre validé par le système.'));
+          ? 'Analysé, correction disponible sous peu.'
+          : 'Pas encore analysé.'));
       bloc.appendChild(ok);
       item.appendChild(bloc);
       return item;
