@@ -486,9 +486,15 @@ var KCP_PERIMETRE = (function () {
     entre:  'Y entrent par exemple :',
     refuse: "N'entrent pas :",
     doute:  'En cas de doute :',
-    detail: 'Niveau de détail :',
-    sous:   'Sujets sous cet ensemble :'
+    detail: 'Niveau de détail :'
   };
+
+  // Un bloc qu'on sait relire et qu'on n'ecrit plus. Le retirer purement et
+  // simplement recreerait le defaut trouve sur l'intitule des exemples : son
+  // contenu serait avale par le bloc precedent, en silence. On le reconnait
+  // donc pour le neutraliser, et il se laisse tomber a la reecriture — l'arbre
+  // est deja porte ailleurs, un perimetre n'a pas a le redire.
+  var TOMBE = { sous: 'Sujets sous cet ensemble :' };
 
   // Tolerant en lecture, strict en ecriture. Les perimetres deja ecrits
   // portent l'ancien intitule des exemples : sans cette table, leur bloc et
@@ -532,7 +538,6 @@ var KCP_PERIMETRE = (function () {
     if (v.refuse && v.refuse.length) t.push(bloc(A.refuse, puces(v.refuse)));
     if (v.doute) t.push(bloc(A.doute, phrase(v.doute)));
     if (v.detail) t.push(bloc(A.detail, phrase(v.detail)));
-    if (v.sousSujets && v.sousSujets.length) t.push(bloc(A.sous, puces(v.sousSujets)));
     return t.join('\n\n');
   }
 
@@ -540,12 +545,16 @@ var KCP_PERIMETRE = (function () {
   // entierement dans le champ 1. C'est le comportement correct, pas un repli.
   function redecouper(txt) {
     var s = String(txt || '').replace(/\r\n?/g, '\n');
-    var vide = { objet: '', regle: '', entre: [], refuse: [], doute: '', detail: '', sousSujets: [] };
+    var vide = { objet: '', regle: '', entre: [], refuse: [], doute: '', detail: '' };
     // Les intitules sont cherches en debut de ligne : le meme mot au fil d'une
     // phrase ne doit pas ouvrir un bloc.
     var trouves = [];
-    Object.keys(A).forEach(function (cle) {
-      var formes = [A[cle]].concat(ANCIENS[cle] || []);
+    // Les blocs tombes sont cherches avec les autres : c'est ce qui les
+    // empeche de se coller au bloc precedent. Leur contenu n'est pas rendu.
+    var TOUS = {}; Object.keys(A).forEach(function (k) { TOUS[k] = A[k]; });
+    Object.keys(TOMBE).forEach(function (k) { TOUS[k] = TOMBE[k]; });
+    Object.keys(TOUS).forEach(function (cle) {
+      var formes = [TOUS[cle]].concat(ANCIENS[cle] || []);
       for (var k = 0; k < formes.length; k++) {
         var m = new RegExp('^' + formes[k].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[ \t]*$', 'm').exec(s);
         if (m) { trouves.push({ cle: cle, i: m.index, l: m[0].length }); break; }
@@ -557,9 +566,9 @@ var KCP_PERIMETRE = (function () {
     trouves.forEach(function (o, k) {
       var fin = k + 1 < trouves.length ? trouves[k + 1].i : s.length;
       var v = s.slice(o.i + o.l, fin).trim();
+      if (o.cle === 'sous') return;          // reconnu, non rendu
       if (o.cle === 'entre') vide.entre = enListe(v);
       else if (o.cle === 'refuse') vide.refuse = enListe(v);
-      else if (o.cle === 'sous') vide.sousSujets = enListe(v);
       else vide[o.cle] = v;
     });
     return vide;
@@ -1260,8 +1269,7 @@ KCP_PERIMETRE.ouvrirFenetre = function (opts, ouvreur) {
         entre: lignes.filter(function (l) { return l.v === 'oui'; }).map(function (l) { return l.t; }),
         refuse: lignes.filter(function (l) { return l.v === 'non'; }).map(function (l) { return l.t; }),
         doute: (p && p.arbitrage) || '',
-        detail: (p && p.grain) || '',
-        sousSujets: (p && p.sous_sujets) || []
+        detail: (p && p.grain) || ''
       });
     }
     zr.addEventListener('input', poserTexte);
@@ -1296,11 +1304,11 @@ KCP_PERIMETRE.ouvrirFenetre = function (opts, ouvreur) {
     var brut = String(opts.valeur || '').trim();
     var d = KCP_PERIMETRE.redecouper(brut);
     var decoupe = !!(d.regle || d.doute || d.detail ||
-      d.entre.length || d.refuse.length || d.sousSujets.length);
+      d.entre.length || d.refuse.length);
     if (!decoupe) return etapeGraine(brut);
     etapeTexte({
       regle_entree: d.regle, arbitrage: d.doute,
-      grain: d.detail, sous_sujets: d.sousSujets
+      grain: d.detail
     }, d.objet, d.entre, d.refuse);
   })();
 
