@@ -95,7 +95,14 @@ p  { max-width:68ch; }                    /* mesure de lecture bornee */
 .nav-i:hover { background:var(--surface3); color:var(--ink); }
 .nav-i[aria-current="page"] { background:var(--surface); color:var(--ink); font-weight:600;
   box-shadow:0 1px 3px rgba(22,21,15,.06); }
-.nav-i .ico { width:17px; flex-shrink:0; opacity:.75; }
+/* Une icone dessinee s'aligne sur la ligne de base comme un caractere, ce qui
+   la fait remonter de trois pixels. La sortir du flux de ligne et centrer sa
+   boite la remet exactement a la place qu'occuperait un glyphe. La regle vaut
+   pour les deux natures : un caractere seul dans une boite centree ne bouge
+   pas, un dessin oui. */
+.nav-i .ico { width:17px; flex-shrink:0; opacity:.75;
+  display:inline-flex; align-items:center; justify-content:center; }
+.nav-i .ico svg { display:block; width:16px; height:16px; }
 .nav-i .n { margin-left:auto; background:var(--accent-deep); color:#fff; font-family:var(--mono);
   font-size:10px; min-width:19px; height:19px; border-radius:10px; display:grid; place-items:center; padding:0 5px; }
 .side-foot { margin-top:auto; border-top:1.5px solid var(--border); padding-top:var(--s2); }
