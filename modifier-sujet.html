@@ -369,10 +369,10 @@
   async function chargerListe() {
     var data = await kcpLoadTiroirs();
     donneesTiroirs = data;
-    var pret = function (t) { return String(t.attente_cycle || '').toLowerCase() !== 'oui'; };
+    // Aucun filtre sur le statut du cycle : la selection n'en depend jamais.
     noeudsTous = (data.gcp || []).slice();
-    var noeuds = noeudsTous.filter(function (t) { return (t.parent || '') !== 'N/A'; }).filter(pret);
-    var sujets = (data.pcp || []).filter(pret);
+    var noeuds = noeudsTous.filter(function (t) { return (t.parent || '') !== 'N/A'; });
+    var sujets = (data.pcp || []);
     ((data.pcp_anx || []).concat(noeudsTous)).forEach(function (t) {
       existants[kcpDocLabel(t).toLowerCase()] = true;
     });
