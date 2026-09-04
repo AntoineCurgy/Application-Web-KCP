@@ -709,7 +709,7 @@
     });
     if (!propsAnalyse.length) {
       var v = document.createElement('div'); v.className = 'vide-etat';
-      v.textContent = 'Aucun périmètre n’a encore été relu. Lancez l’analyse pour commencer.';
+      v.textContent = 'Aucun périmètre n’a encore été analysé. Lancez l’analyse pour commencer.';
       el.appendChild(v); return;
     }
     // Du plus mauvais au meilleur : ce qui réclame une action se lit d'abord.
@@ -735,7 +735,7 @@
     if (cpt) { cpt.textContent = aFaire; cpt.hidden = false; }
     var tete = document.getElementById('ana-tete');
     if (tete) tete.textContent = liste2.length + ' périmètre' + (liste2.length > 1 ? 's' : '') +
-      ' relu' + (liste2.length > 1 ? 's' : '') +
+      ' analysé' + (liste2.length > 1 ? 's' : '') +
       // Le meme mot compte la meme chose partout : « a reprendre », c'est un
       // perimetre qui porte une correction a lire. Compter « pas encore
       // valide » donnait quarante d'un cote et dix-sept de l'autre sur le
