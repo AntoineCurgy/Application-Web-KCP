@@ -94,7 +94,7 @@
           </div>
         </div>
 
-        <div class="confirme" id="ok" hidden><span>✓</span><span id="ok-txt"></span></div>
+        <div class="confirme" id="ok" hidden><span>✓</span><span id="ok-txt"></span><button type="button" class="btn btn-s recopier" id="recopier">Copier de nouveau</button></div>
         <div class="alerte-err" id="err" hidden><span>›</span><span id="err-txt"></span></div>
       </div>
         <aside>
@@ -294,6 +294,21 @@
     okTxt.appendChild(document.createTextNode((n ? ' (+' + n + ')' : '') + ' copié. Collez-le avec Ctrl+V.'));
     document.getElementById('ok').hidden = false;
   }
+
+  // Le texte est deja en memoire : le recopier ne demande aucun appel. Un seul
+  // ecouteur, pose une fois, plutot qu'un bouton recree a chaque confirmation.
+  (function () {
+    var b = document.getElementById('recopier');
+    var t = null;
+    b.addEventListener('click', async function () {
+      if (!promptTexte) return;
+      await copier(promptTexte);
+      clearTimeout(t);
+      b.textContent = 'Copié ✓';
+      b.disabled = true;
+      t = setTimeout(function () { b.textContent = 'Copier de nouveau'; b.disabled = false; }, 2000);
+    });
+  })();
 
   // ── Un bouton, une destination, un geste. La destination EST l'action. ──
   document.querySelectorAll('.llm-a button').forEach(function (b) {

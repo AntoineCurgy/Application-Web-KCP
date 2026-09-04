@@ -655,6 +655,18 @@ textarea { resize:vertical; }
   background:rgba(77,107,20,.08); border:1.5px solid rgba(77,107,20,.25);
   border-radius:var(--r-sm); font-size:var(--t-sm); color:var(--ink-soft); }
 .confirme b { color:var(--accent-deep); }
+/* Recopier ce qui est deja en memoire : aucun appel, donc aucune attente. Le
+   bouton se cale sur la PREMIERE LIGNE du message, pas sur le bloc — centre sur
+   le bloc, il descendait de trois pixels sur un message d'une ligne et de neuf
+   sur deux. Sa hauteur est celle de la ligne, ce qui aligne les deux centres
+   sans decalage a corriger et sans agrandir le bloc. */
+.confirme > .recopier { margin-left:auto; flex-shrink:0; align-self:flex-start;
+  height:calc(var(--t-sm) * var(--lh)); padding-top:0; padding-bottom:0;
+  position:relative; }
+/* A cette hauteur le bouton mesure dix-neuf pixels, sous la cible de clic
+   recommandee. La pastille invisible la ramene a trente et un sans changer ce
+   qu'on voit ni pousser quoi que ce soit. */
+.confirme > .recopier::after { content:''; position:absolute; inset:-6px; }
 
 /* ═══ v10 ══════════════════════════════════════════════════════════ */
 
