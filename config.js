@@ -483,12 +483,19 @@ var KCP_PERIMETRE = (function () {
   // ne tranche pas un cas qu'elle n'a pas prevu, et c'est tout leur objet.
   var A = {
     regle:  'Entre ici :',
-    entre:  'Y entrent notamment :',
+    entre:  'Y entrent par exemple :',
     refuse: "N'entrent pas :",
     doute:  'En cas de doute :',
     detail: 'Niveau de détail :',
     sous:   'Sujets sous cet ensemble :'
   };
+
+  // Tolerant en lecture, strict en ecriture. Les perimetres deja ecrits
+  // portent l'ancien intitule des exemples : sans cette table, leur bloc et
+  // ses puces sont avales par la regle d'entree a la reouverture, et le texte
+  // ressort deforme sans qu'aucune erreur ne le dise. On ne REECRIT jamais
+  // qu'avec `A` ; ceci ne sert qu'a relire ce qui existe deja.
+  var ANCIENS = { entre: ['Y entrent notamment :'] };
 
   function majuscule(x) {
     var t = String(x || '').trim();
@@ -538,8 +545,11 @@ var KCP_PERIMETRE = (function () {
     // phrase ne doit pas ouvrir un bloc.
     var trouves = [];
     Object.keys(A).forEach(function (cle) {
-      var m = new RegExp('^' + A[cle].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[ \t]*$', 'm').exec(s);
-      if (m) trouves.push({ cle: cle, i: m.index, l: m[0].length });
+      var formes = [A[cle]].concat(ANCIENS[cle] || []);
+      for (var k = 0; k < formes.length; k++) {
+        var m = new RegExp('^' + formes[k].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[ \t]*$', 'm').exec(s);
+        if (m) { trouves.push({ cle: cle, i: m.index, l: m[0].length }); break; }
+      }
     });
     if (!trouves.length) { vide.objet = s.trim(); return vide; }
     trouves.sort(function (x, y) { return x.i - y.i; });
@@ -1242,7 +1252,7 @@ KCP_PERIMETRE.ouvrirFenetre = function (opts, ouvreur) {
     zt.addEventListener('input', function () { mien = true; });
     function poserTexte() {
       if (mien) return;
-      // `Entre ici` tranche, `Y entrent notamment` illustre : les acceptes
+      // `Entre ici` tranche, `Y entrent par exemple` illustre : les acceptes
       // sont des exemples, jamais la regle.
       zt.value = KCP_PERIMETRE.assembler({
         objet: zr.value.trim(),
