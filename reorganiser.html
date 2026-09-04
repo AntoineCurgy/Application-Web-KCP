@@ -723,7 +723,14 @@
     });
     // Le compteur de l'onglet ne compte QUE ce qui porte une correction :
     // un périmètre non analysé n'appelle aucun geste, et un bon non plus.
-    var aFaire = liste2.filter(function (p) { return String(p.changement || '').trim(); }).length;
+    // Un seul critere, trois lecteurs : le compteur de l'onglet, le bandeau et
+    // la coupure. Ils en avaient chacun un, et l'ecart se voyait a l'ecran —
+    // neuf corrections annoncees a reprendre pour neuf sujets sans aucun geste.
+    // Un perimetre juge `bon` est valide, point : la page n'offre rien dessus.
+    function offreUnGeste(p) {
+      return p.niveau !== 'bon' && !!String(p.changement || '').trim();
+    }
+    var aFaire = liste2.filter(offreUnGeste).length;
     var cpt = document.getElementById('n-ana');
     if (cpt) { cpt.textContent = aFaire; cpt.hidden = false; }
     var tete = document.getElementById('ana-tete');
@@ -740,7 +747,7 @@
       // demande aucun : deux natures, pas deux degrés.
       // La coupure sépare ce qui appelle un geste de ce qui n'en appelle
       // aucun — un périmètre validé, ou un périmètre pas encore lu.
-      if (!coupe && !String(p.changement || '').trim() && aFaire) {
+      if (!coupe && !offreUnGeste(p) && aFaire) {
         var c = document.createElement('div'); c.className = 'coupure';
         var x = document.createElement('span');
         var n = liste2.length - aFaire;
