@@ -200,6 +200,14 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .fiche-ul li { margin-bottom:.4rem; font-size:var(--t-body); color:var(--ink-soft); }
 .fiche-ul li::marker { color:var(--accent-deep); }
 .fiche-vide { font-size:var(--t-sm); color:var(--muted); font-style:italic; }
+/* Les echeances d'une fiche : une date, son objet, une paire par ligne.
+   `config.js` construit cette grille pour toutes les pages, mais sa mise en
+   forme ne vivait que dans deux d'entre elles. Partout ailleurs les paires se
+   suivaient en flux : la date collee a son texte, et l'echeance suivante collee
+   a la precedente. Le code partage ne depend plus d'une regle locale. */
+.ech { display:grid; grid-template-columns:auto 1fr; gap:.35rem var(--s3); }
+.ech .d { font-family:var(--mono); font-size:var(--t-sm); color:var(--accent-deep); white-space:nowrap; }
+.ech .o { font-size:var(--t-body); color:var(--ink-soft); }
 
 /* ═══ v4 — moins d'elements, plus d'air ═════════════════════════ */
 
