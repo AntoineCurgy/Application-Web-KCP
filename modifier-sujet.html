@@ -298,7 +298,7 @@
       .replace(/^-+|-+$/g, '');
   }
   function noeudFinal(v) { var f = slugFinal(v); return f ? f.charAt(0).toUpperCase() + f.slice(1) : ''; }
-  function sanitize(s) { return (s || '').replace(/[\\"]/g, "'").replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim(); }
+  function sanitize(x) { return kcpAssainirPerimetre(x); }
 
   function bandeauOk(txt) {
     document.getElementById('ok-txt').textContent = txt;
