@@ -850,9 +850,7 @@
   // `update_perimetre` attend `id_client` et `perimetre_declare` : ce
   // scénario-là ne parle pas comme les autres, et le mélange passerait sans
   // erreur en écrivant un périmètre vide.
-  function sanitize(x) {
-    return (x || '').replace(/[\\"]/g, "'").replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
-  }
+  function sanitize(x) { return kcpAssainirPerimetre(x); }
   async function envoyer(item, p, texte, btn, apres) {
     var v = sanitize(texte);
     if (!v) return;

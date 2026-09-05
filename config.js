@@ -477,6 +477,31 @@ var KCP_FICHE = (function () {
 // au référentiel, aucun scénario n'est touché, le CODEX est inchangé.
 // Les deux marqueurs servent d'ancres pour redécouper à la relecture.
 // ─────────────────────────────────────────────────────────────
+// Ce qu'un périmètre doit perdre avant de partir, et rien de plus.
+//
+// Les guillemets doubles et les antislashs partent : un scénario du parc
+// injecte encore un périmètre dans un corps JSON écrit à la main, où ils
+// casseraient la syntaxe.
+//
+// Les sauts de ligne RESTENT. Ils étaient écrasés, et avec eux toute la forme
+// du périmètre : les cinq intitulés doivent être seuls sur leur ligne, séparés
+// par une ligne vide. À plat, `redecouper` ne reconnaît plus rien et le moteur
+// juge une forme qu'il ne peut pas lire. Vérifié avant de lever l'écrasement :
+// aucun scénario n'injecte le périmètre lu du tableur dans un corps manuel, et
+// la seule injection directe l'échappe elle-même.
+//
+// La compression ne porte que sur les espaces horizontaux : `\s` engloberait
+// le saut de ligne et remangerait les lignes vides par la porte de derrière.
+function kcpAssainirPerimetre(x) {
+  return String(x == null ? '' : x)
+    .replace(/[\\"]/g, "'")
+    .replace(/\r\n?/g, '\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+// ─────────────────────────────────────────────────────────────
 var KCP_PERIMETRE = (function () {
   // Cinq intitules, chacun seul sur sa ligne, un bloc separe par une ligne
   // vide. Trois d'entre eux portent une phrase et jamais une liste : une liste

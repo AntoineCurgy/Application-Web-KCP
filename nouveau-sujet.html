@@ -120,7 +120,7 @@
       .replace(/^-+|-+$/g, '');
   }
   // Le texte libre est nettoyé des caractères qui casseraient le JSON de l'automatisation.
-  function sanitize(s) { return (s || '').replace(/[\\"]/g, "'").replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim(); }
+  function sanitize(x) { return kcpAssainirPerimetre(x); }
 
   (function chargerParents() {
     kcpLoadTiroirs().then(function (data) {
