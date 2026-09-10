@@ -33,10 +33,16 @@ localStorage.setItem('kcp_session', JSON.stringify({client_id:'…', client_name
 
 ## Architecture
 
-**Il n'y a pas de backend dans ce repo.** Toute la logique métier vit dans des scénarios
-**Make.com** appelés en `POST` JSON depuis le navigateur. `config.js` est le seul point de
-couplage : il déclare `KCP_WEBHOOKS` (un webhook Make par fonctionnalité, commenté avec le nom
-du scénario correspondant). Vingt-trois webhooks, tous appelés par au moins une page.
+**Il n'y a pas de backend dans ce repo.** Toute la logique métier vit dans des automatisations
+appelées en `POST` JSON depuis le navigateur. `config.js` est le seul point de couplage : il
+déclare `KCP_WEBHOOKS` (un webhook par fonctionnalité, commenté avec le nom de l'automatisation
+correspondante). Vingt-trois webhooks, tous appelés par au moins une page.
+
+**Deux moteurs derrière ces webhooks, et le commentaire dit lequel.** Vingt-deux pointent vers
+**Make.com**, un vers **n8n** (`creer_bot`), depuis que la chaîne de capture des réunions y est
+passée. La page ne voit aucune différence — même appel, même corps, même lecture de la réponse —
+mais un webhook `n8n.88systems.io` ne se cherche pas dans les scénarios Make. Le préfixe du
+commentaire, `Make:` ou `n8n:`, est la seule chose à lire pour savoir où aller.
 
 **L'analyse des périmètres ne se lance pas depuis la page.** `KCP - Analyse
 Perimetres - Trigger` la déclenche le dimanche à 3 h. La page lit le résultat dans
