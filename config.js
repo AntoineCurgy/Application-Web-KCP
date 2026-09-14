@@ -485,8 +485,10 @@ var KCP_FICHE = (function () {
 //
 // Les sauts de ligne RESTENT. Ils étaient écrasés, et avec eux toute la forme
 // du périmètre : les cinq intitulés doivent être seuls sur leur ligne, séparés
-// par une ligne vide. À plat, `redecouper` ne reconnaît plus rien et le moteur
-// juge une forme qu'il ne peut pas lire. Vérifié avant de lever l'écrasement :
+// par une ligne vide. Le standard veut que le référentiel maître conserve la
+// forme SAISIE, sur plusieurs lignes et avec ses puces, parce que c'est elle
+// qui le rend jugeable d'un coup d'œil ; c'est la projection vers la page
+// Notion qui la replie, sans rien réécrire. Vérifié avant de lever l'écrasement :
 // aucun scénario n'injecte le périmètre lu du tableur dans un corps manuel, et
 // la seule injection directe l'échappe elle-même.
 //
@@ -1056,7 +1058,7 @@ KCP_PERIMETRE.ouvrirFenetre = function (opts, ouvreur) {
           var manuel = el('button', 'btn btn-s', 'Écrire le périmètre moi-même');
           manuel.type = 'button';
           manuel.addEventListener('click', function () {
-            etapeTexte(null, z.value.trim(), [], []);
+            etapeEdition(z.value.trim());
           });
           corps.appendChild(manuel);
           return;
@@ -1157,7 +1159,54 @@ KCP_PERIMETRE.ouvrirFenetre = function (opts, ouvreur) {
     poser();
   }
 
+  // ── Rouvrir un périmètre : son texte, et rien d'autre ──────
+  // Un périmètre déjà écrit s'édite littéralement. Il ne repasse plus par
+  // `redecouper` puis `assembler` : ce trajet le réécrivait en silence — un
+  // intitulé ancien renommé, un point final ajouté, des puces renormalisées —
+  // alors que le périmètre est human-owned et que le standard interdit à
+  // quiconque d'autre que l'humain de le rédiger. Corriger un mot ne doit
+  // toucher que ce mot.
+  function etapeEdition(texte) {
+    vider();
+    sous.textContent = 'Corrigez ce texte, ou repartez de zéro.';
+
+    var zt = el('textarea', 'perim-assemble perim-seul');
+    zt.value = texte || '';
+    zt.setAttribute('aria-label', opts.titre || 'Périmètre');
+    corps.appendChild(zt);
+
+    // Repartir de zéro rouvre la phrase de départ, VIDE : un périmètre
+    // structuré n'est pas une graine, et le recharger dans un champ qui
+    // demande une phrase ne donnerait rien de bon. Rien n'est perdu pour
+    // autant, le texte en place ne bouge qu'à la validation.
+    var neuf = el('button', 'btn btn-s', '✦ Générer un nouveau périmètre');
+    neuf.type = 'button';
+    neuf.addEventListener('click', function () { etapeGraine(''); });
+
+    var annuler = el('button', 'btn', 'Annuler');
+    annuler.type = 'button'; annuler.addEventListener('click', fermer);
+    var ok = el('button', 'btn btn-1', opts.libelle || 'Enregistrer ce périmètre');
+    ok.type = 'button';
+    ok.addEventListener('click', function () {
+      opts.onValider && opts.onValider(zt.value.trim(), true);
+      fermer();
+    });
+    var droite = el('div', 'droite');
+    droite.appendChild(annuler); droite.appendChild(ok);
+    // Ce qui fait marche arrière reste à gauche, ce qui agit part à droite :
+    // le pied porte déjà ce partage, le bouton n'a rien à poser de plus.
+    pied.appendChild(neuf); pied.appendChild(droite);
+
+    function etatOk() { ok.disabled = !zt.value.trim(); }
+    zt.addEventListener('input', etatOk);
+    etatOk();
+    zt.focus();
+  }
+
   // ── Étape 3 · le bilan, et le texte que l'on enregistre ────
+  // On n'y arrive plus que par les questions : un périmètre déjà écrit
+  // s'ouvre dans l'édition directe. La liste est le rendu des réponses qu'on
+  // vient de donner, elle n'a de sens qu'à la suite de celles-ci.
   // `p` porte les trois phrases que le moteur redige en plus de la
   // reformulation : la regle d'entree, l'arbitrage et le niveau de detail.
   // Elles ne recoivent pas de champ a elles — elles arrivent dans le texte
@@ -1319,23 +1368,20 @@ KCP_PERIMETRE.ouvrirFenetre = function (opts, ouvreur) {
     zr.focus();
   }
 
+  // La fenêtre s'ouvre AVANT qu'une étape la remplisse. Un élément dans un
+  // sous-arbre `display:none` ne prend pas le focus et mesure zéro : la zone
+  // de saisie n'était donc pas focalisée à l'ouverture, et une hauteur
+  // calculée sur `scrollHeight` sortait à zéro.
+  voile.classList.add('on'); fen.classList.add('on');
+
   // Une seule fenêtre, et toujours une seule : le point d'entrée ne dépend pas
   // d'un choix de l'utilisateur mais de ce qu'il y a à ouvrir. Un périmètre
-  // déjà écrit se découpe et s'ouvre dans ses champs — corriger un mot ne
-  // devrait pas coûter un aller-retour de huit secondes avec le moteur. Un
-  // périmètre vide, ou d'avant le format, n'a rien à découper : il part de la
-  // phrase, comme avant.
+  // déjà écrit s'ouvre dans son texte et s'édite tel quel — corriger un mot ne
+  // coûte ni huit secondes de moteur ni une réécriture de la forme. Un
+  // périmètre vide part de la phrase.
   (function entrer() {
     var brut = String(opts.valeur || '').trim();
-    var d = KCP_PERIMETRE.redecouper(brut);
-    var decoupe = !!(d.regle || d.doute || d.detail ||
-      d.entre.length || d.refuse.length);
-    if (!decoupe) return etapeGraine(brut);
-    etapeTexte({
-      regle_entree: d.regle, arbitrage: d.doute,
-      grain: d.detail
-    }, d.objet, d.entre, d.refuse);
+    if (!brut) return etapeGraine('');
+    etapeEdition(brut);
   })();
-
-  voile.classList.add('on'); fen.classList.add('on');
 };
