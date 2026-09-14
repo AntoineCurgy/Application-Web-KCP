@@ -53,8 +53,6 @@
             <span class="hint err" id="n-dup" hidden>nom déjà utilisé</span></div>
           <input type="text" id="n" placeholder="methodes-et-apprentissages" autocomplete="off" spellcheck="false" maxlength="60">
           <span class="apercu" id="n-ap" hidden></span></div>
-        <div class="champ"><label for="p">Rattachée à</label>
-          <select id="p"></select></div>
         <div class="champ">
           <div class="lbl-q"><span><label>Périmètre</label>
             <button type="button" class="qmark" id="q-perim" aria-label="À quoi sert le périmètre d'une annexe ?">?</button></span></div>
@@ -69,11 +67,12 @@
             <div class="sect-h" style="margin-bottom:var(--s2)">À savoir</div>
             <p><b>Une annexe se consulte, elle ne se pilote pas.</b> Elle n'a ni jalon, ni décision, ni risque à suivre : elle porte un savoir qui se complète, pas un projet qui avance.</p>
             <p>Son périmètre trie comme celui d'un sujet : c'est lui qui décide de ce qui entre.</p>
+            <p>Une annexe ne se range sous rien : elle n'apparaît dans la carte d'aucun ensemble, et se joint à la main quand vous initialisez une IA.</p>
           </div>
           <div class="aside-b">
             <div class="sect-h" style="margin-bottom:var(--s2)">Ce qui se passe ensuite</div>
             <div class="etapes">
-              <span class="n">1</span><span class="x">L'annexe est créée et prend sa place sous son rattachement.</span>
+              <span class="n">1</span><span class="x">L'annexe est créée, hors de l'arbre de vos sujets.</span>
               <span class="n">2</span><span class="x">Elle reste vide jusqu'à ce que vous y déposiez quelque chose.</span>
               <span class="n">3</span><span class="x">Le cycle des annexes absorbe ensuite ce que vous y déposez.</span>
             </div>
@@ -107,9 +106,8 @@
   })();
 
   var nomEl = document.getElementById('n');
-  var parentEl = document.getElementById('p');
   var existants = {};   // labels déjà pris, en minuscules
-  var perim = null, tousSujets = [];
+  var perim = null;
 
   // ── Même règle de nom qu'ailleurs : accents retirés, minuscules, le reste
   // devient tiret. Le préfixe `anx_` ne se tape pas, il s'ajoute à l'affichage
@@ -125,46 +123,21 @@
   // Le texte libre est nettoyé des caractères qui casseraient le JSON de l'automatisation.
   function sanitize(x) { return kcpAssainirPerimetre(x); }
 
-  (function chargerParents() {
+  // Une annexe n'a pas de rattachement : elle porte `parent = N/A` et une
+  // profondeur de zéro, comme les vingt-cinq déjà en place. Il n'y a donc
+  // aucun parent à proposer, et la liste ne sert qu'à interdire un doublon
+  // de label — la même liste que partout ailleurs, servie depuis le cache.
+  (function chargerLabels() {
     kcpLoadTiroirs().then(function (data) {
       ((data.pcp_anx || []).concat(data.gcp || [])).forEach(function (t) {
         existants[kcpDocLabel(t).toLowerCase()] = true;
       });
-      tousSujets = (data.pcp || []).slice();
-      noeudsPourVoisins = (data.gcp || []).slice();
-      // Le rattachement : la racine (au prénom) puis les ensembles existants.
-      // Jamais un sujet simple — un sujet ne porte pas d'enfants.
-      var noeuds = (data.gcp || []);
-      var racine = noeuds.filter(function (t) { return (t.parent || '') === 'N/A'; });
-      var autres = noeuds.filter(function (t) { return (t.parent || '') !== 'N/A'; });
-      (racine.length ? racine : [{ doc_int_id: 'GCP001', type: 'GCP', parent: 'N/A', nom_tiroir: 'Head' }])
-        .concat(autres).forEach(function (t) {
-          var o = document.createElement('option');
-          o.value = t.doc_int_id;
-          o.textContent = kcpDocLabel(t) + ((t.parent || '') === 'N/A' ? ' (racine)' : '');
-          parentEl.appendChild(o);
-        });
       check();
     }).catch(function () {
-      // Liste indisponible : la racine reste proposable, le back-end gardera le 409.
-      var o = document.createElement('option'); o.value = 'GCP001'; o.textContent = 'Racine';
-      parentEl.appendChild(o);
+      // Liste indisponible : on laisse créer, le back-end gardera le 409.
       check();
     });
   })();
-
-  // Une frontière est relationnelle : elle se pense contre ses voisins.
-  // Ils sont relus à chaque ouverture, le parent ayant pu changer entre-temps.
-  var noeudsPourVoisins = [];
-  function voisinsDuParent() {
-    var id = parentEl.value || 'GCP001';
-    var n = noeudsPourVoisins.filter(function (x) { return x.doc_int_id === id; })[0];
-    return {
-      noeud: n ? kcpDocLabel(n) : 'la racine',
-      labels: tousSujets.filter(function (t) { return t.parent === id; })
-        .map(function (t) { return kcpDocLabel(t); }).sort()
-    };
-  }
 
   function check() {
     var slug = slugFinal(nomEl.value);
@@ -208,12 +181,17 @@
     try {
       // Le même point d'entrée que pour un sujet : c'est `nature` qui décide
       // du préfixe, du gabarit copié et des drapeaux de cycle, côté back-end.
+      //
+      // `parent_id` vaut `N/A` et n'est pas un oubli : une annexe n'est
+      // rattachée à rien, et le back-end pose `GCP001` à tout ce qui ne lui
+      // dit rien. Le dire explicitement coûte un mot et évite un faux parent
+      // dans les trois moteurs qui lisent la table de l'univers.
       res = await kcpFetch(C.webhooks.creer_tiroir, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nature: 'ANX',
           id_client: C.client_id, nom_tiroir: nom_tiroir,
-          perimetre_declare: perimetre_declare, parent_id: parentEl.value || 'GCP001'
+          perimetre_declare: perimetre_declare, parent_id: 'N/A'
         })
       });
       var raw = await res.text();
@@ -283,10 +261,8 @@
   // ── Le périmètre en trois questions, et sa barre ──
   perim = KCP_PERIMETRE.champ(document.getElementById('hote-perim'), {
     titre: "Périmètre de l'annexe",
-    voisins: voisinsDuParent,
     onChange: function () { check(); }
   });
-  parentEl.addEventListener('change', check);
   document.getElementById('go').addEventListener('click', function () {
     if (check()) creer(this);
   });
