@@ -181,13 +181,17 @@
     try {
       // Le même point d'entrée que pour un sujet : c'est `nature` qui décide
       // du préfixe, du gabarit copié et des drapeaux de cycle, côté back-end.
-      // Aucun `parent_id` n'est envoyé : une annexe n'est rattachée à rien.
+      //
+      // `parent_id` vaut `N/A` et n'est pas un oubli : une annexe n'est
+      // rattachée à rien, et le back-end pose `GCP001` à tout ce qui ne lui
+      // dit rien. Le dire explicitement coûte un mot et évite un faux parent
+      // dans les trois moteurs qui lisent la table de l'univers.
       res = await kcpFetch(C.webhooks.creer_tiroir, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nature: 'ANX',
           id_client: C.client_id, nom_tiroir: nom_tiroir,
-          perimetre_declare: perimetre_declare
+          perimetre_declare: perimetre_declare, parent_id: 'N/A'
         })
       });
       var raw = await res.text();
