@@ -169,7 +169,12 @@
   }
   function check() {
     var nomN = noeudFinal(val('n'));
-    apercu('n', nomN && nomN !== val('n').trim() ? nomN : '');
+    // L'apercu dit la FORME FINALE, jamais « on a corrige ta saisie » : il
+    // s'affiche des qu'il y a un nom, meme sans transformation. Un ensemble ne
+    // porte aucun prefixe, donc l'apercu n'y montre que la capitale et les
+    // tirets — il s'affiche quand meme, parce qu'un signal qui n'apparait que
+    // parfois ne s'apprend pas.
+    apercu('n', nomN);
     var dupN = nomN.length >= 2 && !!existants[nomN.toLowerCase()];
     document.getElementById('n-dup').hidden = !dupN;
     var ok = nomN.length >= 2 && !dupN && pEns && pEns.valide();
