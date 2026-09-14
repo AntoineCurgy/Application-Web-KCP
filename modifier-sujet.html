@@ -287,6 +287,24 @@
     var o = document.createElement('option'); o.value = ''; o.textContent = '— choisir —'; return o;
   }
   function estNoeud(it) { return String((it && it.type) || '').toUpperCase() === 'GCP'; }
+  function estAnnexe(it) { return String((it && it.type) || '').toUpperCase() === 'ANX'; }
+
+  // ── Le nom nu d'un document, sans son préfixe d'affichage ──
+  // Le webhook `tiroirs` sert `nom_tiroir` amputé de son premier caractère : un
+  // sujet `#refonte` arrive en `refonte`, ce qui tombe juste, mais une annexe
+  // `anx_methode` arrive en `nx_methode`. Le champ de renommage doit porter le
+  // nom que l'utilisateur a écrit, jamais ce résidu.
+  function nomNu(it) {
+    var n = (it && it.nom_tiroir) || '';
+    return estAnnexe(it) ? n.replace(/^a?nx_/, '') : n;
+  }
+  // Le préfixe que le back-end posera : rien pour un ensemble, `anx_` pour une
+  // annexe, le croisillon pour un sujet.
+  function labelFinal(it, f) {
+    if (!f) return '';
+    if (estNoeud(it)) return f;
+    return estAnnexe(it) ? 'anx_' + f : '#' + f;
+  }
 
   // ── Mêmes règles de nom qu'à la création. ──
   function slugFinal(v) {
@@ -325,6 +343,12 @@
   var tabs = [].slice.call(document.querySelectorAll('.ong [role="tab"]'));
   function tabAutorise(b) {
     var it = docChoisi();
+    // Une annexe se consulte : elle n'a ni parent ni enfant, donc rien à
+    // déplacer, scinder ou fusionner. Restent son périmètre, son nom et son
+    // archivage.
+    if (estAnnexe(it)) {
+      return b.dataset.p === 'perim' || b.dataset.p === 'nom' || b.dataset.p === 'archiver';
+    }
     if (!it || !estNoeud(it)) return true;
     // Un ensemble ne se déplace pas, ne se scinde pas, ne se fusionne pas,
     // ne s'archive pas : redistribuer des enfants, le système ne sait pas encore.
@@ -389,6 +413,29 @@
       if (prem && prem.value === 'GCP001') prem.remove();
       if (!gr.querySelector('option')) gr.remove();
     }
+
+    // ── Les annexes, en dernier groupe ──
+    // Elles ne sont sous aucun nœud : la hiérarchie ne peut pas les ranger, et
+    // `kcpRemplirHierarchie` ne lit que les sujets et les ensembles. Elles
+    // forment donc leur propre groupe, dont l'intitulé n'est pas sélectionnable,
+    // comme celui de chaque nœud.
+    var annexes = (data.pcp_anx || [])
+      .filter(function (t) { return estAnnexe(t) && t.doc_int_id; })
+      .sort(function (a, b) {
+        return kcpDocLabel(a).localeCompare(kcpDocLabel(b), 'fr', { sensitivity: 'base' });
+      });
+    annexes.forEach(function (t) { items[t.doc_int_id] = t; });
+    if (annexes.length) {
+      var ga = document.createElement('optgroup');
+      ga.label = 'Annexes';
+      annexes.forEach(function (t) {
+        var o = document.createElement('option');
+        o.value = t.doc_int_id;
+        o.textContent = kcpDocLabel(t);
+        ga.appendChild(o);
+      });
+      sel.appendChild(ga);
+    }
   }
 
   // ── À chaque sélection : pré-remplir chaque panneau ──
@@ -401,7 +448,7 @@
     // Renommer
     var nn = document.getElementById('nn');
     nn.disabled = !it;
-    nn.value = it ? (it.nom_tiroir || '') : '';
+    nn.value = it ? nomNu(it) : '';
     // Déplacer
     var parent = it ? noeudsTous.filter(function (n) { return n.doc_int_id === it.parent; })[0] : null;
     document.getElementById('depl-actuel').textContent =
@@ -615,7 +662,7 @@
 
     // Renommer : forme finale valide, différente, sans doublon.
     var f = it ? (estNoeud(it) ? noeudFinal(document.getElementById('nn').value) : slugFinal(document.getElementById('nn').value)) : '';
-    var lbl = f ? (it && estNoeud(it) ? f : '#' + f) : '';
+    var lbl = labelFinal(it, f);
     // L'apercu dit la FORME FINALE, jamais « on a corrige ta saisie » : il
     // s'affiche des qu'il y a un nom, meme identique a celui en place. Le
     // bouton est deja eteint dans ce cas, le signal etait redondant.
@@ -624,10 +671,10 @@
     var propre = it ? kcpDocLabel(it).toLowerCase() : '';
     var dup = !!lbl && lbl.toLowerCase() !== propre && !!existants[lbl.toLowerCase()];
     document.getElementById('nn-dup').hidden = !dup;
-    bloquer('go-nom', !(it && f.length >= 2 && f !== it.nom_tiroir && !dup));
+    bloquer('go-nom', !(it && f.length >= 2 && f !== nomNu(it) && !dup));
 
-    // Déplacer : un sujet, une destination.
-    bloquer('go-depl', !(it && !estNoeud(it) && document.getElementById('dd').value));
+    // Déplacer : un sujet, une destination. Ni un ensemble, ni une annexe.
+    bloquer('go-depl', !(it && !estNoeud(it) && !estAnnexe(it) && document.getElementById('dd').value));
 
     // Scinder : au moins deux cibles complètes, et l'ensemble s'il est demandé.
     var cs = lireCibles();
@@ -652,7 +699,7 @@
       document.getElementById('ens-n-dup').hidden = !nd;
       nOk = nf.length >= 2 && np.length > 0 && !nd;
     }
-    bloquer('go-scinder', !(it && !estNoeud(it) && csOk && nOk && !dupC));
+    bloquer('go-scinder', !(it && !estNoeud(it) && !estAnnexe(it) && csOk && nOk && !dupC));
 
     // Fusionner : deux sujets distincts et le sujet d'arrivée complet.
     var fnv = slugFinal(document.getElementById('fn').value);
@@ -663,7 +710,8 @@
     document.getElementById('fn-dup').hidden = !dupF;
     var fpOk = pFusion && pFusion.valide();
     bloquer('go-fusionner',
-      !(it && !estNoeud(it) && document.getElementById('fu').value && fnv.length >= 2 && fpOk && !dupF));
+      !(it && !estNoeud(it) && !estAnnexe(it) && document.getElementById('fu').value
+        && fnv.length >= 2 && fpOk && !dupF));
 
     // Archiver : le sujet choisi suffit.
     bloquer('go-archiver', !(it && !estNoeud(it)));
@@ -694,7 +742,7 @@
   document.getElementById('go-nom').addEventListener('click', async function () {
     var it = docChoisi(); if (!it) return;
     var nouveau_nom = estNoeud(it) ? noeudFinal(document.getElementById('nn').value) : slugFinal(document.getElementById('nn').value);
-    if (nouveau_nom.length < 2 || nouveau_nom === it.nom_tiroir) return;
+    if (nouveau_nom.length < 2 || nouveau_nom === nomNu(it)) return;
     var b = this; kcpOccupe(b, true);
     cacherBandeaux();
     try {
@@ -720,7 +768,7 @@
   });
 
   document.getElementById('go-depl').addEventListener('click', async function () {
-    var it = docChoisi(); if (!it || estNoeud(it)) return;
+    var it = docChoisi(); if (!it || estNoeud(it) || estAnnexe(it)) return;
     var nouveau_parent_id = document.getElementById('dd').value;
     if (!nouveau_parent_id) return;
     var b = this; kcpOccupe(b, true);
@@ -747,6 +795,7 @@
 
   async function restructurer(operation, payloadExtra, okMsg, btn, libelle) {
     var it = docChoisi(); if (!it || estNoeud(it)) return;
+    if (estAnnexe(it) && operation !== 'archiver') return;
     kcpOccupe(btn, true);
     cacherBandeaux();
     var payload = {
