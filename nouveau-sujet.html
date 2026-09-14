@@ -168,10 +168,13 @@
 
   function check() {
     var slug = slugFinal(nomEl.value);
+    // L'apercu dit la FORME FINALE, jamais « on a corrige ta saisie ». Il
+    // s'affiche donc des qu'il y a un nom, meme quand rien n'a ete transforme :
+    // un signal qui n'apparait que parfois ne s'apprend pas, et on retape alors
+    // le prefixe soi-meme. Meme regle sur les six champs de nom du site.
     var ap = document.getElementById('n-ap');
-    var montre = slug && slug !== nomEl.value.trim();
-    ap.textContent = montre ? '#' + slug : '';
-    ap.hidden = !montre;
+    ap.textContent = slug ? '#' + slug : '';
+    ap.hidden = !slug;
     var dup = slug.length >= 2 && !!existants['#' + slug];
     document.getElementById('n-dup').hidden = !dup;
 

@@ -477,9 +477,13 @@
       });
       e.appendChild(x);
     }
+    // Le seul champ de nom du site qui n'avait aucun apercu, alors qu'on en
+    // saisit deux a cinq d'affilee : la forme finale s'y voit comme ailleurs.
+    var ap = document.createElement('span');
+    ap.className = 'apercu'; ap.id = 'c-ap-' + i; ap.hidden = true;
     var hp = document.createElement('div'); hp.id = 'c-perim-' + i;
     hp.style.marginTop = '.5rem';
-    d.appendChild(head); d.appendChild(e); d.appendChild(hp);
+    d.appendChild(head); d.appendChild(e); d.appendChild(ap); d.appendChild(hp);
     // Chaque nouveau sujet a son périmètre, défini dans la même fenêtre.
     cibles2['c' + i] = KCP_PERIMETRE.champ(hp, {
       titre: 'Périmètre du nouveau sujet ' + i,
@@ -612,8 +616,11 @@
     // Renommer : forme finale valide, différente, sans doublon.
     var f = it ? (estNoeud(it) ? noeudFinal(document.getElementById('nn').value) : slugFinal(document.getElementById('nn').value)) : '';
     var lbl = f ? (it && estNoeud(it) ? f : '#' + f) : '';
+    // L'apercu dit la FORME FINALE, jamais « on a corrige ta saisie » : il
+    // s'affiche des qu'il y a un nom, meme identique a celui en place. Le
+    // bouton est deja eteint dans ce cas, le signal etait redondant.
     var ap = document.getElementById('nn-ap');
-    ap.textContent = lbl; ap.hidden = !lbl || !it || f === it.nom_tiroir;
+    ap.textContent = lbl; ap.hidden = !lbl;
     var propre = it ? kcpDocLabel(it).toLowerCase() : '';
     var dup = !!lbl && lbl.toLowerCase() !== propre && !!existants[lbl.toLowerCase()];
     document.getElementById('nn-dup').hidden = !dup;
@@ -626,7 +633,8 @@
     var cs = lireCibles();
     var dupC = false, vus = {};
     cs.forEach(function (x) {
-
+      var a = document.getElementById('c-ap-' + x.i);
+      if (a) { a.textContent = x.label; a.hidden = !x.label; }
       var bad = !!x.label && (!!existants[x.label.toLowerCase()] || !!vus[x.label.toLowerCase()]);
       var h = document.getElementById('c-dup-' + x.i);
       if (h) h.hidden = !bad;
@@ -639,7 +647,7 @@
       var nf = noeudFinal(document.getElementById('ens-n').value);
       var np = pEnsScission.texte();
       var apn = document.getElementById('ens-n-ap');
-      apn.textContent = nf; apn.hidden = !nf || nf === document.getElementById('ens-n').value.trim();
+      apn.textContent = nf; apn.hidden = !nf;
       var nd = !!nf && !!existants[nf.toLowerCase()];
       document.getElementById('ens-n-dup').hidden = !nd;
       nOk = nf.length >= 2 && np.length > 0 && !nd;
@@ -650,7 +658,7 @@
     var fnv = slugFinal(document.getElementById('fn').value);
     var fnl = fnv ? '#' + fnv : '';
     var apf = document.getElementById('fn-ap');
-    apf.textContent = fnl; apf.hidden = !fnl || fnv === document.getElementById('fn').value.trim();
+    apf.textContent = fnl; apf.hidden = !fnl;
     var dupF = !!fnl && !!existants[fnl.toLowerCase()];
     document.getElementById('fn-dup').hidden = !dupF;
     var fpOk = pFusion && pFusion.valide();
