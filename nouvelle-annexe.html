@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>KCP | Assembler</title>
+<title>KCP | Annexe</title>
 <link rel="icon" type="image/png" href="./kcp-mark-transparent.png">
 <link rel="apple-touch-icon" href="./kcp-mark-transparent.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,46 +40,42 @@
   </aside>
   <main class="main">
     <div class="z stack">
-      <div><h1>Nouvel ensemble</h1>
-      <p class="sub" style="margin-top:.4rem">Un ensemble regroupe plusieurs sujets et permet une meilleure organisation.</p></div>
+      <div><h1>Nouvelle annexe</h1>
+      <p class="sub" style="margin-top:.4rem">Une annexe est une référence stable que vous consultez : une méthode, un savoir-faire, un cadre. On ne la pilote pas dans le temps.</p></div>
 <div class="duo">
         <div class="carte-f">        <div class="champ"><span style="font-size:var(--t-sm);font-weight:600">Nature</span>
           <div class="modes">
             <a class="btn" href="nouveau-sujet.html" style="flex:1;justify-content:center">Un sujet</a>
-            <a class="btn" href="nouvel-ensemble.html" style="flex:1;justify-content:center;background:var(--dark);border-color:var(--dark);color:var(--accent)">Un ensemble</a>
-            <a class="btn" href="nouvelle-annexe.html" style="flex:1;justify-content:center">Une annexe</a>
+            <a class="btn" href="nouvel-ensemble.html" style="flex:1;justify-content:center">Un ensemble</a>
+            <a class="btn" href="nouvelle-annexe.html" style="flex:1;justify-content:center;background:var(--dark);border-color:var(--dark);color:var(--accent)">Une annexe</a>
           </div></div>
         <div class="champ"><div class="lbl-q"><span><label for="n">Nom</label></span>
-          <span class="hint err" id="n-dup" hidden>nom déjà utilisé</span></div>
-          <input type="text" id="n" placeholder="Direction commerciale" autocomplete="off" spellcheck="false" maxlength="60">
+            <span class="hint err" id="n-dup" hidden>nom déjà utilisé</span></div>
+          <input type="text" id="n" placeholder="methodes-et-apprentissages" autocomplete="off" spellcheck="false" maxlength="60">
           <span class="apercu" id="n-ap" hidden></span></div>
-
-        <div class="champ"><label for="p">Rattaché à</label>
+        <div class="champ"><label for="p">Rattachée à</label>
           <select id="p"></select></div>
-
         <div class="champ">
           <div class="lbl-q"><span><label>Périmètre</label>
-            <button type="button" class="qmark" data-pop="ensemble" aria-label="À quoi sert le périmètre d'un ensemble ?">?</button></span></div>
-          <div id="hote-pe"></div>
+            <button type="button" class="qmark" id="q-perim" aria-label="À quoi sert le périmètre d'une annexe ?">?</button></span></div>
+          <div id="hote-perim"></div>
         </div>
-
-        <div class="confirme" id="ok" hidden><span>✓</span><span>Ensemble créé. Ajoutez-lui ses sujets avec <b>Nouveau sujet</b>.</span></div>
+        <div class="confirme" id="ok" hidden><span>✓</span><span id="ok-txt"></span></div>
         <div class="alerte-err" id="err" hidden><span>›</span><span id="err-txt"></span></div>
-
-        <button class="btn btn-1" id="go" disabled>Créer l'ensemble →</button>
+        <button class="btn btn-1" id="go" disabled>Créer l'annexe →</button>
       </div>
         <aside>
           <div class="aside-b cle">
             <div class="sect-h" style="margin-bottom:var(--s2)">À savoir</div>
-            <p><b>Un ensemble naît vide.</b> Créez ensuite les sujets lui appartenant avec <b>Nouveau sujet</b>.</p>
-            <p>Son périmètre dit ce que couvre la famille entière, pas ce que fait chacun de ses membres.</p>
+            <p><b>Une annexe se consulte, elle ne se pilote pas.</b> Elle n'a ni jalon, ni décision, ni risque à suivre : elle porte un savoir qui se complète, pas un projet qui avance.</p>
+            <p>Son périmètre trie comme celui d'un sujet : c'est lui qui décide de ce qui entre.</p>
           </div>
           <div class="aside-b">
             <div class="sect-h" style="margin-bottom:var(--s2)">Ce qui se passe ensuite</div>
             <div class="etapes">
-              <span class="n">1</span><span class="x">L'ensemble est créé et prend sa place dans l'arbre.</span>
-              <span class="n">2</span><span class="x">Vous lui rattachez ses sujets, un à un.</span>
-              <span class="n">3</span><span class="x">Au cycle suivant, il écrit la vue transverse de ses sous-sujets.</span>
+              <span class="n">1</span><span class="x">L'annexe est créée et prend sa place sous son rattachement.</span>
+              <span class="n">2</span><span class="x">Elle reste vide jusqu'à ce que vous y déposiez quelque chose.</span>
+              <span class="n">3</span><span class="x">Le cycle des annexes absorbe ensuite ce que vous y déposez.</span>
             </div>
           </div>
         </aside>
@@ -96,6 +92,7 @@
 <script>
   var C = KCP_CONFIG;
 
+
   (function nav() {
     var n = (C.client_name || '').trim();
     document.getElementById('nav-who').textContent = n || '—';
@@ -109,10 +106,14 @@
     kcpNavBadges();
   })();
 
+  var nomEl = document.getElementById('n');
   var parentEl = document.getElementById('p');
-  var existants = {};
-  var pEns = null, tousSujets = [], noeudsTous = [];
+  var existants = {};   // labels déjà pris, en minuscules
+  var perim = null, tousSujets = [];
 
+  // ── Même règle de nom qu'ailleurs : accents retirés, minuscules, le reste
+  // devient tiret. Le préfixe `anx_` ne se tape pas, il s'ajoute à l'affichage
+  // comme le croisillon d'un sujet : c'est le back-end qui le pose. ──
   function slugFinal(v) {
     return (v || '')
       .normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -121,19 +122,19 @@
       .replace(/-{2,}/g, '-')
       .replace(/^-+|-+$/g, '');
   }
-  // Nom d'ensemble : mêmes règles, première lettre en majuscule.
-  function noeudFinal(v) { var f = slugFinal(v); return f ? f.charAt(0).toUpperCase() + f.slice(1) : ''; }
+  // Le texte libre est nettoyé des caractères qui casseraient le JSON de l'automatisation.
   function sanitize(x) { return kcpAssainirPerimetre(x); }
-  function val(id) { return document.getElementById(id).value; }
 
   (function chargerParents() {
     kcpLoadTiroirs().then(function (data) {
       ((data.pcp_anx || []).concat(data.gcp || [])).forEach(function (t) {
         existants[kcpDocLabel(t).toLowerCase()] = true;
       });
+      tousSujets = (data.pcp || []).slice();
+      noeudsPourVoisins = (data.gcp || []).slice();
+      // Le rattachement : la racine (au prénom) puis les ensembles existants.
+      // Jamais un sujet simple — un sujet ne porte pas d'enfants.
       var noeuds = (data.gcp || []);
-      tousSujets = (data.pcp || []).slice(); noeudsTous = noeuds.slice();
-      majVoisins();
       var racine = noeuds.filter(function (t) { return (t.parent || '') === 'N/A'; });
       var autres = noeuds.filter(function (t) { return (t.parent || '') !== 'N/A'; });
       (racine.length ? racine : [{ doc_int_id: 'GCP001', type: 'GCP', parent: 'N/A', nom_tiroir: 'Head' }])
@@ -145,34 +146,37 @@
         });
       check();
     }).catch(function () {
+      // Liste indisponible : la racine reste proposable, le back-end gardera le 409.
       var o = document.createElement('option'); o.value = 'GCP001'; o.textContent = 'Racine';
       parentEl.appendChild(o);
       check();
     });
   })();
 
-  // Les voisins de l'ensemble : ceux qui partagent son futur parent.
+  // Une frontière est relationnelle : elle se pense contre ses voisins.
+  // Ils sont relus à chaque ouverture, le parent ayant pu changer entre-temps.
+  var noeudsPourVoisins = [];
   function voisinsDuParent() {
     var id = parentEl.value || 'GCP001';
-    var n = noeudsTous.filter(function (x) { return x.doc_int_id === id; })[0];
+    var n = noeudsPourVoisins.filter(function (x) { return x.doc_int_id === id; })[0];
     return {
       noeud: n ? kcpDocLabel(n) : 'la racine',
       labels: tousSujets.filter(function (t) { return t.parent === id; })
         .map(function (t) { return kcpDocLabel(t); }).sort()
     };
   }
-  function majVoisins() {}
 
-  function apercu(id, txt) {
-    var el = document.getElementById(id + '-ap');
-    el.textContent = txt; el.hidden = !txt;
-  }
   function check() {
-    var nomN = noeudFinal(val('n'));
-    apercu('n', nomN && nomN !== val('n').trim() ? nomN : '');
-    var dupN = nomN.length >= 2 && !!existants[nomN.toLowerCase()];
-    document.getElementById('n-dup').hidden = !dupN;
-    var ok = nomN.length >= 2 && !dupN && pEns && pEns.valide();
+    var slug = slugFinal(nomEl.value);
+    var ap = document.getElementById('n-ap');
+    // L'aperçu montre toujours la forme finale : le préfixe se voit avant
+    // d'être posé, sinon on croit devoir le taper soi-même.
+    ap.textContent = slug ? 'anx_' + slug : '';
+    ap.hidden = !slug;
+    var dup = slug.length >= 2 && !!existants['anx_' + slug];
+    document.getElementById('n-dup').hidden = !dup;
+
+    var ok = !dup && slug.length >= 2 && perim && perim.valide();
     majGo();
     return ok;
   }
@@ -181,31 +185,35 @@
   // allume ce qui manque au lieu de ne rien faire.
   var majGo = KCP_GESTE(document.getElementById('go'),
     function () {
-      var n = noeudFinal(val('n'));
-      return n.length >= 2 && !existants[n.toLowerCase()] && pEns && pEns.valide();
+      var slug = slugFinal(nomEl.value);
+      return slug.length >= 2 && !existants['anx_' + slug] && perim && perim.valide();
     },
     function () {
-      var m = [], n = noeudFinal(val('n'));
-      if (n.length < 2 || existants[n.toLowerCase()]) m.push(document.getElementById('n'));
-      if (!(pEns && pEns.valide())) m.push(document.getElementById('hote-pe').parentNode);
+      var m = [];
+      if (slugFinal(nomEl.value).length < 2 || existants['anx_' + slugFinal(nomEl.value)]) m.push(nomEl);
+      if (!(perim && perim.valide())) m.push(document.getElementById('hote-perim').parentNode);
       return m;
     });
-  document.getElementById('n').addEventListener('input', check);
+  nomEl.addEventListener('input', check);
 
   async function creer(btn) {
-    var nom_noeud = noeudFinal(val('n'));
-    if (nom_noeud.length < 2) return;
+    var nom_tiroir = slugFinal(nomEl.value);
+    var perimetre_declare = sanitize(perim.texte());
+    if (nom_tiroir.length < 2) return;
     document.getElementById('ok').hidden = true;
     document.getElementById('err').hidden = true;
     kcpOccupe(btn, true);
 
     var res, data = {};
     try {
-      res = await kcpFetch(C.webhooks.creer_ensemble, {
+      // Le même point d'entrée que pour un sujet : c'est `nature` qui décide
+      // du préfixe, du gabarit copié et des drapeaux de cycle, côté back-end.
+      res = await kcpFetch(C.webhooks.creer_tiroir, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id_client: C.client_id, parent_id: parentEl.value || 'GCP001',
-          nom_noeud: nom_noeud, perimetre_noeud: sanitize(pEns.texte())
+          nature: 'ANX',
+          id_client: C.client_id, nom_tiroir: nom_tiroir,
+          perimetre_declare: perimetre_declare, parent_id: parentEl.value || 'GCP001'
         })
       });
       var raw = await res.text();
@@ -221,15 +229,18 @@
     kcpOccupe(btn, false);
     if (res.ok && data.success) {
       kcpInvalidateTiroirs();
-      existants[nom_noeud.toLowerCase()] = true;
+      existants['anx_' + nom_tiroir] = true;
+      var okTxt = document.getElementById('ok-txt');
+      okTxt.textContent = '';
+      var b = document.createElement('b'); b.textContent = 'anx_' + nom_tiroir;
+      okTxt.appendChild(b);
+      okTxt.appendChild(document.createTextNode(' créée, prête à recevoir ce que vous y déposerez.'));
       document.getElementById('ok').hidden = false;
-      document.getElementById('n').value = '';
-      pEns.poser('');
+      nomEl.value = ''; perim.poser('');
       check();
-    } else if (res.status === 409 || data.error === 'creation_refusee') {
+    } else if (res.status === 409 || data.error === 'label_exists') {
       check();
-      document.getElementById('err-txt').textContent =
-        data.message || 'Un des noms existe déjà, ou les deux sujets portent le même nom.';
+      document.getElementById('err-txt').textContent = 'Ce nom existe déjà, choisissez-en un autre.';
       document.getElementById('err').hidden = false;
     } else {
       check();
@@ -238,19 +249,14 @@
     }
   }
 
-  // ── Les fenêtres du « ? » ──
+  // ── La fenêtre du « ? » : ouverte à la demande ──
   var TEXTES = {
-    sujet: { t: "À quoi sert le périmètre ?",
-      p: ["Le périmètre dit ce que ce sujet couvre, et surtout ce qu'il ne couvre pas.",
-        "C'est avec ce texte que le système trie. Chaque fois qu'une information arrive, il s'y réfère pour décider si elle appartient à ce sujet ou à un autre. Il est critique : rien n'est figé pour autant, vous pouvez le modifier à tout moment."],
-      bad: "« Ce sujet couvre le recrutement. »",
-      good: "« Ce sujet couvre le recrutement des postes commerciaux : définition du besoin, entretiens, décision d'embauche. Ne couvre pas l'intégration une fois la personne arrivée. »" },
-    ensemble: { t: "À quoi sert le périmètre d'un ensemble ?",
-      p: ["Un ensemble regroupe plusieurs sujets. Son périmètre dit ce qui les réunit, pas ce que chacun contient dans le détail.",
-        "C'est avec ce texte que le système sait ce qui relève de cet ensemble et ce qui reste en dehors.",
-        "Le détail de chaque sujet se déclare dans son propre périmètre."],
-      bad: "« Cet ensemble couvre les RH. »",
-      good: "« Cet ensemble couvre tout ce qui touche aux personnes de l'entreprise : recrutement, paie, formation. Ne couvre pas les prestataires externes. »" }
+    annexe: { t: "À quoi sert le périmètre d'une annexe ?",
+      p: ["Le périmètre dit ce que cette annexe couvre, et surtout ce qu'elle ne couvre pas.",
+        "C'est avec ce texte que le système trie. Chaque fois qu'une information arrive, il s'y réfère pour décider si elle appartient ici ou ailleurs. Rien n'est figé : vous pouvez le modifier à tout moment.",
+        "Une annexe porte une référence stable, pas un projet suivi dans le temps : son périmètre décrit un domaine de savoir, pas un chantier."],
+      bad: "« Cette annexe couvre mes méthodes. »",
+      good: "« Cette annexe couvre ma méthode de rédaction des comptes rendus : structure, ton, longueur, relecture. Ne couvre pas les outils utilisés pour les produire. »" }
   };
   function ouvrirPop(k) {
     var x = TEXTES[k];
@@ -268,20 +274,30 @@
     document.getElementById('voile').classList.remove('on');
     document.getElementById('pop').classList.remove('on');
   }
-  document.querySelectorAll('[data-pop]').forEach(function (b) {
-    b.addEventListener('click', function () { ouvrirPop(b.dataset.pop); });
-  });
+  document.getElementById('q-perim').addEventListener('click', function () { ouvrirPop('annexe'); });
   document.getElementById('voile').addEventListener('click', fermerPop);
   document.getElementById('pop-ok').addEventListener('click', fermerPop);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fermerPop(); });
-  // ── Les trois périmètres, et une seule barre pour les trois ──
-  pEns = KCP_PERIMETRE.champ(document.getElementById('hote-pe'), {
-    ensemble: true, titre: "Périmètre de l'ensemble",
-    voisins: voisinsDuParent, onChange: function () { check(); }
+
+
+  // ── Le périmètre en trois questions, et sa barre ──
+  perim = KCP_PERIMETRE.champ(document.getElementById('hote-perim'), {
+    titre: "Périmètre de l'annexe",
+    voisins: voisinsDuParent,
+    onChange: function () { check(); }
   });
+  parentEl.addEventListener('change', check);
   document.getElementById('go').addEventListener('click', function () {
     if (check()) creer(this);
   });
-  check();
+
+  // ── Pré-remplissage depuis une proposition du système ──
+  (function prefill() {
+    var q = new URLSearchParams(location.search);
+    var nom = q.get('nom') || '', per = q.get('perimetre') || '';
+    if (nom) nomEl.value = nom;
+    if (per) perim.poser(per);
+    if (nom || per) check();
+  })();
 </script>
 </body></html>
