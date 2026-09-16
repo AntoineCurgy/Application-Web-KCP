@@ -1182,10 +1182,12 @@ textarea { resize:vertical; min-height:96px; }
   font-family:var(--text); font-size:var(--t-sm); line-height:1.6; color:var(--ink-soft);
   outline:none; resize:vertical; min-height:132px; }
 .perim-assemble:focus { border-color:var(--ink); background:var(--surface); color:var(--ink); }
-/* Rouvrir un perimetre : le texte est seul dans la fenetre, il la remplit.
-   Le corps est une colonne flex, `flex:1` suffit donc a l'etendre ; le
-   plancher garde une zone confortable quand le perimetre est court. */
-.perim-assemble.perim-seul { margin-top:0; flex:1; min-height:320px; }
+/* Rouvrir un perimetre : le texte est seul dans la fenetre, il l'occupe.
+   La hauteur est POSEE, jamais deduite du flex : `flex:1` l'emporterait sur
+   la hauteur que la poignee de redimensionnement ecrit, et tirer dessus ne
+   ferait rien. `flex:none` laisse donc la main a `height`, celle d'ici comme
+   celle que l'utilisateur pose ; le corps defile quand ca deborde. */
+.perim-assemble.perim-seul { margin-top:0; flex:none; height:46vh; min-height:320px; }
 
 .perim-fen { position:fixed; z-index:71; left:50%; top:50%; transform:translate(-50%,-50%);
   width:min(860px,calc(100vw - 2.5rem)); max-height:90vh; background:var(--surface);
