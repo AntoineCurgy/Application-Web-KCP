@@ -10,7 +10,7 @@ const KCP_WEBHOOKS = {
   auth:         'https://hook.eu2.make.com/8j3iyx5tob56ppw63nffemqii2nqjs8w', // Make: KCP - Auth - Login
   chat:         'https://hook.eu2.make.com/8rh94l9v2lk87hr6g1jredxban13ftqu',
   history:      'https://hook.eu2.make.com/26bhrahrq5xipqcem9hpq3jvdgrmd1si',
-  tiroirs:      'https://hook.eu2.make.com/4kskheb6ie4q6nupygterd84uj5kok2g',
+  tiroirs:      'https://n8n.88systems.io/webhook/webapp-tiroirs', // n8n: KCP - WebApp - ListeTiroirs
   prompt:       'https://hook.eu2.make.com/q86mcoelj49v49gcobam9tbixur6xvm5',
   creer_tiroir: 'https://hook.eu2.make.com/eb7lvgopight6cd56vw2hyclimy8mu7x', // Make: KCP - Nouveau Tiroir
   creer_ensemble: 'https://hook.eu2.make.com/rhqo1uy3ylfj2szvpxkrynr39y98bir1', // Make: KCP - Nouvel Ensemble
@@ -18,17 +18,17 @@ const KCP_WEBHOOKS = {
   renommer: 'https://hook.eu2.make.com/axaxpk4nlkfrxodl8h1rce5htkpgwlzp', // Make: KCP - Renommer Sujet
   creer_bot: 'https://n8n.88systems.io/webhook/creer-bot', // n8n: KCP - Meeting BaaS - Creer Bot
   reset_password: 'https://hook.eu2.make.com/baacr4sl603f8jif2htezl4tbttp857p', // Make: KCP - Reset Password
-  captures: 'https://hook.eu2.make.com/r50v5k4dwhgb1i51pj1rfwvsz231t9e8', // Make: KCP - WebApp - Informations Capturées
-  points_a_clarifier: 'https://hook.eu2.make.com/qkvmr8udjdy5kr6ptm620b3wb2cl47xh', // Make: KCP - WebApp - Points a clarifier
+  captures: 'https://n8n.88systems.io/webhook/webapp-captures', // n8n: KCP - WebApp - Informations Capturees
+  points_a_clarifier: 'https://n8n.88systems.io/webhook/webapp-points', // n8n: KCP - WebApp - Points a clarifier
   reponse_clarification: 'https://hook.eu2.make.com/c29ze7t8b9ql9qf3mjcud8e4f8vc6tpr', // Make: KCP - WebApp - Reponse Clarification
-  carte: 'https://hook.eu2.make.com/5ewsvcp5me3femarcgozfpwvh02glfmy', // Make: KCP - WebApp - Carte
+  carte: 'https://n8n.88systems.io/webhook/webapp-carte', // n8n: KCP - WebApp - Carte
   deplacer: 'https://hook.eu2.make.com/mmjhid1rmuralwj4cqgott05jgnjj3ux', // Make: KCP - Deplacer Sujet
   restructurer: 'https://hook.eu2.make.com/0mwtqehwa8c85n4don6hqt1cxkluiggp', // Make: KCP - Restructurer
-  propositions: 'https://hook.eu2.make.com/w7a7cjlruolk1l6lecayiy5k8c8rqt6t', // Make: KCP - WebApp - Propositions
+  propositions: 'https://n8n.88systems.io/webhook/webapp-propositions', // n8n: KCP - WebApp - Propositions
   reponse_proposition: 'https://hook.eu2.make.com/lp4hd6igjskrirfp29ma2fsuv58c43fo', // Make: KCP - WebApp - Reponse Proposition
-  parametres: 'https://hook.eu2.make.com/vch7qngui955s1ux6kfu5h6u26h39hx3', // Make: KCP - WebApp - Parametres
+  parametres: 'https://n8n.88systems.io/webhook/webapp-parametres', // n8n: KCP - WebApp - Parametres
   completer_perimetre: 'https://hook.eu2.make.com/dk8ww888lghieii868ttg6hc4u99jmuy', // Make: KCP - Perimetre Completer
-  signaux: 'https://hook.eu2.make.com/w2h121ktmb0nrrrshh982w17chte1k4o', // Make: KCP - WebApp - Signaux
+  signaux: 'https://n8n.88systems.io/webhook/webapp-signaux', // n8n: KCP - WebApp - Signaux
   rediger_signal: 'https://hook.eu2.make.com/m5mgc1tuzlsrdth7iz4hiisp2z96t5q2', // Make: KCP - WebApp - Reponse Signal
 };
 
