@@ -20,16 +20,16 @@ const KCP_WEBHOOKS = {
   reset_password: 'https://hook.eu2.make.com/baacr4sl603f8jif2htezl4tbttp857p', // Make: KCP - Reset Password
   captures: 'https://n8n.88systems.io/webhook/webapp-captures', // n8n: KCP - WebApp - Informations Capturees
   points_a_clarifier: 'https://n8n.88systems.io/webhook/webapp-points', // n8n: KCP - WebApp - Points a clarifier
-  reponse_clarification: 'https://hook.eu2.make.com/c29ze7t8b9ql9qf3mjcud8e4f8vc6tpr', // Make: KCP - WebApp - Reponse Clarification
+  reponse_clarification: 'https://n8n.88systems.io/webhook/reponse-clarification', // n8n: KCP - WebApp - Reponse Clarification
   carte: 'https://n8n.88systems.io/webhook/webapp-carte', // n8n: KCP - WebApp - Carte
   deplacer: 'https://n8n.88systems.io/webhook/deplacer-sujet', // n8n: KCP - Deplacer Sujet
   restructurer: 'https://hook.eu2.make.com/0mwtqehwa8c85n4don6hqt1cxkluiggp', // Make: KCP - Restructurer
   propositions: 'https://n8n.88systems.io/webhook/webapp-propositions', // n8n: KCP - WebApp - Propositions
-  reponse_proposition: 'https://hook.eu2.make.com/lp4hd6igjskrirfp29ma2fsuv58c43fo', // Make: KCP - WebApp - Reponse Proposition
+  reponse_proposition: 'https://n8n.88systems.io/webhook/reponse-proposition', // n8n: KCP - WebApp - Reponse Proposition
   parametres: 'https://n8n.88systems.io/webhook/webapp-parametres', // n8n: KCP - WebApp - Parametres
   completer_perimetre: 'https://hook.eu2.make.com/dk8ww888lghieii868ttg6hc4u99jmuy', // Make: KCP - Perimetre Completer
   signaux: 'https://n8n.88systems.io/webhook/webapp-signaux', // n8n: KCP - WebApp - Signaux
-  rediger_signal: 'https://hook.eu2.make.com/m5mgc1tuzlsrdth7iz4hiisp2z96t5q2', // Make: KCP - WebApp - Reponse Signal
+  rediger_signal: 'https://n8n.88systems.io/webhook/rediger-signal', // n8n: KCP - WebApp - Rediger Signal
 };
 
 // Guide d'utilisation, Google Doc partage en lecture. L'identifiant d'un
