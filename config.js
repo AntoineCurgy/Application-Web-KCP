@@ -12,8 +12,8 @@ const KCP_WEBHOOKS = {
   history:      'https://hook.eu2.make.com/26bhrahrq5xipqcem9hpq3jvdgrmd1si',
   tiroirs:      'https://n8n.88systems.io/webhook/webapp-tiroirs', // n8n: KCP - WebApp - ListeTiroirs
   prompt:       'https://hook.eu2.make.com/q86mcoelj49v49gcobam9tbixur6xvm5',
-  creer_tiroir: 'https://hook.eu2.make.com/eb7lvgopight6cd56vw2hyclimy8mu7x', // Make: KCP - Nouveau Tiroir
-  creer_ensemble: 'https://hook.eu2.make.com/rhqo1uy3ylfj2szvpxkrynr39y98bir1', // Make: KCP - Nouvel Ensemble
+  creer_tiroir: 'https://n8n.88systems.io/webhook/creer-document', // n8n: KCP - Creer Document
+  creer_ensemble: 'https://n8n.88systems.io/webhook/creer-ensemble', // n8n: KCP - Creer Ensemble
   update_perimetre: 'https://hook.eu2.make.com/mrtjwmxnmnhy9vus3vlmn6ps99oowa15', // Make: KCP - Update Perimetre
   renommer: 'https://hook.eu2.make.com/axaxpk4nlkfrxodl8h1rce5htkpgwlzp', // Make: KCP - Renommer Sujet
   creer_bot: 'https://n8n.88systems.io/webhook/creer-bot', // n8n: KCP - Meeting BaaS - Creer Bot
