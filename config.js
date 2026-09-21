@@ -27,7 +27,7 @@ const KCP_WEBHOOKS = {
   propositions: 'https://n8n.88systems.io/webhook/webapp-propositions', // n8n: KCP - WebApp - Propositions
   reponse_proposition: 'https://n8n.88systems.io/webhook/reponse-proposition', // n8n: KCP - WebApp - Reponse Proposition
   parametres: 'https://n8n.88systems.io/webhook/webapp-parametres', // n8n: KCP - WebApp - Parametres
-  completer_perimetre: 'https://hook.eu2.make.com/dk8ww888lghieii868ttg6hc4u99jmuy', // Make: KCP - Perimetre Completer
+  completer_perimetre: 'https://n8n.88systems.io/webhook/completer-perimetre', // n8n: KCP - Completer Perimetre
   signaux: 'https://n8n.88systems.io/webhook/webapp-signaux', // n8n: KCP - WebApp - Signaux
   rediger_signal: 'https://n8n.88systems.io/webhook/rediger-signal', // n8n: KCP - WebApp - Rediger Signal
 };
