@@ -7,17 +7,17 @@
 // ─────────────────────────────────────────────────────────────
 
 const KCP_WEBHOOKS = {
-  auth:         'https://hook.eu2.make.com/8j3iyx5tob56ppw63nffemqii2nqjs8w', // Make: KCP - Auth - Login
-  chat:         'https://hook.eu2.make.com/8rh94l9v2lk87hr6g1jredxban13ftqu',
-  history:      'https://hook.eu2.make.com/26bhrahrq5xipqcem9hpq3jvdgrmd1si',
+  auth:         'https://api-kcp.88systems.io/auth/login', // kcp-api: Auth - Login (Python, PCP056)
+  chat:         'https://api-kcp.88systems.io/chat', // kcp-api: Worker_Web_Chat (Python, PCP056)
+  history:      'https://api-kcp.88systems.io/chat/history', // kcp-api: Chat_History (Python, PCP056)
   tiroirs:      'https://n8n.88systems.io/webhook/webapp-tiroirs', // n8n: KCP - WebApp - ListeTiroirs
-  prompt:       'https://hook.eu2.make.com/q86mcoelj49v49gcobam9tbixur6xvm5',
+  prompt:       'https://api-kcp.88systems.io/chat/prompt', // kcp-api: FetchPrompt (Python, PCP056)
   creer_tiroir: 'https://n8n.88systems.io/webhook/creer-document', // n8n: KCP - Creer Document
   creer_ensemble: 'https://n8n.88systems.io/webhook/creer-ensemble', // n8n: KCP - Creer Ensemble
   update_perimetre: 'https://n8n.88systems.io/webhook/update-perimetre', // n8n: KCP - Update Perimetre Declare
   renommer: 'https://n8n.88systems.io/webhook/renommer-sujet', // n8n: KCP - Renommer Sujet
   creer_bot: 'https://n8n.88systems.io/webhook/creer-bot', // n8n: KCP - Meeting BaaS - Creer Bot
-  reset_password: 'https://hook.eu2.make.com/baacr4sl603f8jif2htezl4tbttp857p', // Make: KCP - Reset Password
+  reset_password: 'https://api-kcp.88systems.io/auth/reset', // kcp-api: Reset Password (Python, PCP056)
   captures: 'https://n8n.88systems.io/webhook/webapp-captures', // n8n: KCP - WebApp - Informations Capturees
   points_a_clarifier: 'https://n8n.88systems.io/webhook/webapp-points', // n8n: KCP - WebApp - Points a clarifier
   reponse_clarification: 'https://n8n.88systems.io/webhook/reponse-clarification', // n8n: KCP - WebApp - Reponse Clarification

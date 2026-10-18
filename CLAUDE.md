@@ -44,6 +44,8 @@ passée. La page ne voit aucune différence — même appel, même corps, même 
 mais un webhook `n8n.88systems.io` ne se cherche pas dans les scénarios Make. Le préfixe du
 commentaire, `Make:` ou `n8n:`, est la seule chose à lire pour savoir où aller.
 
+**Depuis le 2026-10-18, un troisième préfixe : `kcp-api:`.** L'offre Make a pris fin ce jour-là ; la connexion, la réinitialisation, le chat, l'historique et l'invite pointent sur `https://api-kcp.88systems.io`, le service Python de la cellule `PCP056` (`GCP003-KCP/PCP056-Kcp-cloud/+TOOLS/kcp_api/`), décidé par Antoine (« full python partout »). Ses réponses sont celles de Make, au champ près.
+
 **L'analyse des périmètres ne se lance pas depuis la page.** `KCP - Analyse
 Perimetres - Trigger` la déclenche le dimanche à 3 h. La page lit le résultat dans
 `carte.perimetre_niveau` et dans les propositions de type `perimetre` — deux
