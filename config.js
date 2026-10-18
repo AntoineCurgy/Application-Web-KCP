@@ -12,7 +12,7 @@ const KCP_WEBHOOKS = {
   history:      'https://api-kcp.88systems.io/chat/history', // kcp-api: Chat_History (Python, PCP056)
   tiroirs:      'https://n8n.88systems.io/webhook/webapp-tiroirs', // n8n: KCP - WebApp - ListeTiroirs
   prompt:       'https://api-kcp.88systems.io/chat/prompt', // kcp-api: FetchPrompt (Python, PCP056)
-  creer_tiroir: 'https://n8n.88systems.io/webhook/creer-document', // n8n: KCP - Creer Document
+  creer_tiroir: 'https://api-kcp.88systems.io/creer-document', // kcp-api: Creer Document + Document - Worker (Python, PCP056)
   creer_ensemble: 'https://n8n.88systems.io/webhook/creer-ensemble', // n8n: KCP - Creer Ensemble
   update_perimetre: 'https://n8n.88systems.io/webhook/update-perimetre', // n8n: KCP - Update Perimetre Declare
   renommer: 'https://n8n.88systems.io/webhook/renommer-sujet', // n8n: KCP - Renommer Sujet
