@@ -21,7 +21,7 @@ const KCP_WEBHOOKS = {
   captures: 'https://n8n.88systems.io/webhook/webapp-captures', // n8n: KCP - WebApp - Informations Capturees
   points_a_clarifier: 'https://n8n.88systems.io/webhook/webapp-points', // n8n: KCP - WebApp - Points a clarifier
   reponse_clarification: 'https://n8n.88systems.io/webhook/reponse-clarification', // n8n: KCP - WebApp - Reponse Clarification
-  carte: 'https://n8n.88systems.io/webhook/webapp-carte', // n8n: KCP - WebApp - Carte
+  carte: 'https://api-kcp.88systems.io/webapp/carte', // kcp-api: WebApp - Carte (Python, PCP056)
   deplacer: 'https://n8n.88systems.io/webhook/deplacer-sujet', // n8n: KCP - Deplacer Sujet
   restructurer: 'https://hook.eu2.make.com/0mwtqehwa8c85n4don6hqt1cxkluiggp', // Make: KCP - Restructurer
   propositions: 'https://n8n.88systems.io/webhook/webapp-propositions', // n8n: KCP - WebApp - Propositions
