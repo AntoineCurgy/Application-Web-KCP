@@ -62,6 +62,8 @@
         <div class="stack">
           <div class="carte-f">
             <div class="champ"><label for="ti">Titre</label><input type="text" id="ti" placeholder="Point hebdomadaire migration"></div>
+            <div class="champ"><label for="ens">Ensemble concerné</label>
+              <select id="ens"><option value="">Aucun</option></select></div>
             <fieldset class="langues" id="lgs">
               <legend>Langues de la réunion</legend>
               <div class="cases">
@@ -101,8 +103,8 @@
             <div class="sect-h" style="margin-bottom:var(--s2)">Ce qui se passe ensuite</div>
             <div class="etapes">
               <span class="n">1</span><span class="x">Le robot rejoint et enregistre. Vous le voyez parmi les participants.</span>
-              <span class="n">2</span><span class="x">À la fin, la réunion est transcrite puis résumée.</span>
-              <span class="n">3</span><span class="x">Le compte rendu arrive dans <a href="#" id="lnk-reunions" style="color:var(--accent-deep)" target="_blank" rel="noopener">Mes réunions</a> quelques minutes après. Le transcript brut est conservé mais non publié : n'hésitez pas à le demander.</span>
+              <span class="n">2</span><span class="x">À la fin, la réunion est transcrite.</span>
+              <span class="n">3</span><span class="x">Le transcript arrive dans Notion quelques minutes après, puis il est classé dans l'ensemble concerné.</span>
             </div>
           </div>
         </aside>
@@ -123,14 +125,26 @@
       document.getElementById('nav-reunions').href = url;
       document.getElementById('nav-reunions').hidden = false;
       document.getElementById('grp-notion').hidden = false;
-      document.getElementById('lnk-reunions').href = url;
-    } else {
-      // Sans lien de session, l'étape 3 garde son texte mais perd le lien mort.
-      var l = document.getElementById('lnk-reunions');
-      var s = document.createElement('b'); s.textContent = 'Mes réunions';
-      l.replaceWith(s);
     }
     kcpNavBadges();
+  })();
+
+  // L'ensemble donne au robot les noms propres à reconnaître (ses glossaires et ses
+  // tiers) ; sans ensemble, il part sans vocabulaire. Même liste que « Rattaché à »
+  // de nouveau-sujet.html : la racine, puis les ensembles.
+  (function chargerEnsembles() {
+    var el = document.getElementById('ens');
+    kcpLoadTiroirs().then(function (data) {
+      var noeuds = (data.gcp || []);
+      var racine = noeuds.filter(function (t) { return (t.parent || '') === 'N/A'; });
+      var autres = noeuds.filter(function (t) { return (t.parent || '') !== 'N/A'; });
+      racine.concat(autres).forEach(function (t) {
+        var o = document.createElement('option');
+        o.value = t.doc_int_id;
+        o.textContent = kcpDocLabel(t) + ((t.parent || '') === 'N/A' ? ' (racine)' : '');
+        el.appendChild(o);
+      });
+    }).catch(function () {});
   })();
 
   // Les langues cochées partent jointes par une virgule dans le champ `langue`,
@@ -182,7 +196,7 @@
     try {
       res = await kcpFetch(C.webhooks.creer_bot, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_client: C.client_id, meeting_url: meeting_url, titre_reunion: titre_reunion, langue: languesChoisies().join(',') })
+        body: JSON.stringify({ id_client: C.client_id, meeting_url: meeting_url, titre_reunion: titre_reunion, langue: languesChoisies().join(','), noeud: document.getElementById('ens').value })
       });
       var raw = await res.text();
       var cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();

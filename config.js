@@ -16,7 +16,7 @@ const KCP_WEBHOOKS = {
   creer_ensemble: 'https://n8n.88systems.io/webhook/creer-ensemble', // n8n: KCP - Creer Ensemble
   update_perimetre: 'https://n8n.88systems.io/webhook/update-perimetre', // n8n: KCP - Update Perimetre Declare
   renommer: 'https://n8n.88systems.io/webhook/renommer-sujet', // n8n: KCP - Renommer Sujet
-  creer_bot: 'https://n8n.88systems.io/webhook/creer-bot', // n8n: KCP - Meeting BaaS - Creer Bot
+  creer_bot: 'https://api-kcp.88systems.io/creer-bot', // kcp-api: Meeting BaaS - Creer Bot (Python, PCP056)
   reset_password: 'https://api-kcp.88systems.io/auth/reset', // kcp-api: Reset Password (Python, PCP056)
   captures: 'https://n8n.88systems.io/webhook/webapp-captures', // n8n: KCP - WebApp - Informations Capturees
   points_a_clarifier: 'https://n8n.88systems.io/webhook/webapp-points', // n8n: KCP - WebApp - Points a clarifier
