@@ -194,7 +194,7 @@
 
     var res, data = {};
     try {
-      res = await kcpFetch(C.webhooks.creer_bot, {
+      res = await kcpFetchWebhook('creer_bot', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_client: C.client_id, meeting_url: meeting_url, titre_reunion: titre_reunion, langue: languesChoisies().join(','), noeud: document.getElementById('ens').value })
       });

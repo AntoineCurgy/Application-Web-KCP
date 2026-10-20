@@ -130,6 +130,33 @@ function kcpFetch(url, options) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Un onglet resté ouvert garde l'ancienne adresse d'un webhook après une
+// mise en ligne : le 2026-10-20, l'envoi du robot visait encore n8n, éteint
+// la veille, et la page a dit « Envoi impossible ». Sur un échec réseau ou un
+// 404/405, on relit config.js sans cache ; si l'adresse a changé, on la prend
+// et on réessaie une fois. Jamais sur la même adresse : un appel parti mais
+// sans réponse ne se rejoue pas (deux robots dans la même réunion).
+// ─────────────────────────────────────────────────────────────
+async function kcpAdresseFraiche(cle) {
+  try {
+    const r = await fetch('config.js?t=' + Date.now(), { cache: 'no-store' });
+    const m = (await r.text()).match(new RegExp('\\b' + cle + ":\\s*'([^']+)'"));
+    return m ? m[1] : null;
+  } catch (e) { return null; }
+}
+
+async function kcpFetchWebhook(cle, options) {
+  const url = KCP_CONFIG.webhooks[cle];
+  let res = null, err = null;
+  try { res = await kcpFetch(url, options); } catch (e) { err = e; }
+  if (res && res.status !== 404 && res.status !== 405) return res;
+  const neuve = await kcpAdresseFraiche(cle);
+  if (!neuve || neuve === url) { if (err) throw err; return res; }
+  KCP_CONFIG.webhooks[cle] = neuve;
+  return kcpFetch(neuve, options);
+}
+
+// ─────────────────────────────────────────────────────────────
 // Cache local de la liste des tiroirs (stale-while-revalidate).
 // La liste change rarement (création / modif de périmètre) : on la
 // sert instantanément depuis localStorage et on rafraîchit en fond.
