@@ -130,20 +130,38 @@
   })();
 
   // L'ensemble donne au robot les noms propres à reconnaître (ses glossaires et ses
-  // tiers) ; sans ensemble, il part sans vocabulaire. Même liste que « Rattaché à »
-  // de nouveau-sujet.html : la racine, puis les ensembles.
+  // tiers) ; sans ensemble, il part sans vocabulaire. La liste vient de la carte
+  // (`/webapp/carte` de kcp-api, compilée depuis les cellules) : l'ancienne liste
+  // des tiroirs était un webhook n8n éteint le 2026-10-18, qui répond 404, et le
+  // menu restait vide sur un navigateur sans cache (mesuré le 2026-11-06).
+  // La racine d'abord, puis les ensembles.
   (function chargerEnsembles() {
     var el = document.getElementById('ens');
-    kcpLoadTiroirs().then(function (data) {
-      var noeuds = (data.gcp || []);
-      var racine = noeuds.filter(function (t) { return (t.parent || '') === 'N/A'; });
-      var autres = noeuds.filter(function (t) { return (t.parent || '') !== 'N/A'; });
+    function poser(data) {
+      var noeuds = ((data && data.sujets) || []).filter(function (t) { return /^GCP/.test(t.doc_int_id || ''); });
+      if (!noeuds.length) return;
+      var choisi = el.value;
+      Array.prototype.slice.call(el.querySelectorAll('option[data-carte]')).forEach(function (o) { o.remove(); });
+      var racine = noeuds.filter(function (t) { return !t.parent || t.parent === 'N/A'; });
+      var autres = noeuds.filter(function (t) { return t.parent && t.parent !== 'N/A'; });
       racine.concat(autres).forEach(function (t) {
         var o = document.createElement('option');
         o.value = t.doc_int_id;
-        o.textContent = kcpDocLabel(t) + ((t.parent || '') === 'N/A' ? ' (racine)' : '');
+        o.dataset.carte = '1';
+        o.textContent = kcpDocLabel(t) + ((!t.parent || t.parent === 'N/A') ? ' (racine)' : '');
         el.appendChild(o);
       });
+      if (choisi) el.value = choisi;
+    }
+    poser(kcpReadCarteCache());
+    kcpFetchWebhook('carte', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: KCP_CONFIG.client_id })
+    }).then(function (r) {
+      if (!r || !r.ok) throw new Error('carte');
+      return r.json();
+    }).then(function (data) {
+      if (data && data.sujets && data.sujets.length) { kcpCacheCarte(data); poser(data); }
     }).catch(function () {});
   })();
 
