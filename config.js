@@ -47,10 +47,13 @@ function kcpNotionHref(u) {
 
 // ── Libellé d'affichage d'un document, commun à toutes les pages ──
 // Annexe → anx_x ; sujet → #x ; nœud → label nu ; la racine porte le prénom.
-// Entrée : un item de la liste tiroirs {nom_tiroir, type, parent?, doc_int_id?}.
+// Entrée : un item de la liste tiroirs {nom_tiroir, type, parent?, doc_int_id?}, ou de la carte
+// de kcp-api {doc_label, doc_int_id, parent?}, qui ne porte ni nom_tiroir ni type : le nom se lit
+// alors dans doc_label (sans son « # »), le type dans le préfixe de l'identifiant. Sans ce repli,
+// la liste des ensembles de « Enregistrer une réunion » n'affichait que des « # » (2026-11-09).
 function kcpDocLabel(t) {
-  var nom = (t && t.nom_tiroir) || '';
-  var type = String((t && t.type) || '').toUpperCase();
+  var nom = (t && (t.nom_tiroir || String(t.doc_label || '').replace(/^#/, ''))) || '';
+  var type = String((t && (t.type || String(t.doc_int_id || '').slice(0, 3))) || '').toUpperCase();
   if (type === 'ANX') {
     if (nom.indexOf('anx_') === 0) return nom;
     if (nom.indexOf('nx_') === 0) return 'a' + nom;
